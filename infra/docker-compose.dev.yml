@@ -1,0 +1,134 @@
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:17
+
+    # DB 데이터 영구 저장
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    # 로컬 접속용 포트
+    ports:
+      - "5432:5432"
+
+    # 공통 환경변수 파일
+    env_file:
+      - .env.dev
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  # S3 호환 객체 스토리지
+  minio:
+    image: minio/minio:latest
+
+    # API(9000) + 관리자 콘솔(9001)
+    command: server /data --console-address ":9001"
+
+    # 이미지 및 파일 영구 저장
+    volumes:
+      - minio-data:/data
+
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+    env_file:
+      - .env.dev
+
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+  # Spring Boot 백엔드
+  spring:
+    build:
+      context: ../spring
+      dockerfile: Dockerfile
+
+    # 개발 시 코드 변경 즉시 반영
+    volumes:
+      - ../spring:/app
+
+    ports:
+      - "8080:8080"
+
+    env_file:
+      - .env.dev
+
+    environment:
+      # PostgreSQL 연결 정보
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # 실행 프로파일(dev, prod 등)
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+
+      # MinIO 연결 정보
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+
+      # 버킷 이름
+      MINIO_BUCKET_PROFILE_IMAGES: ${MINIO_BUCKET_PROFILE_IMAGES}
+      MINIO_BUCKET_ECHO_IMAGES: ${MINIO_BUCKET_ECHO_IMAGES}
+      MINIO_BUCKET_WEAPON_IMAGES: ${MINIO_BUCKET_WEAPON_IMAGES}
+      MINIO_BUCKET_RESONATOR_THUMBNAILS: ${MINIO_BUCKET_RESONATOR_THUMBNAILS}
+      MINIO_BUCKET_RESONATOR_FULL: ${MINIO_BUCKET_RESONATOR_FULL}
+
+    # DB 및 MinIO가 먼저 시작되어야 함
+    depends_on:
+      - postgres
+      - minio
+
+  # 이미지 처리 서버
+  fastapi:
+    build:
+      context: ../fastapi
+      dockerfile: Dockerfile
+
+    # 개발 시 코드 변경 즉시 반영
+    volumes:
+      - ../fastapi:/app
+
+    ports:
+      - "8000:8000"
+
+    # 개발용 자동 리로드
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
+    # 로그 수집 대상 표시
+    labels:
+      logging: "enabled"
+
+    env_file:
+      - .env.dev
+
+    environment:
+      # 실행 환경
+      APP_ENV: ${APP_ENV}
+
+      # MinIO 연결 정보
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+
+      # 사용 버킷
+      MINIO_BUCKET_PROFILE_IMAGES: ${MINIO_BUCKET_PROFILE_IMAGES}
+      MINIO_BUCKET_ECHO_IMAGES: ${MINIO_BUCKET_ECHO_IMAGES}
+
+    # MinIO가 먼저 시작되어야 함
+    depends_on:
+      - minio
+
+# 영구 데이터 저장소
+volumes:
+  postgres-data:
+  minio-data:
