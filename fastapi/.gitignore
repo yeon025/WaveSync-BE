@@ -1,4 +1,4 @@
 myenv
 **/__pycache__/
 credentials
-app/images/crop
+crop
