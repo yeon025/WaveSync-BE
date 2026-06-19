@@ -1,9 +1,14 @@
 from google.cloud import vision
 from app.clients.vision_client import create_vision_client
 import re
+from app.validators.image_validator import validate_image
+from app.config.logger import logger
+
 
 
 def extract_text(image_path):
+    validate_image(image_path)
+
     with open(image_path, "rb") as image_file:
         content = image_file.read()
 

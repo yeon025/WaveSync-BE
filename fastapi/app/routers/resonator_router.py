@@ -13,7 +13,7 @@ def analyze_resonator_image(request : ResonatorImageRequest):
     data = extract_info(request.imageUrl)
 
     return ResonatorImageResponse(
-        status=200,
+        code=200,
         message="OCR 처리가 성공했습니다.",
         data=data
     )

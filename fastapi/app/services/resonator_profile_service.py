@@ -6,7 +6,7 @@ from app.mapper.echo import EchoMapper
 from app.config.constant import TMP_DIR, CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR
 from app.schemas.response import ExtractData
 import os
-
+from app.config.logger import logger
 
 
 
@@ -38,7 +38,7 @@ def extract_info(image_path):
     # 공명 체인 레벨 계산
     # ========================================
     chain_level = calculate_chain_level(CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR)
-
+    logger.debug(f"공명 체인 돌파 횟수는 {chain_level}입니다.")
 
 
 
@@ -48,12 +48,16 @@ def extract_info(image_path):
     
     # OCR로 텍스트 추출
     full_text = extract_text(os.path.join(TMP_DIR, "merged.png"))
+    logger.debug("텍스트 추출을 완료했습니다.")
     
     # 추출된 텍스트를 y좌표 기준으로 병합
     merged_texts = process_ocr_result(full_text)
+    logger.debug("텍스트 병합을 완료했습니다.")
     
     # 텍스트 정제 및 필터링
     cleaned_texts = clean_text(merged_texts)
+    logger.debug("텍스트 정제를 완료했습니다.")
+
 
 
 
@@ -66,8 +70,8 @@ def extract_info(image_path):
     
 
     return ExtractData(
-        resonatorName=merged_texts[0], 
+        resonatorName=cleaned_texts[0], 
         resonanceChainLevel=chain_level, 
-        weaponName=merged_texts[1], 
+        weaponName=cleaned_texts[1], 
         echo=echo_list
     )

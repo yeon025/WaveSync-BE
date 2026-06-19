@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import os
 from app.config.constant import TMP_DIR, CIRCLES, RECTANGLES
+from app.config.logger import logger
+
 
 os.makedirs(TMP_DIR, exist_ok=True)
 
@@ -23,7 +25,7 @@ def crop_circles(image_path):
     for i, crop in enumerate(crops, start=1):
         save_path = os.path.join(TMP_DIR, f"resonance_chain_{i}.png")
         cv2.imwrite(save_path, crop)
-        print(f"Saved: {save_path}")
+        logger.debug(f"{save_path}가 저장되었습니다.")
 
 
 
@@ -56,4 +58,4 @@ def crop_and_stack(image_path):
 
     save_path = os.path.join(TMP_DIR, f"merged.png")
     cv2.imwrite(save_path, cv2.vconcat(aligned))
-    print(f"Saved: {save_path}")
+    logger.debug(f"{save_path}가 저장되었습니다.")

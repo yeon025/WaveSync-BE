@@ -16,7 +16,7 @@ CHAIN_IMG_DIRS = [
     os.path.join(TMP_DIR, "resonance_chain_5.png"),
     os.path.join(TMP_DIR, "resonance_chain_6.png"),
 ]
-TEMPLATE_IMG_DIR = os.path.join(TEMPLATE_DIR, "resonance_chain_1.png")
+TEMPLATE_IMG_DIR = os.path.join(TEMPLATE_DIR, "locked_resonance_chain.png")
 
 
 RECTANGLES = [
