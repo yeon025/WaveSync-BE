@@ -1,0 +1,19 @@
+from fastapi import APIRouter
+from schemas.request import ResonatorImageRequest
+from schemas.response import ResonatorImageResponse
+from services.resonator_profile_service import extract_info
+
+
+router = APIRouter(prefix="/resonators")
+
+
+@router.post("/images", response_model=ResonatorImageResponse, status_code=200)
+def analyze_resonator_image(request : ResonatorImageRequest):
+    
+    data = extract_info(request.imageUrl)
+
+    return ResonatorImageResponse(
+        status=200,
+        message="OCR 처리가 성공했습니다.",
+        data=data
+    )
