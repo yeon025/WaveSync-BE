@@ -6,7 +6,7 @@ services:
     # DB 데이터 영구 저장
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres:/docker-entrypoint-initdb.d
 
     # 로컬 접속용 포트
     ports:
@@ -35,6 +35,36 @@ services:
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password123
+      
+  minio-init:
+    image: minio/mc:latest
+  
+    depends_on:
+      - minio
+  
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 admin password123; do
+        echo 'Waiting for MinIO...';
+        sleep 2;
+      done;
+  
+      mc mb --ignore-existing local/profile-images;
+      mc mb --ignore-existing local/echo-images;
+      mc mb --ignore-existing local/weapon-images;
+      mc mb --ignore-existing local/resonator-thumbnail-images;
+      mc mb --ignore-existing local/resonator-standing-images;
+  
+      mc anonymous set download local/profile-images;
+      mc anonymous set download local/echo-images;
+      mc anonymous set download local/weapon-images;
+      mc anonymous set download local/resonator-thumbnail-images;
+      mc anonymous set download local/resonator-standing-images;
+  
+      echo 'MinIO initialization complete.';
+      "
+  
+    restart: "no"
 
   # Spring Boot 백엔드
   spring:
@@ -74,6 +104,7 @@ services:
     depends_on:
       - postgres
       - minio
+      - minio-init
 
   # 이미지 처리 서버
   fastapi:
@@ -107,10 +138,18 @@ services:
       # 사용 버킷
       MINIO_BUCKET_PROFILES: profile-images
       MINIO_BUCKET_ECHOES: echo-images
+      
+      # PostgreSQL
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: wawu
+      POSTGRES_USER: wawu
+      POSTGRES_PASSWORD: wawu
 
     # MinIO가 먼저 시작되어야 함
     depends_on:
       - minio
+      - minio-init
 
 # 영구 데이터 저장소
 volumes:
