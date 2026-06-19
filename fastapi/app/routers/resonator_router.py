@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from schemas.request import ResonatorImageRequest
-from schemas.response import ResonatorImageResponse
-from services.resonator_profile_service import extract_info
+from app.schemas.request import ResonatorImageRequest
+from app.schemas.response import ResonatorImageResponse
+from app.services.resonator_profile_service import extract_info
 
 
 router = APIRouter(prefix="/resonators")

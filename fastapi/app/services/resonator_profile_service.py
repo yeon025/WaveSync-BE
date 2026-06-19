@@ -1,10 +1,10 @@
-from validators.image_validator import validate_image
-from services.preprocess_service import crop_circles, crop_and_stack
-from services.resonance_chain_service import calculate_chain_level
-from services.ocr_service import extract_text, process_ocr_result, clean_text
-from mapper.echo import EchoMapper
-from config.constant import TMP_DIR, CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR
-from schemas.response import ExtractData
+from app.validators.image_validator import validate_image
+from app.services.preprocess_service import crop_circles, crop_and_stack
+from app.services.resonance_chain_service import calculate_chain_level
+from app.services.ocr_service import extract_text, process_ocr_result, clean_text
+from app.mapper.echo import EchoMapper
+from app.config.constant import TMP_DIR, CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR
+from app.schemas.response import ExtractData
 import os
 
 

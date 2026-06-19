@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import resonator_router
+from app.routers import resonator_router
 
 app = FastAPI()
 

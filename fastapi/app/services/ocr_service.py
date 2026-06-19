@@ -1,5 +1,5 @@
 from google.cloud import vision
-from clients.vision_client import create_vision_client
+from app.clients.vision_client import create_vision_client
 import re
 
 

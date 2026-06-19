@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-from config.constant import TMP_DIR, CIRCLES, RECTANGLES
+from app.config.constant import TMP_DIR, CIRCLES, RECTANGLES
 
 os.makedirs(TMP_DIR, exist_ok=True)
 
