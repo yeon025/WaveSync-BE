@@ -2,3 +2,9 @@ fastapi
 uvicorn[standard]
 opencv-python-headless
 google-cloud-vision
+sqlalchemy
+psycopg2-binary
+minio
+Pillow
+ImageHash
+numpy
