@@ -5,8 +5,12 @@ import lombok.*;
 @Getter
 @RequiredArgsConstructor
 public enum BranchPosition {
-    TOP("top", "상단"),
-    MIDDLE("middle", "중단");
+
+    LEFT_OUTER("left_outer", "왼쪽 외곽"),
+    LEFT_INNER("left_inner", "왼쪽 내부"),
+    CENTER("center", "중앙"),
+    RIGHT_OUTER("right_outer", "오른쪽 외곽"),
+    RIGHT_INNER("right_inner", "오른쪽 내부");
 
     private final String code; // API, DB 값
     private final String description; // UI 표시
