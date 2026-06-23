@@ -25,8 +25,6 @@ public class ResonatorMaster {
     @Column(nullable = false, length = 20)
     private Element element;
 
-    @Min(4)
-    @Max(5)
     @Column(nullable = false)
     private Integer rarity;
 

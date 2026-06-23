@@ -33,7 +33,7 @@ public class WeaponMaster {
     private BigDecimal mainValue;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "refine_type", length = 50)
+    @Column(name = "refine_type", length = 70)
     private StatType refineType;
 
     @Column(name = "refine_1_value")
