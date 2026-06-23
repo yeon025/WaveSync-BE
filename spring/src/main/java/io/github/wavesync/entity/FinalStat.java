@@ -58,8 +58,8 @@ public class FinalStat {
     @Column(name = "aero_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal aeroDamageBonus;
 
-    @Column(name = "spectro_damage_bonus", nullable = false, precision = 5, scale = 2)
-    private BigDecimal spectroDamageBonus;
+    @Column(name = "spectra_damage_bonus", nullable = false, precision = 5, scale = 2)
+    private BigDecimal spectraDamageBonus;
 
     @Column(name = "havoc_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal havocDamageBonus;
