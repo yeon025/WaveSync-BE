@@ -11,7 +11,7 @@ public enum Element {
     FUSION("fusion", "용융"),
     AERO("aero", "기류"),
     CONDUCTO("conducto", "전도"),
-    SPECTRO("spectro", "회절"),
+    SPECTRA("spectra", "회절"),
     HAVOC("havoc", "인멸");
 
     private final String code;        // API / DB 값
