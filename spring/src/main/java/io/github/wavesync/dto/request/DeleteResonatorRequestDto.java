@@ -8,6 +8,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor
 public class DeleteResonatorRequestDto {
-    @NotBlank
-    private List<Long> userResonatorIds;
+
+    @NotEmpty
+    private List<@NotNull @Positive Long> userResonatorIds;
 }

@@ -1,5 +1,5 @@
 package io.github.wavesync.dto.request;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 
@@ -7,6 +7,7 @@ import lombok.*;
 @Getter
 @NoArgsConstructor
 public class ExtractProfileRequestDto {
+
     @NotBlank
     private String imageUrl;
 }
