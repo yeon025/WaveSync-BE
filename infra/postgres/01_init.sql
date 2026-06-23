@@ -5,9 +5,9 @@ CREATE TABLE IF NOT EXISTS weapon_master (
     id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(50) NOT NULL UNIQUE,
     attack_value INT NOT NULL,
-    main_type VARCHAR(20) NOT NULL,
+    main_type VARCHAR(50) NOT NULL,
     main_value NUMERIC(5,2) NOT NULL,
-    refine_type VARCHAR(20),
+    refine_type VARCHAR(70),
     refine_1_value INT,
     refine_2_value INT,
     refine_3_value INT,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS weapon_master (
 CREATE TABLE IF NOT EXISTS resonator_master (
     id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(20) NOT NULL UNIQUE,
-    element VARCHAR(10) NOT NULL,
+    element VARCHAR(20) NOT NULL,
     rarity INT NOT NULL CHECK (rarity IN (4, 5)),
     hp INT NOT NULL,
     attack INT NOT NULL,
@@ -40,11 +40,11 @@ CREATE TABLE IF NOT EXISTS resonator_master (
 CREATE TABLE IF NOT EXISTS resonance_node_master (
     id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
-    outer_node_type VARCHAR(20) NOT NULL,
+    outer_node_type VARCHAR(50) NOT NULL,
     outer_top_node_value NUMERIC(5,2) NOT NULL,
     outer_middle_node_value NUMERIC(5,2) NOT NULL,
 
-    inner_node_type VARCHAR(20) NOT NULL,
+    inner_node_type VARCHAR(50) NOT NULL,
     inner_top_node_value NUMERIC(5,2) NOT NULL,
     inner_middle_node_value NUMERIC(5,2) NOT NULL,
 
@@ -97,21 +97,16 @@ CREATE TABLE IF NOT EXISTS user_resonators (
 CREATE TABLE IF NOT EXISTS user_echoes (
     id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
-    main_type VARCHAR(20) NOT NULL,
+    main_type VARCHAR(50) NOT NULL,
     main_value NUMERIC(5,2) NOT NULL,
 
-    secondary_type VARCHAR(20) NOT NULL,
+    secondary_type VARCHAR(50) NOT NULL,
     secondary_value INT NOT NULL,
 		
-		echo_master_id INT NOT NULL,
     user_resonator_id INT NOT NULL,
 
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     
-    CONSTRAINT fk_user_echoes_echo_master
-        FOREIGN KEY (echo_master_id)
-        REFERENCES echo_master(id),
-
     CONSTRAINT fk_user_echo_resonator
         FOREIGN KEY (user_resonator_id)
         REFERENCES user_resonators(id)
@@ -124,10 +119,8 @@ CREATE TABLE IF NOT EXISTS user_echoes (
 CREATE TABLE IF NOT EXISTS user_echo_sub (
     id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
-    type VARCHAR(20) NOT NULL,
+    type VARCHAR(50) NOT NULL,
     value NUMERIC(7,2) NOT NULL,
-
-    unit VARCHAR(20) NOT NULL CHECK (unit IN ('flat', 'percent')),
 
     user_echo_id INT NOT NULL,
 
@@ -145,8 +138,8 @@ CREATE TABLE IF NOT EXISTS user_echo_sub (
 CREATE TABLE IF NOT EXISTS user_resonance_nodes (
     id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
-    branch_position VARCHAR(10) NOT NULL CHECK (branch_position IN ('top', 'middle')),
-    node_position VARCHAR(10) NOT NULL CHECK (node_position IN ('outer', 'inner')),
+    branch_position VARCHAR(20) NOT NULL CHECK (branch_position IN ('top', 'middle')),
+    node_position VARCHAR(20) NOT NULL CHECK (node_position IN ('left_outer', 'left_inner', 'center', 'right_outer', 'right_inner')),
 
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
@@ -169,21 +162,21 @@ CREATE TABLE IF NOT EXISTS final_stats (
     attack INT NOT NULL,
     defense INT NOT NULL,
 
-    resonance_efficiency NUMERIC(5,2) NOT NULL,
-    critical NUMERIC(5,2) NOT NULL,
+    energy_regen NUMERIC(5,2) NOT NULL,
+    critical_rate NUMERIC(5,2) NOT NULL,
     critical_damage NUMERIC(5,2) NOT NULL,
 
-    resonance_skill_bonus NUMERIC(5,2) NOT NULL,
-    basic_attack_bonus NUMERIC(5,2) NOT NULL,
-    heavy_attack_bonus NUMERIC(5,2) NOT NULL,
-    resonance_liberation_bonus NUMERIC(5,2) NOT NULL,
+    resonance_skill_damage_bonus NUMERIC(5,2) NOT NULL,
+    basic_attack_damage_bonus NUMERIC(5,2) NOT NULL,
+    heavy_attack_damage_bonus NUMERIC(5,2) NOT NULL,
+    resonance_liberation_damage_bonus NUMERIC(5,2) NOT NULL,
 
-    glacio_bonus NUMERIC(5,2) NOT NULL,
-    fusion_bonus NUMERIC(5,2) NOT NULL,
-    conducto_bonus NUMERIC(5,2) NOT NULL,
-    aero_bonus NUMERIC(5,2) NOT NULL,
-    spectro_bonus NUMERIC(5,2) NOT NULL,
-    havoc_bonus NUMERIC(5,2) NOT NULL,
+    glacio_damage_bonus NUMERIC(5,2) NOT NULL,
+    fusion_damage_bonus NUMERIC(5,2) NOT NULL,
+    conducto_damage_bonus NUMERIC(5,2) NOT NULL,
+    aero_damage_bonus NUMERIC(5,2) NOT NULL,
+    spectra_damage_bonus NUMERIC(5,2) NOT NULL,
+    havoc_damage_bonus NUMERIC(5,2) NOT NULL,
     healing_bonus NUMERIC(5,2) NOT NULL,
 
     user_resonator_id INT NOT NULL,
