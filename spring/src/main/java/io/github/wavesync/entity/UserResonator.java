@@ -20,13 +20,9 @@ public class UserResonator {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Min(0)
-    @Max(6)
     @Column(name = "resonance_chain_level", nullable = false)
     private Integer resonanceChainLevel;
 
-    @Min(1)
-    @Max(5)
     @Column(name = "refine_level", nullable = false)
     private Integer refineLevel;
 

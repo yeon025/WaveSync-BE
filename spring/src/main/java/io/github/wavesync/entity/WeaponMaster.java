@@ -26,14 +26,14 @@ public class WeaponMaster {
     private Integer attackValue;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "main_type", nullable = false, length = 20)
+    @Column(name = "main_type", nullable = false, length = 50)
     private StatType mainType;
 
     @Column(name = "main_value", nullable = false, precision = 5, scale = 2)
     private BigDecimal mainValue;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "refine_type", length = 20)
+    @Column(name = "refine_type", length = 50)
     private StatType refineType;
 
     @Column(name = "refine_1_value")

@@ -18,12 +18,12 @@ public class ResonatorMaster {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20, unique = true)
-    private Element name;
+    private String name;
 
-    @Column(nullable = false, length = 10)
-    private String element;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Element element;
 
     @Min(4)
     @Max(5)

@@ -20,10 +20,10 @@ public class UserEchoSub {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 20)
+    @Column(nullable = false, length = 50)
     private StatType type;
 
-    @Column(name = "value", nullable = false, precision = 7, scale = 2)
+    @Column(nullable = false, precision = 7, scale = 2)
     private BigDecimal value;
 
     @Column(name = "is_deleted", nullable = false)

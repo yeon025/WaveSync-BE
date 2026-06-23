@@ -18,7 +18,7 @@ public class ResonanceNodeMaster {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "outer_node_type", nullable = false, length = 20)
+    @Column(name = "outer_node_type", nullable = false, length = 50)
     private StatType outerNodeType;
 
     @Column(name = "outer_top_node_value", nullable = false, precision = 5, scale = 2)
@@ -28,7 +28,7 @@ public class ResonanceNodeMaster {
     private BigDecimal outerMiddleNodeValue;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "inner_node_type", nullable = false, length = 20)
+    @Column(name = "inner_node_type", nullable = false, length = 50)
     private StatType innerNodeType;
 
     @Column(name = "inner_top_node_value", nullable = false, precision = 5, scale = 2)

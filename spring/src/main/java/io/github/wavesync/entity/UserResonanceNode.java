@@ -19,11 +19,11 @@ public class UserResonanceNode {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "branch_position", nullable = false)
+    @Column(name = "branch_position", nullable = false, length = 20)
     private BranchPosition branchPosition;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "node_position", nullable = false)
+    @Column(name = "node_position", nullable = false, length = 20)
     private NodePosition nodePosition;
 
     @Column(name = "is_active", nullable = false)

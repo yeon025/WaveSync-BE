@@ -16,50 +16,55 @@ public class FinalStat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Integer hp;
+
+    @Column(nullable = false)
     private Integer attack;
+
+    @Column(nullable = false)
     private Integer defense;
 
-    @Column(precision = 5, scale = 2)
-    private BigDecimal resonanceEfficiency;
+    @Column(name = "energy_regen", nullable = false, precision = 5, scale = 2)
+    private BigDecimal energyRegen;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "critical_rate",nullable = false, precision = 5, scale = 2)
     private BigDecimal criticalRate;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "critical_damage", nullable = false, precision = 5, scale = 2)
     private BigDecimal criticalDamage;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "resonance_skill_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal resonanceSkillDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "basic_attack_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal basicAttackDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "heavy_attack_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal heavyAttackDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "resonance_liberation_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal resonanceLiberationDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "glacio_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal glacioDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "fusion_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal fusionDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "conducto_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal conductoDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "aero_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal aeroDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "spectro_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal spectroDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "havoc_damage_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal havocDamageBonus;
 
-    @Column(precision = 5, scale = 2)
+    @Column(name = "healing_bonus", nullable = false, precision = 5, scale = 2)
     private BigDecimal healingBonus;
 
     @OneToOne(fetch = FetchType.LAZY)

@@ -18,14 +18,14 @@ public class UserEcho {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "main_type", nullable = false, length = 20)
+    @Column(name = "main_type", nullable = false, length = 50)
     private StatType mainType;
 
     @Column(name = "main_value", nullable = false, precision = 5, scale = 2)
     private BigDecimal mainValue;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "secondary_type", nullable = false, length = 20)
+    @Column(name = "secondary_type", nullable = false, length = 50)
     private StatType secondaryType;
 
     @Column(name = "secondary_value", nullable = false)
