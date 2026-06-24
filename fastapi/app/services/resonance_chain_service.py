@@ -1,14 +1,17 @@
 import cv2
+from app.config.logger import logger
 
 
 
 
 def _check_chain_level(chain, template):
-    threshold=0.99
+    threshold=0.95
     
     # 템플릿 매칭 점수 계산
     results = cv2.matchTemplate(chain, template, cv2.TM_CCOEFF_NORMED)
     score = results.max()
+
+    logger.warning(f"score: {score}")
 
     # 미돌파 템플릿과 유사 → 돌파 안됨
     if score >= threshold:
