@@ -1,8 +1,8 @@
 import re
 from enum import Enum, auto
-from app.schemas.response import Echo, Stat, Sub
+from app.schemas.response import Echo, Stat
 from app.config.logger import logger
-
+from app.config.constant import MAIN_STAT_MAP, SECONDARY_STAT_MAP, SUB_STAT_PERCENT_MAP, SUB_STAT_FLAT_MAP
 
 
 
@@ -48,15 +48,18 @@ class EchoMapper:
 
             # --- 흐름 제어 (Flow Control) 핵심 로직 ---
             
-            # 1. 새로운 Echo 세션 시작 조건 (매칭되지 않는 텍스트가 들어왔을 때)
+            # 새로운 Echo 세션 시작 조건 (매칭되지 않는 텍스트가 들어왔을 때)
             if not match:
                 self._finalize_echo()
+
+                text = MAIN_STAT_MAP.get(text, text)
+
                 self.current_echo.main.type = text
                 logger.debug(f"{len(self.final_list) + 1}번 에코의 main type은 {text}입니다.")
                 self.state = ParseState.MAIN_VALUE_PENDING
                 continue
 
-            # 2. 상태에 따른 데이터 처리 (Strategy 역할)
+            # 상태에 따른 데이터 처리 (Strategy 역할)
             self._process_by_state(match)
 
         # 마지막으로 작업 중이던 객체 저장
@@ -66,7 +69,7 @@ class EchoMapper:
 
     def _process_by_state(self, match):
         # 현재 상태에 따라 매칭된 데이터를 적절한 필드에 할당
-        label = match.group(1).strip()
+        raw_label = match.group(1).strip()
         value = match.group(2)
         is_percent = match.group(3) is not None
 
@@ -76,17 +79,23 @@ class EchoMapper:
             logger.debug(f"{len(self.final_list) + 1}번 에코의 main value는 {value}%입니다.")
 
         elif self.state == ParseState.SECONDARY_PENDING:
+            label = SECONDARY_STAT_MAP.get(raw_label, raw_label)
+
             self.current_echo.secondary.type = label
             self.current_echo.secondary.value = float(value) if '.' in value else int(value)
             self.state = ParseState.COLLECTING_SUBS
             logger.debug(f"{len(self.final_list) + 1}번 에코의 secondary는 {label}, {self.current_echo.secondary.value}입니다.")
 
         elif self.state == ParseState.COLLECTING_SUBS:
+            if is_percent == True:
+                label = SUB_STAT_PERCENT_MAP.get(raw_label, raw_label)
+            else:
+                label = SUB_STAT_FLAT_MAP.get(raw_label, raw_label)
+
             value = float(value) if '.' in value else int(value)
-            unit = "percent" if is_percent else "flat"
-            new_sub = Sub(type=label, value=value, unit=unit)
+            new_sub = Stat(type=label, value=value)
             self.current_subs.append(new_sub)
             logger.debug(
                 f"{len(self.final_list) + 1}번 에코의 {len(self.current_subs)}번 sub는 "
-                f"{label}, {value}{'%' if unit == 'percent' else ''}입니다."
+                f"{label}, {value}입니다."
             )

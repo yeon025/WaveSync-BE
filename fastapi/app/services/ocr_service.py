@@ -66,11 +66,19 @@ def _group_into_lines(words_data):
 
 
 def clean_text(raw_texts):
+    texts_without_lv = []
     final_texts = []
     
+    # LV 제거
     for text in raw_texts:
         cleaned = re.sub(r"LV[.\s]?\d+", "", text).strip()
         if cleaned:
             final_texts.append(cleaned)
+
+    # 공명자 이름에서 공백 제거
+    final_texts[0] = final_texts[0].replace(" ", "")
+
+    # 무기 이름에서 공백 제거
+    final_texts[1] = final_texts[1].replace(" ", "")
             
     return final_texts

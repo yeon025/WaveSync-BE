@@ -8,17 +8,13 @@ class Stat(BaseModel):
     type: str
     value: float
 
-class Sub(BaseModel):
-    type: str
-    value: float
-    unit: str
 
 class Echo(BaseModel):
     # name: str
     # imageUrl: str
     main: Stat
     secondary: Stat
-    sub: List[Sub] = Field(default_factory=list)
+    sub: List[Stat] = Field(default_factory=list)
 
 
 

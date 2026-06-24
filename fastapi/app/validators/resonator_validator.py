@@ -4,7 +4,6 @@ from app.database.models.resonator_master import ResonatorMaster
 from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
-import json
 
 
 

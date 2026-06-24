@@ -40,7 +40,7 @@ RECTANGLES = [
     (63, 1015, 380, 1050),  # 에코 부옵 5
 
     # ====================================
-    
+
     (590, 720, 760, 750),  # 에코 주옵 옵션
     (685, 750, 760, 790),  # 에코 주옵 수치
     (436, 840, 760, 875),  # 에코 보조옵
@@ -52,7 +52,7 @@ RECTANGLES = [
     (436, 1015, 760, 1050),  # 에코 부옵 5
 
     # ====================================
-    
+
     (970, 720, 1135, 750),  # 에코 주옵 옵션
     (1060, 750, 1135, 790),  # 에코 주옵 수치
     (811, 840, 1135, 875),  # 에코 보조옵
@@ -100,3 +100,54 @@ CIRCLES = [
     (503, 575, 15),
     (583, 575, 15),
 ]
+
+
+
+MAIN_STAT_MAP = {
+    "HP": "hp_percent",
+    "공격력": "attack_percent",
+    "방어력": "defense_percent",
+
+    "공명 효율": "energy_regen",
+    "크리티컬": "critical_rate",
+    "크리티컬 피해": "critical_damage",
+
+    "응결 피해 보너스": "glacio_damage_bonus",
+    "용융 피해 보너스": "fusion_damage_bonus",
+    "전도 피해 보너스": "conducto_damage_bonus",
+    "기류 피해 보너스": "aero_damage_bonus",
+    "회절 피해 보너스": "spectra_damage_bonus",
+    "인멸 피해 보너스": "havoc_damage_bonus",
+
+    "치료 효과 보너스": "healing_bonus"
+}
+
+
+SECONDARY_STAT_MAP = {
+    "HP": "hp",
+    "공격력": "attack"
+}
+
+
+SUB_STAT_PERCENT_MAP = {
+    "HP": "hp_percent",
+    "공격력": "attack_percent",
+    "방어력": "defense_percent",
+
+    "공명 효율": "energy_regen",
+    "크리티컬": "critical_rate",
+    "크리티컬 피해": "critical_damage",
+
+    "공명 스킬 피해 보너스": "resonance_skill_damage_bonus",
+    "일반 공격 피해 보너스": "basic_attack_damage_bonus",
+    "강공격 피해 보너스": "heavy_attack_damage_bonus",
+    "공명 해방 피해 보너스": "resonance_liberation_damage_bonus",
+
+    "치료 효과 보너스": "healing_bonus"
+}
+
+SUB_STAT_FLAT_MAP = {
+    "HP": "hp",
+    "공격력": "attack",
+    "방어력": "defense"
+}
