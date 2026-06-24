@@ -72,9 +72,13 @@ services:
       context: ../spring
       dockerfile: Dockerfile
 
+    working_dir: /app
+
     # 개발 시 코드 변경 즉시 반영
     volumes:
       - ../spring:/app
+
+    entrypoint: ["./gradlew", "bootRun"]
 
     ports:
       - "8080:8080"

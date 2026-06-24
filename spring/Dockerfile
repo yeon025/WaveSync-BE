@@ -5,7 +5,7 @@ FROM eclipse-temurin:21-jdk
 WORKDIR /app
 
 # 빌드된 JAR 파일 복사
-COPY build/libs/*.jar app.jar
+COPY build/libs/wavesync-0.0.1-SNAPSHOT.jar app.jar
 
 # Spring Boot 포트
 EXPOSE 8080
