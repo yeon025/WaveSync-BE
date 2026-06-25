@@ -22,8 +22,7 @@ public class LoggerInterceptor implements HandlerInterceptor {
         request.setAttribute(START_TIME, System.currentTimeMillis());
 
         // 요청 로그 출력
-        log.info("{} [INFO] {} {} 요청을 시작합니다.",
-                System.currentTimeMillis(),     // 현재 시간 (timestamp)
+        log.info("{} {} 요청을 시작합니다.",
                 request.getMethod(),           // HTTP Method (GET, POST 등)
                 request.getRequestURI()        // 요청 URL
         );
@@ -45,8 +44,7 @@ public class LoggerInterceptor implements HandlerInterceptor {
         long duration = System.currentTimeMillis() - startTime;
 
         // 응답 로그 출력
-        log.info("{} [INFO] {} {} 응답이 완료되었습니다. | status={} | time={}ms",
-                System.currentTimeMillis(),     // 현재 시간
+        log.info("{} {} 응답이 완료되었습니다. | status={} | time={}ms",
                 request.getMethod(),           // HTTP Method
                 request.getRequestURI(),       // 요청 URL
                 response.getStatus(),          // HTTP 상태 코드

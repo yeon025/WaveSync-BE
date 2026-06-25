@@ -17,6 +17,8 @@ services:
       POSTGRES_USER: wawu
       POSTGRES_PASSWORD: wawu
 
+      TZ: Asia/Seoul
+
   # S3 호환 객체 스토리지
   minio:
     image: minio/minio:latest
@@ -35,6 +37,8 @@ services:
     environment:
       MINIO_ROOT_USER: admin
       MINIO_ROOT_PASSWORD: password123
+
+      TZ: Asia/Seoul
       
   minio-init:
     image: minio/mc:latest
@@ -103,6 +107,8 @@ services:
 
       FASTAPI_BASE_URL: http://fastapi:8000
 
+      TZ: Asia/Seoul
+
     # DB 및 MinIO가 먼저 시작되어야 함
     depends_on:
       - postgres
@@ -149,6 +155,8 @@ services:
       POSTGRES_DB: wawu
       POSTGRES_USER: wawu
       POSTGRES_PASSWORD: wawu
+
+      TZ: Asia/Seoul
 
     # MinIO가 먼저 시작되어야 함
     depends_on:

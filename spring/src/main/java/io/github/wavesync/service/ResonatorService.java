@@ -6,6 +6,7 @@ import io.github.wavesync.dto.request.*;
 import io.github.wavesync.dto.response.*;
 import io.github.wavesync.entity.*;
 import io.github.wavesync.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,11 +28,12 @@ public class ResonatorService {
     private final FinalStatRepository finalStatRepository;
     private final UserResonatorRepository userResonatorRepository;
 
+    @Transactional
     public CreateResonatorResponseDto createResonator(MultipartFile resonatorProfile) {
 
         // 공명자 프로필 이미지 저장
         String profileUrl = objectStorageService.uploadProfileImage(resonatorProfile);
-        log.info("{} 저장을 완료했습니다.", profileUrl);
+        log.debug("{} 저장을 완료했습니다.", profileUrl);
         
         // 이미지 경로를 ExtractProfileRequestDto로 감쌈
         ExtractProfileRequestDto request = new ExtractProfileRequestDto(profileUrl);
@@ -39,6 +41,9 @@ public class ResonatorService {
         // fastAPI 호출
         log.info("fastApi 요청을 시작합니다.");
         ApiResponseDto<ExtractProfileResponseDto> response = fastApiClient.extractImage(request);
+        log.info("fastApi 요청이 완료되었습니다.");
+
+        // Dto에서 data만 추출
         ExtractProfileResponseDto extractedTexts = response.getData();
         try {
             log.info(objectMapper.writeValueAsString(extractedTexts));

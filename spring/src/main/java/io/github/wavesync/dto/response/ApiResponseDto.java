@@ -1,11 +1,13 @@
 package io.github.wavesync.dto.response;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
-import org.springframework.http.HttpStatus;
+
 
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponseDto<T> {
     private String code;
     private String message;
