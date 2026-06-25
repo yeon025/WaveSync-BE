@@ -8,8 +8,7 @@ from app.config.logger import logger
 os.makedirs(TMP_DIR, exist_ok=True)
 
 
-def crop_circles(image_path):
-    image = cv2.imread(image_path)
+def crop_circles(image):
 
     crops = []
     for cx, cy, r in CIRCLES:
@@ -29,8 +28,7 @@ def crop_circles(image_path):
 
 
 
-def crop_and_stack(image_path):
-    image = cv2.imread(image_path)
+def crop_and_stack(image):
 
     crops = [image[y1:y2, x1:x2] for (x1, y1, x2, y2) in RECTANGLES]
 

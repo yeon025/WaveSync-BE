@@ -26,9 +26,11 @@ public class UserResonanceNode {
     @Column(name = "node_position", nullable = false, length = 20)
     private NodePosition nodePosition;
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = false;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 

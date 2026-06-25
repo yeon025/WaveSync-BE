@@ -1,9 +1,7 @@
 package io.github.wavesync.dto.response;
 import io.github.wavesync.dto.common.EchoDto;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 import lombok.*;
-
+import java.util.List;
 
 
 @Getter
@@ -16,5 +14,5 @@ public class ExtractProfileResponseDto {
 
     private String weaponName;
 
-    private EchoDto echoes;
+    private List<EchoDto> echoes;
 }

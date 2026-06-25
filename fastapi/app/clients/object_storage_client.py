@@ -1,6 +1,7 @@
 from minio import Minio
-from io import BytesIO
 from PIL import Image
+import numpy as np
+import cv2
 import os
 
 
@@ -18,4 +19,8 @@ minio_client = Minio(
 def load_image(bucket: str, path: str) -> Image.Image:
     response = minio_client.get_object(bucket, path)
     data = response.read()
-    return Image.open(BytesIO(data)).convert("RGB")
+    
+    np_arr = np.frombuffer(data, np.uint8)
+    img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+    return img

@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/resonators")
+@RequestMapping("/api/resonators")
 public class ResonatorController {
 
     private final ResonatorService resonatorService;
@@ -22,7 +22,7 @@ public class ResonatorController {
         CreateResonatorResponseDto response = resonatorService.createResonator(resonatorProfile);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponseDto.of(HttpStatus.OK, "공명자가 등록되었습니다.", response));
+                .body(ApiResponseDto.of("OK", "공명자가 등록되었습니다.", response));
     }
 
 
@@ -32,7 +32,7 @@ public class ResonatorController {
         ResonatorSummaryResponseDto response = resonatorService.getResonatorSummary();
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponseDto.of(HttpStatus.OK, "전체 공명자 목록을 조회했습니다.", response));
+                .body(ApiResponseDto.of("OK", "전체 공명자 목록을 조회했습니다.", response));
     }
 
 
@@ -43,7 +43,7 @@ public class ResonatorController {
         ResonatorDetailResponseDto response = resonatorService.getResonatorDetail(userResonatorId);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponseDto.of(HttpStatus.OK, "공명자를 조회했습니다.", response));
+                .body(ApiResponseDto.of("OK", "공명자를 조회했습니다.", response));
     }
 
 
@@ -55,7 +55,7 @@ public class ResonatorController {
         resonatorService.updateResonator(userResonatorId, data);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponseDto.of(HttpStatus.OK, "공명자 정보가 수정되었습니다."));
+                .body(ApiResponseDto.of("OK", "공명자 정보가 수정되었습니다."));
     }
 
 
@@ -66,6 +66,6 @@ public class ResonatorController {
         resonatorService.deleteResonator(data);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponseDto.of(HttpStatus.OK, "공명자 정보가 삭제되었습니다."));
+                .body(ApiResponseDto.of("OK", "공명자 정보가 삭제되었습니다."));
     }
 }

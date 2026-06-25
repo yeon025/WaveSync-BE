@@ -14,7 +14,7 @@ class Echo(BaseModel):
     # imageUrl: str
     main: Stat
     secondary: Stat
-    sub: List[Stat] = Field(default_factory=list)
+    subs: List[Stat] = Field(default_factory=list)
 
 
 
@@ -23,10 +23,10 @@ class ExtractData(BaseModel):
     resonatorName: str
     resonanceChainLevel: int
     weaponName: str
-    echo: List[Echo]
+    echoes: List[Echo]
 
 
 class ResonatorImageResponse(BaseModel):
-    code: int
+    code: str
     message: str
     data: ExtractData

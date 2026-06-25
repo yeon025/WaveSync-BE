@@ -7,15 +7,15 @@ import org.springframework.http.HttpStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ApiResponseDto<T> {
-    private HttpStatus code;
+    private String code;
     private String message;
     private T data;
 
-    public static <T> ApiResponseDto<T> of(HttpStatus code, String message, T data) {
+    public static <T> ApiResponseDto<T> of(String code, String message, T data) {
         return new ApiResponseDto<>(code, message, data);
     }
 
-    public static ApiResponseDto<Void> of(HttpStatus code, String message) {
+    public static ApiResponseDto<Void> of(String code, String message) {
         return new ApiResponseDto<>(code, message, null);
     }
 }

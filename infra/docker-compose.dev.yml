@@ -68,17 +68,14 @@ services:
 
   # Spring Boot 백엔드
   spring:
-    build:
-      context: ../spring
-      dockerfile: Dockerfile
-
+    image: gradle:8.7-jdk21
     working_dir: /app
 
-    # 개발 시 코드 변경 즉시 반영
     volumes:
       - ../spring:/app
+      - gradle-cache:/home/gradle/.gradle
 
-    entrypoint: ["./gradlew", "bootRun"]
+    command: ./gradlew bootRun --no-daemon
 
     ports:
       - "8080:8080"
@@ -93,7 +90,7 @@ services:
       SPRING_PROFILES_ACTIVE: dev
 
       # MinIO 연결 정보
-      MINIO_ENDPOINT: minio:9000
+      MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: admin
       MINIO_SECRET_KEY: password123
 
@@ -103,6 +100,8 @@ services:
       MINIO_BUCKET_WEAPONS: weapon-images
       MINIO_BUCKET_RESONATOR_THUMBNAILS: resonator-thumbnail-images
       MINIO_BUCKET_RESONATOR_STANDINGS: resonator-standing-images
+
+      FASTAPI_BASE_URL: http://fastapi:8000
 
     # DB 및 MinIO가 먼저 시작되어야 함
     depends_on:
@@ -160,3 +159,4 @@ services:
 volumes:
   postgres-data:
   minio-data:
+  gradle-cache:

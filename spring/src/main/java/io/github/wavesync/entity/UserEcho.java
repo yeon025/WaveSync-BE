@@ -31,6 +31,7 @@ public class UserEcho {
     @Column(name = "secondary_value", nullable = false)
     private Integer secondaryValue;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 

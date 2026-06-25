@@ -26,6 +26,7 @@ public class UserResonator {
     @Column(name = "refine_level", nullable = false)
     private Integer refineLevel;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 

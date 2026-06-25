@@ -28,7 +28,7 @@ class EchoMapper:
     def _finalize_echo(self):
         # 현재까지 작업하던 Echo를 결과 리스트에 담고 정리
         if self.current_echo.main.type:
-            self.current_echo.sub = self.current_subs
+            self.current_echo.subs = self.current_subs
             self.final_list.append(self.current_echo)
         
         self.current_echo = Echo(

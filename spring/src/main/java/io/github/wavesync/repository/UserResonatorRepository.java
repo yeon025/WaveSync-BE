@@ -1,5 +1,10 @@
 package io.github.wavesync.repository;
+import io.github.wavesync.entity.UserResonator;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public class UserResonatorRepository {
+
+@Repository
+public interface UserResonatorRepository extends JpaRepository<UserResonator, Long> {
 
 }

@@ -55,7 +55,7 @@ VALID_SUB_VALUES = {
 
 def validate_sub(echo_list):
     for i, echo in enumerate(echo_list, start=1):
-        for j, sub in enumerate(echo.sub, start=1):
+        for j, sub in enumerate(echo.subs, start=1):
 
             sub_type = sub.type
             sub_value = sub.value

@@ -26,6 +26,7 @@ public class UserEchoSub {
     @Column(nullable = false, precision = 7, scale = 2)
     private BigDecimal value;
 
+    @Builder.Default
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 

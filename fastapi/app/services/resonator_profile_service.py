@@ -1,4 +1,5 @@
 import os
+from app.clients.object_storage_client import load_image
 from app.validators.image_validator import validate_image
 from app.services.preprocess_service import crop_circles, crop_and_stack
 from app.services.resonance_chain_service import calculate_chain_level
@@ -19,10 +20,15 @@ def extract_info(image_path, db: Session):
     echoMapper = EchoMapper()
 
     os.makedirs(TMP_DIR, exist_ok=True)
-    
-    # 이미지 유효성 검사
-    validate_image(image_path)
-    
+
+
+    # ========================================
+    # 이미지 가져오기
+    # ========================================
+
+    bucket, object_name = image_path.split("/")
+    profile = load_image(bucket, object_name)
+
     
     
     # ========================================
@@ -30,10 +36,10 @@ def extract_info(image_path, db: Session):
     # ========================================
     
     # 돌파 상태 판별을 위한 전처리
-    crop_circles(image_path)
+    crop_circles(profile)
 
     # OCR용 텍스트 인식 정확도 향상을 위한 전처리
-    crop_and_stack(image_path)
+    crop_and_stack(profile)
     
     
     
@@ -92,5 +98,5 @@ def extract_info(image_path, db: Session):
         resonatorName=cleaned_texts[0], 
         resonanceChainLevel=chain_level, 
         weaponName=cleaned_texts[1], 
-        echo=echo_list
+        echoes=echo_list
     )

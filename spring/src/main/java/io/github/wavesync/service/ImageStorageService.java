@@ -1,5 +1,0 @@
-package io.github.wavesync.service;
-
-public class ImageStorageService {
-
-}
