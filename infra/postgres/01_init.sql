@@ -6,13 +6,13 @@ CREATE TABLE IF NOT EXISTS weapon_master (
     name VARCHAR(50) NOT NULL UNIQUE,
     attack_value INT NOT NULL,
     main_type VARCHAR(50) NOT NULL,
-    main_value NUMERIC(5,2) NOT NULL,
-    refine_type VARCHAR(70),
-    refine_1_value INT,
-    refine_2_value INT,
-    refine_3_value INT,
-    refine_4_value INT,
-    refine_5_value INT,
+    main_value NUMERIC(5,1) NOT NULL,
+    refine_type VARCHAR(50),
+    refine_1_value NUMERIC(5,1),
+    refine_2_value NUMERIC(5,1),
+    refine_3_value NUMERIC(5,1),
+    refine_4_value NUMERIC(5,1),
+    refine_5_value NUMERIC(5,1),
     image VARCHAR(255) NOT NULL
 );
 
@@ -41,12 +41,12 @@ CREATE TABLE IF NOT EXISTS resonance_node_master (
     id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     outer_node_type VARCHAR(50) NOT NULL,
-    outer_top_node_value NUMERIC(5,2) NOT NULL,
-    outer_middle_node_value NUMERIC(5,2) NOT NULL,
+    outer_top_node_value NUMERIC(5,1) NOT NULL,
+    outer_middle_node_value NUMERIC(5,1) NOT NULL,
 
     inner_node_type VARCHAR(50) NOT NULL,
-    inner_top_node_value NUMERIC(5,2) NOT NULL,
-    inner_middle_node_value NUMERIC(5,2) NOT NULL,
+    inner_top_node_value NUMERIC(5,1) NOT NULL,
+    inner_middle_node_value NUMERIC(5,1) NOT NULL,
 
     resonator_master_id INT NOT NULL UNIQUE,
 
@@ -121,22 +121,22 @@ CREATE TABLE IF NOT EXISTS final_stats (
     attack INT NOT NULL,
     defense INT NOT NULL,
 
-    energy_regen NUMERIC(5,2) NOT NULL,
-    critical_rate NUMERIC(5,2) NOT NULL,
-    critical_damage NUMERIC(5,2) NOT NULL,
+    energy_regen NUMERIC(5,1) NOT NULL,
+    critical_rate NUMERIC(5,1) NOT NULL,
+    critical_damage NUMERIC(5,1) NOT NULL,
 
-    resonance_skill_damage_bonus NUMERIC(5,2) NOT NULL,
-    basic_attack_damage_bonus NUMERIC(5,2) NOT NULL,
-    heavy_attack_damage_bonus NUMERIC(5,2) NOT NULL,
-    resonance_liberation_damage_bonus NUMERIC(5,2) NOT NULL,
+    resonance_skill_damage_bonus NUMERIC(5,1) NOT NULL,
+    basic_attack_damage_bonus NUMERIC(5,1) NOT NULL,
+    heavy_attack_damage_bonus NUMERIC(5,1) NOT NULL,
+    resonance_liberation_damage_bonus NUMERIC(5,1) NOT NULL,
 
-    glacio_damage_bonus NUMERIC(5,2) NOT NULL,
-    fusion_damage_bonus NUMERIC(5,2) NOT NULL,
-    conducto_damage_bonus NUMERIC(5,2) NOT NULL,
-    aero_damage_bonus NUMERIC(5,2) NOT NULL,
-    spectra_damage_bonus NUMERIC(5,2) NOT NULL,
-    havoc_damage_bonus NUMERIC(5,2) NOT NULL,
-    healing_bonus NUMERIC(5,2) NOT NULL,
+    glacio_damage_bonus NUMERIC(5,1) NOT NULL,
+    fusion_damage_bonus NUMERIC(5,1) NOT NULL,
+    conducto_damage_bonus NUMERIC(5,1) NOT NULL,
+    aero_damage_bonus NUMERIC(5,1) NOT NULL,
+    spectra_damage_bonus NUMERIC(5,1) NOT NULL,
+    havoc_damage_bonus NUMERIC(5,1) NOT NULL,
+    healing_bonus NUMERIC(5,1) NOT NULL,
 
     user_resonator_id INT NOT NULL,
 
