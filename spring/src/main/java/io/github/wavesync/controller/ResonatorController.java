@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import io.github.wavesync.service.ResonatorService;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -27,9 +29,9 @@ public class ResonatorController {
 
 
     @GetMapping("")
-    public ResponseEntity<ApiResponseDto<ResonatorSummaryResponseDto>> getResonatorSummary() {
+    public ResponseEntity<ApiResponseDto<List<ResonatorSummaryResponseDto>>> getResonatorSummary() {
 
-        ResonatorSummaryResponseDto response = resonatorService.getResonatorSummary();
+        List<ResonatorSummaryResponseDto> response = resonatorService.getResonatorSummary();
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponseDto.of("OK", "전체 공명자 목록을 조회했습니다.", response));

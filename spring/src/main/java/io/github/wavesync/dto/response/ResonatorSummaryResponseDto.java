@@ -5,6 +5,7 @@ import lombok.*;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class ResonatorSummaryResponseDto {
 
     private Long userResonatorId;
@@ -12,6 +13,8 @@ public class ResonatorSummaryResponseDto {
     private String resonatorName;
 
     private Integer rarity;
+
+    private Integer releaseVersion;
 
     private String thumbnailImageUrl;
 }

@@ -149,10 +149,11 @@ INSERT INTO resonator_master (name, element, rarity, hp, attack, defense, releas
 VALUES ('데니아', 'FUSION', 5, 11025, 425, 1148, 332, 'resonator-thumbnail-images/데니아-thumbnail.png', 'resonator-standing-images/데니아-standing.png');
 
 INSERT INTO resonator_master (name, element, rarity, hp, attack, defense, release_version, thumbnail_image, standing_image)
-VALUES ('레베카', 'CONDUCTO', 5, 11600, 400, 1173, 341, 'resonator-thumbnail-images/레베카-thumbnail.png', 'resonator-standing-images/레베카-standing.png');
+VALUES ('레베카', 'CONDUCTO', 5, 11600, 400, 1173, 340, 'resonator-thumbnail-images/레베카-thumbnail.png', 'resonator-standing-images/레베카-standing.png');
 
 INSERT INTO resonator_master (name, element, rarity, hp, attack, defense, release_version, thumbnail_image, standing_image)
-VALUES ('루시', 'SPECTRA', 5, 11025, 425, 1148, 341, 'resonator-thumbnail-images/루시-thumbnail.png', 'resonator-standing-images/루시-standing.png');
+VALUES ('루시', 'SPECTRA', 5, 11025, 425, 1148, 340, 'resonator-thumbnail-images/루시-thumbnail.png', 'resonator-standing-images/루시-standing.png');
 
 INSERT INTO resonator_master (name, element, rarity, hp, attack, defense, release_version, thumbnail_image, standing_image)
 VALUES ('루실라', 'GLACIO', 5, 12237, 375, 1197, 341, 'resonator-thumbnail-images/루실라-thumbnail.png', 'resonator-standing-images/루실라-standing.png');
+
