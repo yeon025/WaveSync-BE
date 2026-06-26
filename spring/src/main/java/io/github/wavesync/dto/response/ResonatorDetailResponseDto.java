@@ -13,7 +13,9 @@ public class ResonatorDetailResponseDto {
 
     private String resonatorName;
 
-    private String resonatorImageUrl;
+    private String element;
+
+    private String standingImageUrl;
 
     private Integer resonanceChainLevel;
 

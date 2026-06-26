@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -30,4 +31,16 @@ public interface UserResonatorRepository extends JpaRepository<UserResonator, Lo
           and ur.isDeleted = false
     """)
     void softDeleteByIds(@Param("ids") List<Long> ids);
+
+
+    @Query("""
+        select ur
+        from UserResonator ur
+        join fetch ur.resonatorMaster
+        join fetch ur.weaponMaster
+        join fetch ur.finalStat
+        where ur.id = :userResonatorId
+          and ur.isDeleted = false
+    """)
+    Optional<UserResonator> findDetailById(Long userResonatorId);
 }

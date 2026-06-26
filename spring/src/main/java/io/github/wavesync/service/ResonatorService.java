@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -30,8 +30,6 @@ public class ResonatorService {
     private final ResonanceNodeMasterRepository resonanceNodeMasterRepository;
     private final FinalStatRepository finalStatRepository;
     private final UserResonatorRepository userResonatorRepository;
-    private final UserEchoRepository userEchoRepository;
-    private final UserEchoSubRepository userEchoSubRepository;
     private final UserResonanceNodeRepository userResonanceNodeRepository;
 
 
@@ -64,31 +62,43 @@ public class ResonatorService {
         ResonanceNodeMaster nodeInfo = resonanceNodeMasterRepository.findByResonatorMasterId(resonatorInfo.getId());
         log.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.");
 
-        // DB 저장을 위한 UserResonator 객체 생성
+        // 저장 전에 동일한 공명자는 삭제
+        List<Long> targetId = userResonatorRepository.findIdsByResonatorName(extractedTexts.getResonatorName());
+
+        if (!CollectionUtils.isEmpty(targetId)) {
+            log.debug("조회한 id: {}", targetId);
+
+            userResonatorRepository.softDeleteByIds(targetId);
+            userResonanceNodeRepository.softDeleteByUserResonatorIds(targetId);
+            finalStatRepository.deleteByUserResonatorIds(targetId);
+
+            log.debug("동일한 공명자 정보를 삭제했습니다.");
+        }
+
+        // UserResonator 객체 생성 후 저장
         UserResonator userResonator = UserResonator.builder()
                 .resonanceChainLevel(extractedTexts.getResonanceChainLevel())
                 .refineLevel(1)
                 .resonatorMaster(resonatorInfo)
                 .weaponMaster(weaponInfo)
                 .build();
-
-        // 저장 전에 동일한 공명자는 삭제
-        List<Long> selectedId = userResonatorRepository.findIdsByResonatorName(extractedTexts.getResonatorName());
-
-        if (!CollectionUtils.isEmpty(selectedId)) {
-            log.debug("조회한 id: {}", selectedId);
-
-            userResonatorRepository.softDeleteByIds(selectedId);
-            userEchoRepository.softDeleteByUserResonatorIds(selectedId);
-            userEchoSubRepository.softDeleteByUserResonatorIds(selectedId);
-            userResonanceNodeRepository.softDeleteByUserResonatorIds(selectedId);
-            finalStatRepository.deleteByUserResonatorIds(selectedId);
-
-            log.debug("동일한 공명자 정보를 삭제했습니다.");
-        }
-
-        // user_resonators에 저장
         UserResonator savedUserResonator = userResonatorRepository.save(userResonator);
+
+        // UserResonanceNode 객체 생성 후 저장
+        List<UserResonanceNode> userResonanceNodes = new ArrayList<>();
+
+        for (BranchPosition branchPosition : BranchPosition.values()) {
+            for (NodePosition nodePosition : NodePosition.values()) {
+                userResonanceNodes.add(
+                        UserResonanceNode.builder()
+                                .branchPosition(branchPosition)
+                                .nodePosition(nodePosition)
+                                .userResonator(userResonator)
+                                .build()
+                );
+            }
+        }
+        userResonanceNodeRepository.saveAll(userResonanceNodes);
 
         // 최종 스펙 계산
         FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, extractedTexts.getEchoes(), resonatorInfo, weaponInfo, nodeInfo);
@@ -108,13 +118,13 @@ public class ResonatorService {
         return resonatorMasterRepository.findResonatorSummary();
     }
 
-
+    @Transactional(readOnly = true)
     public ResonatorDetailResponseDto getResonatorDetail(Long userResonatorId) {
 
         return null;
     }
 
-
+    @Transactional
     public void updateResonator(Long userResonatorId, UpdateResonatorRequestDto data) {
 
     }
@@ -125,12 +135,6 @@ public class ResonatorService {
 
         // user_resonators (soft delete)
         userResonatorRepository.softDeleteByIds(ids);
-
-        // user_echoes (soft delete)
-        userEchoRepository.softDeleteByUserResonatorIds(ids);
-
-        // user_echo_sub (soft delete)
-        userEchoSubRepository.softDeleteByUserResonatorIds(ids);
 
         // user_resonance_nodes (soft delete)
         userResonanceNodeRepository.softDeleteByUserResonatorIds(ids);

@@ -156,4 +156,3 @@ VALUES ('루시', 'SPECTRA', 5, 11025, 425, 1148, 340, 'resonator-thumbnail-imag
 
 INSERT INTO resonator_master (name, element, rarity, hp, attack, defense, release_version, thumbnail_image, standing_image)
 VALUES ('루실라', 'GLACIO', 5, 12237, 375, 1197, 341, 'resonator-thumbnail-images/루실라-thumbnail.png', 'resonator-standing-images/루실라-standing.png');
-

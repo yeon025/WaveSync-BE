@@ -12,6 +12,6 @@ public enum BranchPosition {
     RIGHT_OUTER("right_outer", "오른쪽 외곽"),
     RIGHT_INNER("right_inner", "오른쪽 내부");
 
-    private final String code; // API, DB 값
+    private final String code; // API 값
     private final String description; // UI 표시
 }

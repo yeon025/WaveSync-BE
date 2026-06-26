@@ -19,4 +19,13 @@ public interface UserResonanceNodeRepository extends JpaRepository<UserResonance
           and urn.isDeleted = false
     """)
     void softDeleteByUserResonatorIds(@Param("ids") List<Long> ids);
+
+    @Query("""
+        select urn
+        from UserResonanceNode urn
+        where urn.userResonator.id = :userResonatorId
+          and urn.isDeleted = false
+        order by urn.branchPosition, urn.nodePosition
+    """)
+    List<UserResonanceNode> findAllByUserResonatorId(Long userResonatorId);
 }

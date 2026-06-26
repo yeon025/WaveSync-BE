@@ -14,6 +14,6 @@ public enum Element {
     SPECTRA("spectra", "회절"),
     HAVOC("havoc", "인멸");
 
-    private final String code;        // API / DB 값
+    private final String code;        // API 값
     private final String description; // UI 표시용
 }
