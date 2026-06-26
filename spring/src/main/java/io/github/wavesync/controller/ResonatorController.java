@@ -49,7 +49,18 @@ public class ResonatorController {
     }
 
 
-    @PutMapping("/{userResonatorId}")
+    @GetMapping("/{userResonatorId}/setting")
+    public ResponseEntity<ApiResponseDto<ResonatorSettingResponseDto>> getResonatorSetting(
+            @PathVariable Long userResonatorId
+    ) {
+        ResonatorSettingResponseDto response = resonatorService.getResonatorSetting(userResonatorId);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponseDto.of("OK", "설정 정보를 조회했습니다.", response));
+    }
+
+
+    @PutMapping("/{userResonatorId}/setting")
     public ResponseEntity<ApiResponseDto<Void>> updateResonator(
             @PathVariable Long userResonatorId,
             @RequestBody UpdateResonatorRequestDto data

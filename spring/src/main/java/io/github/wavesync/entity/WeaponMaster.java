@@ -56,16 +56,4 @@ public class WeaponMaster {
 
     @OneToMany(mappedBy = "weaponMaster")
     private List<UserResonator> userResonators;
-
-
-    public BigDecimal getRefineValue(int refineLevel) {
-        return switch (refineLevel) {
-            case 1 -> refine1Value;
-            case 2 -> refine2Value;
-            case 3 -> refine3Value;
-            case 4 -> refine4Value;
-            case 5 -> refine5Value;
-            default -> throw new IllegalArgumentException("Invalid refine level: " + refineLevel);
-        };
-    }
 }

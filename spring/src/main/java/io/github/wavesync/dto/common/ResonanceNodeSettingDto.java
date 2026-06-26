@@ -4,7 +4,6 @@ import io.github.wavesync.entity.BranchPosition;
 import io.github.wavesync.entity.NodePosition;
 import io.github.wavesync.entity.ResonanceNodeMaster;
 import io.github.wavesync.entity.UserResonanceNode;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResonanceNodeDto {
+public class ResonanceNodeSettingDto {
 
     private BranchPosition branchPosition;
 
@@ -26,8 +25,8 @@ public class ResonanceNodeDto {
     private StatDto stat;
 
 
-    public static ResonanceNodeDto from(UserResonanceNode node, ResonanceNodeMaster nodeMaster) {
-        return ResonanceNodeDto.builder()
+    public static ResonanceNodeSettingDto from(UserResonanceNode node, ResonanceNodeMaster nodeMaster) {
+        return ResonanceNodeSettingDto.builder()
                 .branchPosition(node.getBranchPosition())
                 .nodePosition(node.getNodePosition())
                 .active(node.getIsActive())

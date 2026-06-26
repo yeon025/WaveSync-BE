@@ -2,9 +2,7 @@ package io.github.wavesync.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wavesync.client.FastApiClient;
-import io.github.wavesync.dto.common.ResonanceNodeUpdateDto;
-import io.github.wavesync.dto.common.ResonatorStatDto;
-import io.github.wavesync.dto.common.WeaponDetailDto;
+import io.github.wavesync.dto.common.*;
 import io.github.wavesync.dto.request.*;
 import io.github.wavesync.dto.response.*;
 import io.github.wavesync.entity.*;
@@ -117,11 +115,15 @@ public class ResonatorService {
         return CreateResonatorResponseDto.from(resonatorInfo);
     }
 
+
+
     @Transactional(readOnly = true)
     public List<ResonatorSummaryResponseDto> getResonatorSummary() {
 
         return resonatorMasterRepository.findResonatorSummary();
     }
+
+
 
     @Transactional(readOnly = true)
     public ResonatorDetailResponseDto getResonatorDetail(Long userResonatorId) {
@@ -152,10 +154,33 @@ public class ResonatorService {
                 .build();
     }
 
+
+
+    @Transactional(readOnly = true)
+    public ResonatorSettingResponseDto getResonatorSetting(Long userResonatorId) {
+
+        UserResonator userResonator = userResonatorRepository.findById(userResonatorId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
+
+        ResonanceNodeMaster nodeMaster = resonanceNodeMasterRepository.findByResonatorMasterId(userResonator.getResonatorMaster().getId());
+
+        List<ResonanceNodeSettingDto> nodes = userResonator.getUserResonanceNode().stream()
+                .map(node -> ResonanceNodeSettingDto.from(node, nodeMaster))
+                .toList();
+
+        WeaponSettingDto weapon = WeaponSettingDto.from(userResonator);
+
+        return ResonatorSettingResponseDto.from(nodes, weapon);
+    }
+
+
+
     @Transactional
     public void updateResonator(Long userResonatorId, UpdateResonatorRequestDto data) {
 
     }
+
+
 
     @Transactional
     public void deleteResonator(DeleteResonatorRequestDto data) {
