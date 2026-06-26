@@ -1,4 +1,5 @@
 package io.github.wavesync.entity;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.*;
 
 
@@ -12,6 +13,7 @@ public enum BranchPosition {
     RIGHT_OUTER("right_outer", "오른쪽 외곽"),
     RIGHT_INNER("right_inner", "오른쪽 내부");
 
+    @JsonValue
     private final String code; // API 값
     private final String description; // UI 표시
 }

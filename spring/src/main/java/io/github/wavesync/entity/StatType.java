@@ -42,15 +42,4 @@ public enum StatType {
     @JsonValue
     private final String code;          // API 값
     private final String description;    // UI 표시용
-
-
-    @JsonCreator
-    public static StatType from(String code) {
-        for (StatType type : values()) {
-            if (type.code.equals(code)) {
-                return type;
-            }
-        }
-        throw new IllegalArgumentException("Unknown StatType: " + code);
-    }
 }

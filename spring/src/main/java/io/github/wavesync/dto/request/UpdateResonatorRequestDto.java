@@ -1,5 +1,5 @@
 package io.github.wavesync.dto.request;
-import io.github.wavesync.dto.common.ResonanceNodeDto;
+import io.github.wavesync.dto.common.ResonanceNodeUpdateDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.util.List;
@@ -19,5 +19,5 @@ public class UpdateResonatorRequestDto {
 
     @Valid
     @NotEmpty
-    private List<@NotNull ResonanceNodeDto> nodes;
+    private List<@NotNull ResonanceNodeUpdateDto> nodes;
 }

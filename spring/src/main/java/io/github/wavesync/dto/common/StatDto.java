@@ -7,6 +7,7 @@ import lombok.*;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class StatDto {
 
     private StatType type;

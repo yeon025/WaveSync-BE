@@ -1,39 +1,31 @@
 package io.github.wavesync.dto.common;
-
 import io.github.wavesync.entity.BranchPosition;
 import io.github.wavesync.entity.NodePosition;
-import io.github.wavesync.entity.ResonanceNodeMaster;
 import io.github.wavesync.entity.UserResonanceNode;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.*;
+import lombok.*;
 
 
 @Builder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResonanceNodeDto {
-
+public class ResonanceNodeUpdateDto {
+    @NotNull
     private BranchPosition branchPosition;
 
+    @NotNull
     private NodePosition nodePosition;
 
+    @NotNull
     private Boolean active;
 
-    private StatDto stat;
 
-
-    public static ResonanceNodeDto from(UserResonanceNode node, ResonanceNodeMaster nodeMaster) {
-        return ResonanceNodeDto.builder()
+    public static ResonanceNodeUpdateDto from(UserResonanceNode node) {
+        return ResonanceNodeUpdateDto.builder()
                 .branchPosition(node.getBranchPosition())
                 .nodePosition(node.getNodePosition())
                 .active(node.getIsActive())
-                .stat(nodeMaster.getStat(
-                        node.getBranchPosition(), node.getNodePosition()
-                ))
                 .build();
     }
 }

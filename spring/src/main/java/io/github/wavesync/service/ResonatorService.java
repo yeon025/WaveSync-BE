@@ -2,9 +2,14 @@ package io.github.wavesync.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wavesync.client.FastApiClient;
+import io.github.wavesync.dto.common.ResonanceNodeUpdateDto;
+import io.github.wavesync.dto.common.ResonatorStatDto;
+import io.github.wavesync.dto.common.WeaponDetailDto;
 import io.github.wavesync.dto.request.*;
 import io.github.wavesync.dto.response.*;
 import io.github.wavesync.entity.*;
+import io.github.wavesync.exception.CustomException;
+import io.github.wavesync.exception.ErrorCode;
 import io.github.wavesync.repository.*;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -121,7 +126,30 @@ public class ResonatorService {
     @Transactional(readOnly = true)
     public ResonatorDetailResponseDto getResonatorDetail(Long userResonatorId) {
 
-        return null;
+        // id로 userResonator 조회
+        UserResonator userResonator = userResonatorRepository.findDetailById(userResonatorId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
+
+        // id로 userResonanceNode 조회
+        List<ResonanceNodeUpdateDto> nodes = userResonanceNodeRepository
+                .findAllByUserResonatorId(userResonatorId)
+                .stream()
+                .map(ResonanceNodeUpdateDto::from)
+                .toList();
+
+        // dto 생성
+        WeaponDetailDto weapon = WeaponDetailDto.from(userResonator);
+        ResonatorStatDto stat = ResonatorStatDto.from(userResonator.getFinalStat());
+
+        return ResonatorDetailResponseDto.builder()
+                .userResonatorId(userResonator.getId())
+                .resonatorName(userResonator.getResonatorMaster().getName())
+                .element(userResonator.getResonatorMaster().getElement().getCode())
+                .standingImageUrl(userResonator.getResonatorMaster().getStandingImage())
+                .resonanceChainLevel(userResonator.getResonanceChainLevel())
+                .weapon(weapon)
+                .stat(stat)
+                .build();
     }
 
     @Transactional

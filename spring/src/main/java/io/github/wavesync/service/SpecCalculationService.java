@@ -79,21 +79,21 @@ public class SpecCalculationService {
 
         // 무기 재련 옵션
         if (weaponInfo.getRefineType() == statType) {
-            percent = percent.add(BigDecimal.valueOf(weaponInfo.getRefine1Value()));
+            percent = percent.add(weaponInfo.getRefine1Value());
         }
 
         // 전체 속성 피해 보너스
         if (isElementDamageType(statType)
                 && weaponInfo.getRefineType() == StatType.ALL_ATTRIBUTE_DAMAGE_BONUS) {
 
-            percent = percent.add(BigDecimal.valueOf(weaponInfo.getRefine1Value()));
+            percent = percent.add(weaponInfo.getRefine1Value());
         }
 
         // 일반 공격 + 강공격 피해 보너스
         if (isBasicOrHeavyDamageType(statType)
                 && weaponInfo.getRefineType() == StatType.BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS) {
 
-            percent = percent.add(BigDecimal.valueOf(weaponInfo.getRefine1Value()));
+            percent = percent.add(weaponInfo.getRefine1Value());
         }
 
         // 외부 노드 (상단 2개, 중단 2개)

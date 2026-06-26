@@ -1,12 +1,12 @@
 package io.github.wavesync.dto.response;
 import io.github.wavesync.dto.common.*;
-import java.util.List;
 import lombok.*;
 
 
-
+@Builder
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class ResonatorDetailResponseDto {
 
     private Long userResonatorId;
@@ -19,9 +19,7 @@ public class ResonatorDetailResponseDto {
 
     private Integer resonanceChainLevel;
 
-    private List<ResonanceNodeDto> nodes;
-
-    private WeaponDto weapon;
+    private WeaponDetailDto weapon;
 
     private ResonatorStatDto stat;
 }
