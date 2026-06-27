@@ -20,9 +20,7 @@ public class ResonatorSettingResponseDto {
 
 
     public static ResonatorSettingResponseDto from(List<ResonanceNodeSettingDto> nodes, WeaponSettingDto weapon) {
-        return ResonatorSettingResponseDto.builder()
-                .nodes(nodes)
-                .weapon(weapon)
-                .build();
+
+        return new ResonatorSettingResponseDto(nodes, weapon);
     }
 }

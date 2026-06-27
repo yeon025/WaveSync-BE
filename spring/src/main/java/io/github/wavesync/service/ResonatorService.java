@@ -120,7 +120,16 @@ public class ResonatorService {
     @Transactional(readOnly = true)
     public List<ResonatorSummaryResponseDto> getResonatorSummary() {
 
-        return resonatorMasterRepository.findResonatorSummary();
+        return resonatorMasterRepository.findResonatorSummary()
+                .stream()
+                .map(row -> new ResonatorSummaryResponseDto(
+                        row[0] == null ? null : ((Number) row[0]).longValue(),
+                        (String) row[1],
+                        ((Number) row[2]).intValue(),
+                        ((Number) row[3]).intValue(),
+                        (String) row[4]
+                ))
+                .toList();
     }
 
 
@@ -132,26 +141,11 @@ public class ResonatorService {
         UserResonator userResonator = userResonatorRepository.findDetailById(userResonatorId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
 
-        // id로 userResonanceNode 조회
-        List<ResonanceNodeUpdateDto> nodes = userResonanceNodeRepository
-                .findAllByUserResonatorId(userResonatorId)
-                .stream()
-                .map(ResonanceNodeUpdateDto::from)
-                .toList();
-
         // dto 생성
         WeaponDetailDto weapon = WeaponDetailDto.from(userResonator);
         ResonatorStatDto stat = ResonatorStatDto.from(userResonator.getFinalStat());
 
-        return ResonatorDetailResponseDto.builder()
-                .userResonatorId(userResonator.getId())
-                .resonatorName(userResonator.getResonatorMaster().getName())
-                .element(userResonator.getResonatorMaster().getElement().getCode())
-                .standingImageUrl(userResonator.getResonatorMaster().getStandingImage())
-                .resonanceChainLevel(userResonator.getResonanceChainLevel())
-                .weapon(weapon)
-                .stat(stat)
-                .build();
+        return ResonatorDetailResponseDto.from(userResonator, weapon, stat);
     }
 
 

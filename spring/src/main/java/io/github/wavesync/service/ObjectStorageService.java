@@ -8,11 +8,12 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.UUID;
+
+
 
 @Slf4j
 @Service

@@ -1,5 +1,4 @@
 package io.github.wavesync.exception;
-import io.github.wavesync.dto.response.ApiResponseDto;
 import io.github.wavesync.dto.response.ErrorResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;

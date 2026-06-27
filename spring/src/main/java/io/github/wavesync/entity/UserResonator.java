@@ -1,6 +1,5 @@
 package io.github.wavesync.entity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
 import java.util.List;
 

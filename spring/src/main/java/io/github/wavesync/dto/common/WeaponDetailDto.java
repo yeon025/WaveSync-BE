@@ -23,12 +23,12 @@ public class WeaponDetailDto {
     public static WeaponDetailDto from(UserResonator userResonator) {
         WeaponMaster weapon = userResonator.getWeaponMaster();
 
-        return WeaponDetailDto.builder()
-                .name(weapon.getName())
-                .attackValue(weapon.getAttackValue())
-                .main(new StatDto(weapon.getMainType(), weapon.getMainValue()))
-                .refineLevel(userResonator.getRefineLevel())
-                .imageUrl(weapon.getImage())
-                .build();
+        return new WeaponDetailDto(
+                weapon.getName(),
+                weapon.getAttackValue(),
+                new StatDto(weapon.getMainType(), weapon.getMainValue()),
+                userResonator.getRefineLevel(),
+                weapon.getImage()
+        );
     }
 }

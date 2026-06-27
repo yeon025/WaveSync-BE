@@ -1,5 +1,6 @@
 package io.github.wavesync.dto.response;
 import io.github.wavesync.dto.common.*;
+import io.github.wavesync.entity.UserResonator;
 import lombok.*;
 
 
@@ -22,4 +23,18 @@ public class ResonatorDetailResponseDto {
     private WeaponDetailDto weapon;
 
     private ResonatorStatDto stat;
+
+
+    public static ResonatorDetailResponseDto from(UserResonator userResonator, WeaponDetailDto weapon, ResonatorStatDto stat) {
+
+        return new ResonatorDetailResponseDto(
+                userResonator.getId(),
+                userResonator.getResonatorMaster().getName(),
+                userResonator.getResonatorMaster().getElement().getCode(),
+                userResonator.getResonatorMaster().getStandingImage(),
+                userResonator.getResonanceChainLevel(),
+                weapon,
+                stat
+        );
+    }
 }

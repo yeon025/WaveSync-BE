@@ -1,12 +1,10 @@
 package io.github.wavesync.dto.common;
-
 import io.github.wavesync.entity.UserResonator;
 import io.github.wavesync.entity.WeaponMaster;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 
 
@@ -35,15 +33,15 @@ public class WeaponSettingDto {
     public static WeaponSettingDto from(UserResonator userResonator) {
         WeaponMaster weaponMaster = userResonator.getWeaponMaster();
 
-        return WeaponSettingDto.builder()
-                .refineLevel(userResonator.getRefineLevel())
-                .refineType(weaponMaster.getRefineType().getCode())
-                .refine1Value(weaponMaster.getRefine1Value())
-                .refine2Value(weaponMaster.getRefine2Value())
-                .refine3Value(weaponMaster.getRefine3Value())
-                .refine4Value(weaponMaster.getRefine4Value())
-                .refine5Value(weaponMaster.getRefine5Value())
-                .imageUrl(weaponMaster.getImage())
-                .build();
+        return new WeaponSettingDto(
+                userResonator.getRefineLevel(),
+                weaponMaster.getRefineType().getCode(),
+                weaponMaster.getRefine1Value(),
+                weaponMaster.getRefine2Value(),
+                weaponMaster.getRefine3Value(),
+                weaponMaster.getRefine4Value(),
+                weaponMaster.getRefine5Value(),
+                weaponMaster.getImage()
+        );
     }
 }

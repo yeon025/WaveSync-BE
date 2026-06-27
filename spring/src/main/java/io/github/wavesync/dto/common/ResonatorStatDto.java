@@ -1,6 +1,5 @@
 package io.github.wavesync.dto.common;
 import java.math.BigDecimal;
-
 import io.github.wavesync.entity.FinalStat;
 import lombok.*;
 
@@ -47,24 +46,25 @@ public class ResonatorStatDto {
 
 
     public static ResonatorStatDto from(FinalStat finalStat) {
-        return ResonatorStatDto.builder()
-                .hp(finalStat.getHp())
-                .attack(finalStat.getAttack())
-                .defense(finalStat.getDefense())
-                .energyRegen(finalStat.getEnergyRegen())
-                .criticalRate(finalStat.getCriticalRate())
-                .criticalDamage(finalStat.getCriticalDamage())
-                .resonanceSkillDamageBonus(finalStat.getResonanceSkillDamageBonus())
-                .basicAttackDamageBonus(finalStat.getBasicAttackDamageBonus())
-                .heavyAttackDamageBonus(finalStat.getHeavyAttackDamageBonus())
-                .resonanceLiberationDamageBonus(finalStat.getResonanceLiberationDamageBonus())
-                .glacioDamageBonus(finalStat.getGlacioDamageBonus())
-                .fusionDamageBonus(finalStat.getFusionDamageBonus())
-                .conductoDamageBonus(finalStat.getConductoDamageBonus())
-                .aeroDamageBonus(finalStat.getAeroDamageBonus())
-                .spectraDamageBonus(finalStat.getSpectraDamageBonus())
-                .havocDamageBonus(finalStat.getHavocDamageBonus())
-                .healingBonus(finalStat.getHealingBonus())
-                .build();
+
+        return new ResonatorStatDto(
+                finalStat.getHp(),
+                finalStat.getAttack(),
+                finalStat.getDefense(),
+                finalStat.getEnergyRegen(),
+                finalStat.getCriticalRate(),
+                finalStat.getCriticalDamage(),
+                finalStat.getResonanceSkillDamageBonus(),
+                finalStat.getBasicAttackDamageBonus(),
+                finalStat.getHeavyAttackDamageBonus(),
+                finalStat.getResonanceLiberationDamageBonus(),
+                finalStat.getGlacioDamageBonus(),
+                finalStat.getFusionDamageBonus(),
+                finalStat.getConductoDamageBonus(),
+                finalStat.getAeroDamageBonus(),
+                finalStat.getSpectraDamageBonus(),
+                finalStat.getHavocDamageBonus(),
+                finalStat.getHealingBonus()
+        );
     }
 }
