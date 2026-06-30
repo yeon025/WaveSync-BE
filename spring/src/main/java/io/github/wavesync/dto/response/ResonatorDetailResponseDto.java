@@ -4,7 +4,7 @@ import io.github.wavesync.entity.UserResonator;
 import lombok.*;
 
 
-@Builder
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

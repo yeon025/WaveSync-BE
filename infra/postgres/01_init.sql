@@ -92,6 +92,47 @@ CREATE TABLE IF NOT EXISTS user_resonators (
 
 
 -- =========================
+-- user_echoes
+-- =========================
+CREATE TABLE IF NOT EXISTS user_echoes (
+    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+
+    main_type VARCHAR(50) NOT NULL,
+    main_value NUMERIC(5,1) NOT NULL,
+
+    secondary_type VARCHAR(50) NOT NULL,
+    secondary_value INT NOT NULL,
+
+    user_resonator_id INT NOT NULL,
+
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_user_echo_resonator
+        FOREIGN KEY (user_resonator_id)
+        REFERENCES user_resonators(id)
+);
+
+
+-- =========================
+-- user_echo_sub
+-- =========================
+CREATE TABLE IF NOT EXISTS user_echo_sub (
+    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+
+    type VARCHAR(50) NOT NULL,
+    value NUMERIC(7,1) NOT NULL,
+
+    user_echo_id INT NOT NULL,
+
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_echo_sub
+        FOREIGN KEY (user_echo_id)
+        REFERENCES user_echoes(id)
+);
+
+
+-- =========================
 -- user_resonance_nodes
 -- =========================
 CREATE TABLE IF NOT EXISTS user_resonance_nodes (

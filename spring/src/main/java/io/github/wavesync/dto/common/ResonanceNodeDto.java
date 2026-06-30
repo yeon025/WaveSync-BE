@@ -3,30 +3,33 @@ import io.github.wavesync.entity.BranchPosition;
 import io.github.wavesync.entity.NodePosition;
 import io.github.wavesync.entity.ResonanceNodeMaster;
 import io.github.wavesync.entity.UserResonanceNode;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 
-@Builder
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResonanceNodeSettingDto {
+public class ResonanceNodeDto {
 
+    @NotNull
     private BranchPosition branchPosition;
 
+    @NotNull
     private NodePosition nodePosition;
 
+    @NotNull
     private Boolean active;
 
     private StatDto stat;
 
 
-    public static ResonanceNodeSettingDto from(UserResonanceNode node, ResonanceNodeMaster nodeMaster) {
+    public static ResonanceNodeDto from(UserResonanceNode node, ResonanceNodeMaster nodeMaster) {
 
-        return new ResonanceNodeSettingDto(
+        return new ResonanceNodeDto(
                 node.getBranchPosition(),
                 node.getNodePosition(),
                 node.getIsActive(),

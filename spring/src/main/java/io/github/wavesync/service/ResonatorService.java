@@ -6,8 +6,7 @@ import io.github.wavesync.dto.common.*;
 import io.github.wavesync.dto.request.*;
 import io.github.wavesync.dto.response.*;
 import io.github.wavesync.entity.*;
-import io.github.wavesync.exception.CustomException;
-import io.github.wavesync.exception.ErrorCode;
+import io.github.wavesync.exception.*;
 import io.github.wavesync.repository.*;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +16,10 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -34,6 +37,8 @@ public class ResonatorService {
     private final FinalStatRepository finalStatRepository;
     private final UserResonatorRepository userResonatorRepository;
     private final UserResonanceNodeRepository userResonanceNodeRepository;
+    private final UserEchoRepository userEchoRepository;
+    private final UserEchoSubRepository userEchoSubRepository;
 
 
     @Transactional
@@ -60,9 +65,9 @@ public class ResonatorService {
         }
 
         // 이름을 기준으로 DB 조회
-        ResonatorMaster resonatorInfo = resonatorMasterRepository.findByName(extractedTexts.getResonatorName());
-        WeaponMaster weaponInfo = weaponMasterRepository.findByName(extractedTexts.getWeaponName());
-        ResonanceNodeMaster nodeInfo = resonanceNodeMasterRepository.findByResonatorMasterId(resonatorInfo.getId());
+        ResonatorMaster rm = resonatorMasterRepository.findByName(extractedTexts.getResonatorName());
+        WeaponMaster wm = weaponMasterRepository.findByName(extractedTexts.getWeaponName());
+        ResonanceNodeMaster rnm = resonanceNodeMasterRepository.findByResonatorMasterId(rm.getId());
         log.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.");
 
         // 저장 전에 동일한 공명자는 삭제
@@ -73,6 +78,8 @@ public class ResonatorService {
 
             userResonatorRepository.softDeleteByIds(targetId);
             userResonanceNodeRepository.softDeleteByUserResonatorIds(targetId);
+            userEchoRepository.softDeleteByUserResonatorIds(targetId);
+            userEchoSubRepository.softDeleteByUserResonatorIds(targetId);
             finalStatRepository.deleteByUserResonatorIds(targetId);
 
             log.debug("동일한 공명자 정보를 삭제했습니다.");
@@ -82,8 +89,8 @@ public class ResonatorService {
         UserResonator userResonator = UserResonator.builder()
                 .resonanceChainLevel(extractedTexts.getResonanceChainLevel())
                 .refineLevel(1)
-                .resonatorMaster(resonatorInfo)
-                .weaponMaster(weaponInfo)
+                .resonatorMaster(rm)
+                .weaponMaster(wm)
                 .build();
         UserResonator savedUserResonator = userResonatorRepository.save(userResonator);
 
@@ -103,8 +110,45 @@ public class ResonatorService {
         }
         userResonanceNodeRepository.saveAll(userResonanceNodes);
 
+        // Echo 객체 생성
+        List<UserEcho> userEchoes = new ArrayList<>();
+        List<UserEchoSub> userEchoSubs = new ArrayList<>();
+
+        for (EchoDto echo : extractedTexts.getEchoes()) {
+
+            UserEcho userEcho = UserEcho.builder()
+                    .mainType(echo.getMain().getType())
+                    .mainValue(echo.getMain().getValue())
+                    .secondaryType(echo.getSecondary().getType())
+                    .secondaryValue(echo.getSecondary().getValue().intValue())
+                    .userResonator(userResonator)
+                    .build();
+
+            userEchoes.add(userEcho);
+
+            for (StatDto sub : echo.getSubs()) {
+
+                UserEchoSub userEchoSub = UserEchoSub.builder()
+                        .type(sub.getType())
+                        .value(sub.getValue())
+                        .userEcho(userEcho)
+                        .build();
+
+                // 양방향 연관관계 설정
+                userEcho.getUserEchoSubs().add(userEchoSub);
+
+                userEchoSubs.add(userEchoSub);
+            }
+        }
+
+        // UserEcho 5개 저장
+        List<UserEcho> savedUserEchoes = userEchoRepository.saveAll(userEchoes);
+
+        // UserEchoSub 25개 저장
+        List<UserEchoSub> savedUserEchoSubs = userEchoSubRepository.saveAll(userEchoSubs);
+
         // 최종 스펙 계산
-        FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, extractedTexts.getEchoes(), resonatorInfo, weaponInfo, nodeInfo);
+        FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, savedUserEchoes, savedUserEchoSubs, rm, wm, rnm);
         log.debug("HP: {}, 공격력: {}, 방어력: {}, 공명 효율: {}, 크리티컬: {}, 크리티컬 피해: {}",
                 finalStat.getHp(), finalStat.getAttack(), finalStat.getDefense(), finalStat.getEnergyRegen(), finalStat.getCriticalRate(), finalStat.getCriticalDamage());
 
@@ -112,7 +156,7 @@ public class ResonatorService {
         finalStatRepository.save(finalStat);
         log.debug("최종 스펙을 데이터베이스에 저장했습니다.");
 
-        return CreateResonatorResponseDto.from(resonatorInfo);
+        return CreateResonatorResponseDto.from(rm);
     }
 
 
@@ -153,15 +197,19 @@ public class ResonatorService {
     @Transactional(readOnly = true)
     public ResonatorSettingResponseDto getResonatorSetting(Long userResonatorId) {
 
+        // 공명자 조회
         UserResonator userResonator = userResonatorRepository.findById(userResonatorId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
 
+        // 공명자 아이디로 노드 조회
         ResonanceNodeMaster nodeMaster = resonanceNodeMasterRepository.findByResonatorMasterId(userResonator.getResonatorMaster().getId());
 
-        List<ResonanceNodeSettingDto> nodes = userResonator.getUserResonanceNode().stream()
-                .map(node -> ResonanceNodeSettingDto.from(node, nodeMaster))
+        // 조회한 노드를 dto로 변환
+        List<ResonanceNodeDto> nodes = userResonator.getUserResonanceNode().stream()
+                .map(node -> ResonanceNodeDto.from(node, nodeMaster))
                 .toList();
 
+        // 공명자 아이디로 무기 조회 후 dto로 변환
         WeaponSettingDto weapon = WeaponSettingDto.from(userResonator);
 
         return ResonatorSettingResponseDto.from(nodes, weapon);
@@ -185,6 +233,12 @@ public class ResonatorService {
 
         // user_resonance_nodes (soft delete)
         userResonanceNodeRepository.softDeleteByUserResonatorIds(ids);
+
+        // user_echo (soft delete)
+        userEchoRepository.softDeleteByUserResonatorIds(ids);
+
+        // user_echo_sub (soft delete)
+        userEchoSubRepository.softDeleteByUserResonatorIds(ids);
 
         // final_stat (hard delete)
         finalStatRepository.deleteByUserResonatorIds(ids);

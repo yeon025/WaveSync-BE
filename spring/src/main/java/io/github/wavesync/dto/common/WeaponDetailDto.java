@@ -4,7 +4,7 @@ import io.github.wavesync.entity.WeaponMaster;
 import lombok.*;
 
 
-@Builder
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

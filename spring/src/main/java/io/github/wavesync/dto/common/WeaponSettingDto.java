@@ -2,13 +2,12 @@ package io.github.wavesync.dto.common;
 import io.github.wavesync.entity.UserResonator;
 import io.github.wavesync.entity.WeaponMaster;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 
-@Builder
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

@@ -1,25 +1,22 @@
 package io.github.wavesync.dto.response;
-import io.github.wavesync.dto.common.ResonanceNodeSettingDto;
+import io.github.wavesync.dto.common.ResonanceNodeDto;
 import io.github.wavesync.dto.common.WeaponSettingDto;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import java.util.List;
 
 
-@Builder
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResonatorSettingResponseDto {
 
-    private List<ResonanceNodeSettingDto> nodes;
+    private List<ResonanceNodeDto> nodes;
 
     private WeaponSettingDto weapon;
 
 
-    public static ResonatorSettingResponseDto from(List<ResonanceNodeSettingDto> nodes, WeaponSettingDto weapon) {
+    public static ResonatorSettingResponseDto from(List<ResonanceNodeDto> nodes, WeaponSettingDto weapon) {
 
         return new ResonatorSettingResponseDto(nodes, weapon);
     }
