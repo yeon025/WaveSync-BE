@@ -33,7 +33,7 @@ public class SpecCalculationService {
     }
 
     // 에코에서 획득한 백분율 스탯과 고정 스탯을 합산
-    private EchoStat getEchoStat(List<UserEcho> echoes, List<UserEchoSub> echoSubs, StatType percentType, StatType flatType) {
+    private EchoStat getEchoStat(List<UserEcho> echoes, StatType percentType, StatType flatType) {
         BigDecimal percent = BigDecimal.ZERO;
         BigDecimal flat = BigDecimal.ZERO;
 
@@ -48,63 +48,79 @@ public class SpecCalculationService {
             if (echo.getSecondaryType() == flatType) {
                 flat = flat.add(BigDecimal.valueOf(echo.getSecondaryValue()));
             }
-        }
 
-        // 서브 옵션의 백분율 스탯 및 고정 스탯 합산
-        for (UserEchoSub sub : echoSubs) {
+            // 서브 옵션의 백분율 스탯 및 고정 스탯 합산
+            for (UserEchoSub sub : echo.getUserEchoSubs()) {
+                if (sub.getType() == percentType) { percent = percent.add(sub.getValue()); }
 
-            if (sub.getType() == percentType) {
-                percent = percent.add(sub.getValue());
-            }
-
-            if (sub.getType() == flatType) {
-                flat = flat.add(sub.getValue());
+                if (sub.getType() == flatType) { flat = flat.add(sub.getValue()); }
             }
         }
 
         return new EchoStat(percent, flat);
     }
 
-    // 무기 및 공명 노드에서 획득한 백분율 스탯 합산
-    private BigDecimal getStatPercent(
-            WeaponMaster weaponInfo, ResonanceNodeMaster nodeInfo, StatType statType
+
+
+    // 무기에서 획득한 백분율 스탯 합산
+    private BigDecimal getWeaponStatPercent(
+            WeaponMaster weaponMaster, StatType statType, Integer weaponRefineLevel
     ) {
         BigDecimal percent = BigDecimal.ZERO;
 
+        BigDecimal refineValue = switch (weaponRefineLevel) {
+            case 1 -> weaponMaster.getRefine1Value();
+            case 2 -> weaponMaster.getRefine2Value();
+            case 3 -> weaponMaster.getRefine3Value();
+            case 4 -> weaponMaster.getRefine4Value();
+            case 5 -> weaponMaster.getRefine5Value();
+            default -> throw new IllegalArgumentException("잘못된 무기 레벨입니다.");
+        };
+
         // 무기 주 옵션
-        if (weaponInfo.getMainType() == statType) {
-            percent = percent.add(weaponInfo.getMainValue());
+        if (weaponMaster.getMainType() == statType) {
+            percent = percent.add(weaponMaster.getMainValue());
         }
 
         // 무기 재련 옵션
-        if (weaponInfo.getRefineType() == statType) {
-            percent = percent.add(weaponInfo.getRefine1Value());
+        if (weaponMaster.getRefineType() == statType) {
+            percent = percent.add(refineValue);
         }
 
         // 전체 속성 피해 보너스
         if (isElementDamageType(statType)
-                && weaponInfo.getRefineType() == StatType.ALL_ATTRIBUTE_DAMAGE_BONUS) {
+                && weaponMaster.getRefineType() == StatType.ALL_ATTRIBUTE_DAMAGE_BONUS) {
 
-            percent = percent.add(weaponInfo.getRefine1Value());
+            percent = percent.add(refineValue);
         }
 
         // 일반 공격 + 강공격 피해 보너스
         if (isBasicOrHeavyDamageType(statType)
-                && weaponInfo.getRefineType() == StatType.BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS) {
+                && weaponMaster.getRefineType() == StatType.BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS) {
 
-            percent = percent.add(weaponInfo.getRefine1Value());
+            percent = percent.add(refineValue);
         }
 
+        return percent;
+    }
+
+
+    // 공명 노드에서 획득한 백분율 스탯 합산
+    private BigDecimal getNodeStatPercent(
+            ResonanceNodeMaster nodeMaster, StatType statType
+    ) {
+        BigDecimal percent = BigDecimal.ZERO;
+
         // 외부 노드 (상단 2개, 중단 2개)
-        if (nodeInfo.getOuterNodeType() == statType) {
-            percent = percent.add(nodeInfo.getOuterTopNodeValue().multiply(BigDecimal.valueOf(2)));
-            percent = percent.add(nodeInfo.getOuterMiddleNodeValue().multiply(BigDecimal.valueOf(2)));
+        if (nodeMaster.getOuterNodeType() == statType) {
+            percent = percent.add(nodeMaster.getOuterTopNodeValue().multiply(BigDecimal.valueOf(2)));
+            percent = percent.add(nodeMaster.getOuterMiddleNodeValue().multiply(BigDecimal.valueOf(2)));
         }
 
         // 내부 노드 (상단 2개, 중단 2개)
-        if (nodeInfo.getInnerNodeType() == statType) {
-            percent = percent.add(nodeInfo.getInnerTopNodeValue().multiply(BigDecimal.valueOf(2)));
-            percent = percent.add(nodeInfo.getInnerMiddleNodeValue().multiply(BigDecimal.valueOf(2)));
+        if (nodeMaster.getInnerNodeType() == statType) {
+            percent = percent.add(nodeMaster.getInnerTopNodeValue().multiply(BigDecimal.valueOf(2)));
+            percent = percent.add(nodeMaster.getInnerMiddleNodeValue().multiply(BigDecimal.valueOf(2)));
         }
 
         return percent;
@@ -112,19 +128,24 @@ public class SpecCalculationService {
 
 
     private Integer calculateStat(
-            Integer baseStat, List<UserEcho> echoes, List<UserEchoSub> echoSubs, WeaponMaster weaponInfo, ResonanceNodeMaster nodeInfo,
-            StatType percentStatType, StatType echoPercentType, StatType echoFlatType
+            Integer baseStat, List<UserEcho> echoes, WeaponMaster weaponMaster, ResonanceNodeMaster nodeMaster,
+            StatType percentStatType, StatType echoFlatType, Integer weaponRefineLevel
     ) {
         final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
         log.debug("baseStat: {}", baseStat);
 
-        // 무기 + 공명 노드에서 획득한 백분율 스탯
-        BigDecimal statPercent = getStatPercent(weaponInfo, nodeInfo, percentStatType);
-        log.debug("statPercent: {}%", statPercent);
+        // 무기에서 획득한 백분율 스탯
+        BigDecimal weaponStatPercent = getWeaponStatPercent(weaponMaster, percentStatType, weaponRefineLevel);
+
+        // 공명 노드에서 획득한 백분율 스탯
+        BigDecimal nodeStatPercent = getNodeStatPercent(nodeMaster, percentStatType);
+
+        // 무기와 공명 노드의 백분율 스탯 합산
+        BigDecimal statPercent = weaponStatPercent.add(nodeStatPercent);
 
         // 에코에서 획득한 백분율 스탯과 고정 스탯
-        EchoStat echoStat = getEchoStat(echoes, echoSubs, echoPercentType, echoFlatType);
+        EchoStat echoStat = getEchoStat(echoes, percentStatType, echoFlatType);
 
         // 에코 백분율을 소수로 변환 (22 -> 0.22)
         BigDecimal echoPercentRate = echoStat.percent().divide(HUNDRED);
@@ -136,7 +157,7 @@ public class SpecCalculationService {
                                 .add(echoStat.flat())
                                 .intValue();
         log.debug("echoFlat: {}", echoStat.flat());
-        log.debug("echoPercentRate: {}", echoPercentRate);
+        log.debug("echoPercentRate: {}%", echoStat.percent());
         log.debug("totalEchoStat: {}", totalEchoStat);
 
         // 백분율 스탯을 소수로 변환 (30 -> 0.30)
@@ -152,51 +173,58 @@ public class SpecCalculationService {
 
 
     public Integer calculateHp(
-            List<UserEcho> echoes, List<UserEchoSub> echoSubs, ResonatorMaster resonatorInfo, WeaponMaster weaponInfo, ResonanceNodeMaster nodeInfo
+            List<UserEcho> echoes, ResonatorMaster resonatorMaster,
+            WeaponMaster weaponMaster, ResonanceNodeMaster nodeMaster, Integer weaponRefineLevel
     ) {
         log.debug("HP 계산을 시작합니다.");
 
         return calculateStat(
-                resonatorInfo.getHp(), echoes, echoSubs, weaponInfo, nodeInfo,
-                StatType.HP_PERCENT, StatType.HP_PERCENT, StatType.HP
+                resonatorMaster.getHp(), echoes, weaponMaster, nodeMaster,
+                StatType.HP_PERCENT, StatType.HP, weaponRefineLevel
         );
     }
 
 
     public Integer calculateAttack(
-            List<UserEcho> echoes, List<UserEchoSub> echoSubs, ResonatorMaster resonatorInfo, WeaponMaster weaponInfo, ResonanceNodeMaster nodeInfo
+            List<UserEcho> echoes, ResonatorMaster resonatorMaster,
+            WeaponMaster weaponMaster, ResonanceNodeMaster nodeMaster, Integer weaponRefineLevel
     ) {
         log.debug("공격력 계산을 시작합니다.");
 
         return calculateStat(
-                resonatorInfo.getAttack() + weaponInfo.getAttackValue(),
-                echoes, echoSubs, weaponInfo, nodeInfo,
-                StatType.ATTACK_PERCENT, StatType.ATTACK_PERCENT, StatType.ATTACK
+                resonatorMaster.getAttack() + weaponMaster.getAttackValue(),
+                echoes, weaponMaster, nodeMaster, StatType.ATTACK_PERCENT, StatType.ATTACK, weaponRefineLevel
         );
     }
 
 
     public Integer calculateDefense(
-            List<UserEcho> echoes, List<UserEchoSub> echoSubs, ResonatorMaster resonatorInfo, WeaponMaster weaponInfo, ResonanceNodeMaster nodeInfo
+            List<UserEcho> echoes, ResonatorMaster resonatorMaster,
+            WeaponMaster weaponMaster, ResonanceNodeMaster nodeMaster, Integer weaponRefineLevel
     ) {
         log.debug("방어력 계산을 시작합니다.");
 
         return calculateStat(
-                resonatorInfo.getDefense(), echoes, echoSubs, weaponInfo, nodeInfo,
-                StatType.DEFENSE_PERCENT, StatType.DEFENSE_PERCENT, StatType.DEFENSE
+                resonatorMaster.getDefense(), echoes, weaponMaster, nodeMaster,
+                StatType.DEFENSE_PERCENT, StatType.DEFENSE, weaponRefineLevel
         );
     }
 
 
     public BigDecimal calculatePercentStat(
-            BigDecimal baseValue, List<UserEcho> echoes, WeaponMaster weaponInfo, ResonanceNodeMaster nodeInfo, StatType statType
+            BigDecimal baseValue, List<UserEcho> echoes, WeaponMaster weaponMaster, ResonanceNodeMaster nodeMaster, StatType statType, Integer refineLevel
     ) {
         // 기본 수치(예: 치명타 확률 5%, 치명타 피해 150%)
         BigDecimal result = baseValue;
 
-        // 무기 및 공명 노드에서 획득한 스탯 합산
-        result = result.add(getStatPercent(weaponInfo, nodeInfo, statType));
-        log.debug("{} 무기 및 공명 노드에서 획득한 스탯 합산 : {}%", statType, result);
+        // 무기에서 획득한 백분율 스탯
+        BigDecimal weaponStatPercent = getWeaponStatPercent(weaponMaster, statType, refineLevel);
+
+        // 공명 노드에서 획득한 백분율 스탯
+        BigDecimal nodeStatPercent = getNodeStatPercent(nodeMaster, statType);
+
+        // 무기와 공명 노드의 백분율 스탯 합산
+        BigDecimal statPercent = weaponStatPercent.add(nodeStatPercent);
 
         // 에코 메인 옵션, 서브 옵션에서 획득한 스탯 합산
         for (UserEcho echo : echoes) {
@@ -218,145 +246,56 @@ public class SpecCalculationService {
 
 
     public FinalStat calculateFinalStat(
-            UserResonator savedUserResonator, List<UserEcho> savedUserEchoes, List<UserEchoSub> savedUserEchoSubs,
-            ResonatorMaster resonatorInfo, WeaponMaster weaponInfo, ResonanceNodeMaster nodeInfo
+            UserResonator userResonator, List<UserEcho> userEchoes,
+            ResonatorMaster resonatorMaster, WeaponMaster weaponMaster, ResonanceNodeMaster nodeMaster
     ) {
         return FinalStat.builder()
-                .hp(calculateHp(savedUserEchoes, savedUserEchoSubs, resonatorInfo, weaponInfo, nodeInfo))
-                .attack(calculateAttack(savedUserEchoes, savedUserEchoSubs, resonatorInfo, weaponInfo, nodeInfo))
-                .defense(calculateDefense(savedUserEchoes, savedUserEchoSubs, resonatorInfo, weaponInfo, nodeInfo))
+                .hp(calculateHp(userEchoes, resonatorMaster, weaponMaster, nodeMaster, 1))
+                .attack(calculateAttack(userEchoes, resonatorMaster, weaponMaster, nodeMaster, 1))
+                .defense(calculateDefense(userEchoes, resonatorMaster, weaponMaster, nodeMaster, 1))
                 .energyRegen(calculatePercentStat(
-                        BigDecimal.valueOf(100), savedUserEchoes, weaponInfo, nodeInfo, StatType.ENERGY_REGEN
+                        BigDecimal.valueOf(100), userEchoes, weaponMaster, nodeMaster, StatType.ENERGY_REGEN, 1
                 ))
                 .criticalRate(calculatePercentStat(
-                        BigDecimal.valueOf(5), savedUserEchoes, weaponInfo, nodeInfo, StatType.CRITICAL_RATE
+                        BigDecimal.valueOf(5), userEchoes, weaponMaster, nodeMaster, StatType.CRITICAL_RATE, 1
                 ))
                 .criticalDamage(calculatePercentStat(
-                        BigDecimal.valueOf(150), savedUserEchoes, weaponInfo, nodeInfo, StatType.CRITICAL_DAMAGE
+                        BigDecimal.valueOf(150), userEchoes, weaponMaster, nodeMaster, StatType.CRITICAL_DAMAGE, 1
                 ))
                 .resonanceSkillDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.RESONANCE_SKILL_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.RESONANCE_SKILL_DAMAGE_BONUS, 1
                 ))
                 .basicAttackDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.BASIC_ATTACK_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.BASIC_ATTACK_DAMAGE_BONUS, 1
                 ))
                 .heavyAttackDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.HEAVY_ATTACK_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.HEAVY_ATTACK_DAMAGE_BONUS, 1
                 ))
                 .resonanceLiberationDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.RESONANCE_LIBERATION_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.RESONANCE_LIBERATION_DAMAGE_BONUS, 1
                 ))
                 .glacioDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.GLACIO_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.GLACIO_DAMAGE_BONUS, 1
                 ))
                 .fusionDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.FUSION_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.FUSION_DAMAGE_BONUS, 1
                 ))
                 .conductoDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.CONDUCTO_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.CONDUCTO_DAMAGE_BONUS, 1
                 ))
                 .aeroDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.AERO_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.AERO_DAMAGE_BONUS, 1
                 ))
                 .spectraDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.SPECTRA_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.SPECTRA_DAMAGE_BONUS, 1
                 ))
                 .havocDamageBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.HAVOC_DAMAGE_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.HAVOC_DAMAGE_BONUS, 1
                 ))
                 .healingBonus(calculatePercentStat(
-                        BigDecimal.ZERO, savedUserEchoes, weaponInfo, nodeInfo, StatType.HEALING_BONUS
+                        BigDecimal.ZERO, userEchoes, weaponMaster, nodeMaster, StatType.HEALING_BONUS, 1
                 ))
-                .userResonator(savedUserResonator)
+                .userResonator(userResonator)
                 .build();
-    }
-
-
-    public void applyStat(UserResonator userResonator, StatType type, BigDecimal value, boolean increase) {
-
-        ResonatorMaster rm = userResonator.getResonatorMaster();
-        WeaponMaster wm = userResonator.getWeaponMaster();
-        FinalStat fs = userResonator.getFinalStat();
-
-        BigDecimal baseHp = BigDecimal.valueOf(rm.getHp());
-        BigDecimal baseAttack = BigDecimal.valueOf(rm.getAttack() + wm.getAttackValue());
-        BigDecimal baseDefense = BigDecimal.valueOf(rm.getDefense());
-
-        switch (type) {
-
-            case HP_PERCENT -> {
-                int amount = baseHp
-                        .multiply(value.movePointLeft(2))
-                        .intValue();
-
-                int result = increase ? fs.getHp() + amount : fs.getHp() - amount;
-                fs.setHp(result);
-            }
-
-            case ATTACK_PERCENT -> {
-                int amount = baseAttack
-                        .multiply(value.movePointLeft(2))
-                        .intValue();
-
-                int result = increase ? fs.getAttack() + amount : fs.getAttack() - amount;
-                fs.setAttack(result);
-            }
-
-            case DEFENSE_PERCENT -> {
-                int amount = baseDefense
-                        .multiply(value.movePointLeft(2))
-                        .intValue();
-
-                int result = increase ? fs.getDefense() + amount : fs.getDefense() - amount;
-                fs.setDefense(result);
-            }
-
-            case CRITICAL_RATE -> {
-                BigDecimal result = increase ? fs.getCriticalRate().add(value) : fs.getCriticalRate().subtract(value);
-                fs.setCriticalRate(result);
-            }
-
-            case CRITICAL_DAMAGE -> {
-                BigDecimal result = increase ? fs.getCriticalDamage().add(value) : fs.getCriticalDamage().subtract(value);
-                fs.setCriticalDamage(result);
-            }
-
-            case FUSION_DAMAGE_BONUS -> {
-                BigDecimal result = increase ? fs.getFusionDamageBonus().add(value) : fs.getFusionDamageBonus().subtract(value);
-                fs.setFusionDamageBonus(result);
-            }
-
-            case GLACIO_DAMAGE_BONUS -> {
-                BigDecimal result = increase ? fs.getGlacioDamageBonus().add(value) : fs.getGlacioDamageBonus().subtract(value);
-                fs.setGlacioDamageBonus(result);
-            }
-
-            case AERO_DAMAGE_BONUS -> {
-                BigDecimal result = increase ? fs.getAeroDamageBonus().add(value) : fs.getAeroDamageBonus().subtract(value);
-                fs.setAeroDamageBonus(result);
-            }
-
-            case CONDUCTO_DAMAGE_BONUS -> {
-                BigDecimal result = increase ? fs.getConductoDamageBonus().add(value) : fs.getConductoDamageBonus().subtract(value);
-                fs.setConductoDamageBonus(result);
-            }
-
-            case SPECTRA_DAMAGE_BONUS -> {
-                BigDecimal result = increase ? fs.getSpectraDamageBonus().add(value) : fs.getSpectraDamageBonus().subtract(value);
-                fs.setSpectraDamageBonus(result);
-            }
-
-            case HAVOC_DAMAGE_BONUS -> {
-                BigDecimal result = increase ? fs.getHavocDamageBonus().add(value) : fs.getHavocDamageBonus().subtract(value);
-                fs.setHavocDamageBonus(result);
-            }
-
-            case HEALING_BONUS -> {
-                BigDecimal result = increase ? fs.getHealingBonus().add(value) : fs.getHealingBonus().subtract(value);
-                fs.setHealingBonus(result);
-            }
-
-            default -> {}
-        }
     }
 }

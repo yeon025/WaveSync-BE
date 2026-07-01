@@ -58,11 +58,6 @@ public class ResonatorService {
 
         // Dto에서 data만 추출
         ExtractProfileResponseDto extractedTexts = response.getData();
-        try {
-            log.info(objectMapper.writeValueAsString(extractedTexts));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
 
         // 이름을 기준으로 DB 조회
         ResonatorMaster rm = resonatorMasterRepository.findByName(extractedTexts.getResonatorName());
@@ -145,12 +140,10 @@ public class ResonatorService {
         List<UserEcho> savedUserEchoes = userEchoRepository.saveAll(userEchoes);
 
         // UserEchoSub 25개 저장
-        List<UserEchoSub> savedUserEchoSubs = userEchoSubRepository.saveAll(userEchoSubs);
+        userEchoSubRepository.saveAll(userEchoSubs);
 
         // 최종 스펙 계산
-        FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, savedUserEchoes, savedUserEchoSubs, rm, wm, rnm);
-        log.debug("HP: {}, 공격력: {}, 방어력: {}, 공명 효율: {}, 크리티컬: {}, 크리티컬 피해: {}",
-                finalStat.getHp(), finalStat.getAttack(), finalStat.getDefense(), finalStat.getEnergyRegen(), finalStat.getCriticalRate(), finalStat.getCriticalDamage());
+        FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, savedUserEchoes, rm, wm, rnm);
 
         // 최종 스펙을 DB에 저장
         finalStatRepository.save(finalStat);
