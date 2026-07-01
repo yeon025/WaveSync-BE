@@ -214,17 +214,16 @@ public class SpecCalculationService {
     public BigDecimal calculatePercentStat(
             BigDecimal baseValue, List<UserEcho> echoes, WeaponMaster weaponMaster, ResonanceNodeMaster nodeMaster, StatType statType, Integer refineLevel
     ) {
-        // 기본 수치(예: 치명타 확률 5%, 치명타 피해 150%)
-        BigDecimal result = baseValue;
-
         // 무기에서 획득한 백분율 스탯
         BigDecimal weaponStatPercent = getWeaponStatPercent(weaponMaster, statType, refineLevel);
 
         // 공명 노드에서 획득한 백분율 스탯
         BigDecimal nodeStatPercent = getNodeStatPercent(nodeMaster, statType);
 
-        // 무기와 공명 노드의 백분율 스탯 합산
-        BigDecimal statPercent = weaponStatPercent.add(nodeStatPercent);
+        // 기본 수치 + 무기 + 공명 노드
+        BigDecimal result = baseValue
+                .add(weaponStatPercent)
+                .add(nodeStatPercent);
 
         // 에코 메인 옵션, 서브 옵션에서 획득한 스탯 합산
         for (UserEcho echo : echoes) {
