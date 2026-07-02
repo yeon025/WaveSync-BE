@@ -1,6 +1,4 @@
 package io.github.wavesync.service;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wavesync.client.FastApiClient;
 import io.github.wavesync.dto.common.*;
 import io.github.wavesync.dto.request.*;
@@ -14,10 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,7 +25,6 @@ public class ResonatorService {
 
     private final ObjectStorageService objectStorageService;
     private final FastApiClient fastApiClient;
-    private final ObjectMapper objectMapper;
     private final SpecCalculationService specCalculationService;
     private final ResonatorMasterRepository resonatorMasterRepository;
     private final WeaponMasterRepository weaponMasterRepository;
@@ -105,6 +100,11 @@ public class ResonatorService {
         }
         userResonanceNodeRepository.saveAll(userResonanceNodes);
 
+        // 노드를 dto로 변환
+        List<ResonanceNodeDto> nodes = userResonanceNodes.stream()
+                .map(node -> ResonanceNodeDto.from(node, rnm))
+                .toList();
+
         // Echo 객체 생성
         List<UserEcho> userEchoes = new ArrayList<>();
         List<UserEchoSub> userEchoSubs = new ArrayList<>();
@@ -136,14 +136,12 @@ public class ResonatorService {
             }
         }
 
-        // UserEcho 5개 저장
-        List<UserEcho> savedUserEchoes = userEchoRepository.saveAll(userEchoes);
-
-        // UserEchoSub 25개 저장
+        // UserEcho, UserEchoSub 저장
+        userEchoRepository.saveAll(userEchoes);
         userEchoSubRepository.saveAll(userEchoSubs);
 
         // 최종 스펙 계산
-        FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, savedUserEchoes, rm, wm, rnm);
+        FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, nodes);
 
         // 최종 스펙을 DB에 저장
         finalStatRepository.save(finalStat);
@@ -175,7 +173,7 @@ public class ResonatorService {
     public ResonatorDetailResponseDto getResonatorDetail(Long userResonatorId) {
 
         // id로 userResonator 조회
-        UserResonator userResonator = userResonatorRepository.findDetailById(userResonatorId)
+        UserResonator userResonator = userResonatorRepository.findById(userResonatorId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
 
         // dto 생성
@@ -198,7 +196,7 @@ public class ResonatorService {
         ResonanceNodeMaster nodeMaster = resonanceNodeMasterRepository.findByResonatorMasterId(userResonator.getResonatorMaster().getId());
 
         // 조회한 노드를 dto로 변환
-        List<ResonanceNodeDto> nodes = userResonator.getUserResonanceNode().stream()
+        List<ResonanceNodeDto> nodes = userResonator.getUserResonanceNodes().stream()
                 .map(node -> ResonanceNodeDto.from(node, nodeMaster))
                 .toList();
 
@@ -213,6 +211,45 @@ public class ResonatorService {
     @Transactional
     public void updateResonator(Long userResonatorId, UpdateResonatorRequestDto data) {
 
+        // id로 userResonator 조회
+        UserResonator userResonator = userResonatorRepository.findById(userResonatorId)
+                .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
+
+        Set<StatType> requiredType = new HashSet<>();
+
+        // 10개의 공명 노드에서 활성화된 노드만 StatType 수집
+        data.getNodes().stream()
+                .filter(node -> Boolean.TRUE.equals(node.getActive()))
+                .map(ResonanceNodeDto::getStat)
+                .filter(Objects::nonNull)
+                .map(StatDto::getType)
+                .filter(Objects::nonNull)
+                .forEach(requiredType::add);
+
+        // 무기의 재련 옵션 추가
+        StatType refineType = userResonator.getWeaponMaster().getRefineType();
+        if (refineType != null) { requiredType.add(refineType); }
+
+        // 스펙 재계산
+        specCalculationService.reCalculateFinalStat(requiredType, userResonator, data.getNodes(), data.getWeaponRefineLevel());
+
+        // 무기 재련 레벨 변경
+        userResonator.setRefineLevel(data.getWeaponRefineLevel());
+
+        // 요청으로 들어온 공명 노드를 위치 기준으로 Map 생성
+        Map<String, ResonanceNodeDto> nodeMap = data.getNodes().stream()
+                .collect(Collectors.toMap(
+                        node -> node.getBranchPosition() + "_" + node.getNodePosition(),
+                        Function.identity()
+                ));
+
+        // 공명 노드 활성화 상태 변경
+        for (UserResonanceNode node : userResonator.getUserResonanceNodes()) {
+            String key = node.getBranchPosition() + "_" + node.getNodePosition();
+
+            ResonanceNodeDto dto = nodeMap.get(key);
+            node.setIsActive(dto.getActive());
+        }
     }
 
 

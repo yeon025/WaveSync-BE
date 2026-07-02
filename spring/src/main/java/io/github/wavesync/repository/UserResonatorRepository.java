@@ -42,5 +42,5 @@ public interface UserResonatorRepository extends JpaRepository<UserResonator, Lo
         where ur.id = :userResonatorId
           and ur.isDeleted = false
     """)
-    Optional<UserResonator> findDetailById(Long userResonatorId);
+    Optional<UserResonator> findById(Long userResonatorId);
 }

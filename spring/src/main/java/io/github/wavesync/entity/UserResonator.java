@@ -38,8 +38,11 @@ public class UserResonator {
     private WeaponMaster weaponMaster;
 
     @OneToMany(mappedBy = "userResonator")
-    private List<UserResonanceNode> userResonanceNode;
+    private List<UserResonanceNode> userResonanceNodes;
 
     @OneToOne(mappedBy = "userResonator")
     private FinalStat finalStat;
+
+    @OneToMany(mappedBy = "userResonator")
+    private List<UserEcho> userEchoes;
 }
