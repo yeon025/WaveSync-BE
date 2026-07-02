@@ -1,8 +1,8 @@
 package io.github.wavesync.dto.request;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 
 @Getter
@@ -11,6 +11,5 @@ import lombok.*;
 public class ExtractProfileRequestDto {
 
     @NotBlank
-    @JsonProperty("imageUrl")
     private String imageUrl;
 }

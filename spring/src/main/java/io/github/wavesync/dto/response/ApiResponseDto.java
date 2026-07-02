@@ -1,7 +1,8 @@
 package io.github.wavesync.dto.response;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 
 @Getter

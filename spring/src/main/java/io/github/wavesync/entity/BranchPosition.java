@@ -1,6 +1,7 @@
 package io.github.wavesync.entity;
 import com.fasterxml.jackson.annotation.JsonValue;
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 
 @Getter

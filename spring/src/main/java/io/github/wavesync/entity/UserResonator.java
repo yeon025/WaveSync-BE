@@ -1,6 +1,7 @@
 package io.github.wavesync.entity;
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -37,12 +38,14 @@ public class UserResonator {
     @JoinColumn(name = "weapon_master_id", nullable = false)
     private WeaponMaster weaponMaster;
 
-    @OneToMany(mappedBy = "userResonator")
-    private List<UserResonanceNode> userResonanceNodes;
-
     @OneToOne(mappedBy = "userResonator")
     private FinalStat finalStat;
 
+    @Builder.Default
     @OneToMany(mappedBy = "userResonator")
-    private List<UserEcho> userEchoes;
+    private List<UserResonanceNode> userResonanceNodes = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "userResonator")
+    private List<UserEcho> userEchoes = new ArrayList<>();
 }

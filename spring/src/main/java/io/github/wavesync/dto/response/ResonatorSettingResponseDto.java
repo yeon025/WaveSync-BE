@@ -1,7 +1,9 @@
 package io.github.wavesync.dto.response;
 import io.github.wavesync.dto.common.ResonanceNodeDto;
 import io.github.wavesync.dto.common.WeaponSettingDto;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import java.util.List;
 
 

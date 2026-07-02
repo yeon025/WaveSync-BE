@@ -12,10 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Objects;
+import java.util.Map;
 
 
 @Slf4j
@@ -119,6 +123,9 @@ public class ResonatorService {
                     .userResonator(userResonator)
                     .build();
 
+            // 양방향 연관관계 설정
+            savedUserResonator.getUserEchoes().add(userEcho);
+
             userEchoes.add(userEcho);
 
             for (StatDto sub : echo.getSubs()) {
@@ -217,9 +224,8 @@ public class ResonatorService {
 
         Set<StatType> requiredType = new HashSet<>();
 
-        // 10개의 공명 노드에서 활성화된 노드만 StatType 수집
+        // 10개의 공명 노드에서 모든 StatType 수집
         data.getNodes().stream()
-                .filter(node -> Boolean.TRUE.equals(node.getActive()))
                 .map(ResonanceNodeDto::getStat)
                 .filter(Objects::nonNull)
                 .map(StatDto::getType)

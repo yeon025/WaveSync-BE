@@ -1,8 +1,9 @@
 package io.github.wavesync.dto.response;
 import io.github.wavesync.dto.common.*;
 import io.github.wavesync.entity.UserResonator;
-import lombok.*;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 
 @Getter

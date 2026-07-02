@@ -1,8 +1,5 @@
 package io.github.wavesync.dto.common;
-import io.github.wavesync.entity.BranchPosition;
-import io.github.wavesync.entity.NodePosition;
-import io.github.wavesync.entity.ResonanceNodeMaster;
-import io.github.wavesync.entity.UserResonanceNode;
+import io.github.wavesync.entity.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

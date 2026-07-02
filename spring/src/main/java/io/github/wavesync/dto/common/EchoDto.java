@@ -1,6 +1,7 @@
 package io.github.wavesync.dto.common;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import java.util.List;
-import lombok.*;
 
 
 

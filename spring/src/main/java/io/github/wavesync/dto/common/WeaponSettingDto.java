@@ -1,6 +1,5 @@
 package io.github.wavesync.dto.common;
-import io.github.wavesync.entity.UserResonator;
-import io.github.wavesync.entity.WeaponMaster;
+import io.github.wavesync.entity.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

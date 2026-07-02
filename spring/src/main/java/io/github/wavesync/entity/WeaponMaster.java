@@ -1,5 +1,6 @@
 package io.github.wavesync.entity;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 import java.math.BigDecimal;
@@ -54,6 +55,7 @@ public class WeaponMaster {
     @Column(nullable = false, length = 255)
     private String image;
 
+    @Builder.Default
     @OneToMany(mappedBy = "weaponMaster")
-    private List<UserResonator> userResonators;
+    private List<UserResonator> userResonators = new ArrayList<>();
 }

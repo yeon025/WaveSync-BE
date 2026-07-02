@@ -1,7 +1,10 @@
 package io.github.wavesync.dto.common;
 import io.github.wavesync.entity.StatType;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-import lombok.*;
+
 
 
 

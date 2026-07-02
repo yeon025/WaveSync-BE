@@ -1,7 +1,7 @@
 package io.github.wavesync.dto.response;
 import io.github.wavesync.entity.ResonatorMaster;
-import lombok.*;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 
 @Getter

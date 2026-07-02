@@ -1,5 +1,6 @@
 package io.github.wavesync.entity;
 import jakarta.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.*;
 
@@ -48,6 +49,7 @@ public class ResonatorMaster {
     @OneToOne(mappedBy = "resonatorMaster")
     private ResonanceNodeMaster resonanceNodeMaster;
 
+    @Builder.Default
     @OneToMany(mappedBy = "resonatorMaster")
-    private List<UserResonator> userResonators;
+    private List<UserResonator> userResonators = new ArrayList<>();
 }

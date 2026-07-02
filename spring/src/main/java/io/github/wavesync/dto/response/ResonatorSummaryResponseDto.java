@@ -1,6 +1,7 @@
 package io.github.wavesync.dto.response;
-import lombok.*;
-
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 
 @Getter

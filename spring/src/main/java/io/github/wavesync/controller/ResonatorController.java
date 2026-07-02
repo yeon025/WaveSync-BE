@@ -1,10 +1,11 @@
 package io.github.wavesync.controller;
-import org.springframework.http.*;
 import io.github.wavesync.dto.request.*;
 import io.github.wavesync.dto.response.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import lombok.RequiredArgsConstructor;
 import io.github.wavesync.service.ResonatorService;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
@@ -60,7 +61,7 @@ public class ResonatorController {
     }
 
 
-    @PutMapping("/{userResonatorId}/setting")
+    @PatchMapping("/{userResonatorId}/setting")
     public ResponseEntity<ApiResponseDto<Void>> updateResonator(
             @PathVariable Long userResonatorId,
             @RequestBody UpdateResonatorRequestDto data

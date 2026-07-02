@@ -1,5 +1,6 @@
 package io.github.wavesync.entity;
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 
 
