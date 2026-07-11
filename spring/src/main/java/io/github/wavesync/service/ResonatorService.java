@@ -183,11 +183,15 @@ public class ResonatorService {
         UserResonator userResonator = userResonatorRepository.findById(userResonatorId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
 
+        // 이미지를 전체 경로로 변환
+        String standingImage = objectStorageService.createUrl(userResonator.getResonatorMaster().getStandingImage());
+        String weaponImage = objectStorageService.createUrl(userResonator.getWeaponMaster().getImage());
+
         // dto 생성
-        WeaponDetailDto weapon = WeaponDetailDto.from(userResonator);
+        WeaponDetailDto weapon = WeaponDetailDto.from(userResonator, weaponImage);
         ResonatorStatDto stat = ResonatorStatDto.from(userResonator.getFinalStat());
 
-        return ResonatorDetailResponseDto.from(userResonator, weapon, stat);
+        return ResonatorDetailResponseDto.from(userResonator, standingImage, weapon, stat);
     }
 
 

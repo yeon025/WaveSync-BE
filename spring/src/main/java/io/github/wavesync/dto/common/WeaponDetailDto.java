@@ -21,7 +21,7 @@ public class WeaponDetailDto {
 
     private String imageUrl;
 
-    public static WeaponDetailDto from(UserResonator userResonator) {
+    public static WeaponDetailDto from(UserResonator userResonator, String weaponImage) {
         WeaponMaster weapon = userResonator.getWeaponMaster();
 
         return new WeaponDetailDto(
@@ -29,7 +29,7 @@ public class WeaponDetailDto {
                 weapon.getAttackValue(),
                 new StatDto(weapon.getMainType(), weapon.getMainValue()),
                 userResonator.getRefineLevel(),
-                weapon.getImage()
+                weaponImage
         );
     }
 }

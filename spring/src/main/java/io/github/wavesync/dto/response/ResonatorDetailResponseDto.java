@@ -26,13 +26,13 @@ public class ResonatorDetailResponseDto {
     private ResonatorStatDto stat;
 
 
-    public static ResonatorDetailResponseDto from(UserResonator userResonator, WeaponDetailDto weapon, ResonatorStatDto stat) {
+    public static ResonatorDetailResponseDto from(UserResonator userResonator, String standingImage, WeaponDetailDto weapon, ResonatorStatDto stat) {
 
         return new ResonatorDetailResponseDto(
                 userResonator.getId(),
                 userResonator.getResonatorMaster().getName(),
                 userResonator.getResonatorMaster().getElement().getCode(),
-                userResonator.getResonatorMaster().getStandingImage(),
+                standingImage,
                 userResonator.getResonanceChainLevel(),
                 weapon,
                 stat
