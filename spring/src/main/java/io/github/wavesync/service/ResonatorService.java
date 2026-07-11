@@ -169,7 +169,7 @@ public class ResonatorService {
                         (String) row[1],
                         ((Number) row[2]).intValue(),
                         ((Number) row[3]).intValue(),
-                        (String) row[4]
+                        row[4] == null ? null : objectStorageService.createUrl((String) row[4])
                 ))
                 .toList();
     }

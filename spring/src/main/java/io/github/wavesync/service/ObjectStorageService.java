@@ -22,6 +22,9 @@ public class ObjectStorageService {
 
     private final MinioClient minioClient;
 
+    @Value("${MINIO_PUBLIC_URL}")
+    private String publicUrl;
+
     @Value("${MINIO_BUCKET_PROFILES}")
     private String profileBucket;
 
@@ -36,6 +39,10 @@ public class ObjectStorageService {
 
     @Value("${MINIO_BUCKET_RESONATOR_STANDINGS}")
     private String resonatorStandingBucket;
+
+    public String createUrl(String path) {
+        return publicUrl + "/" + path;
+    }
 
     public String uploadProfileImage(MultipartFile file) {
         return upload(file, profileBucket);
