@@ -6,8 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 
 @RestControllerAdvice
@@ -30,22 +29,30 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
-                .body(ErrorResponseDto.of(
-                        ErrorCode.INTERNAL_SERVER_ERROR.getCode(), ErrorCode.INTERNAL_SERVER_ERROR.getMessage(), e.getMessage()
-                ));
+                .body(ErrorResponseDto.of(ErrorCode.INTERNAL_SERVER_ERROR.getCode(), ErrorCode.INTERNAL_SERVER_ERROR.getMessage(), e.getMessage()));
     }
 
 
     @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<ErrorResponseDto> handleDataAccessException(
-            DataAccessException e
-    ) {
+    public ResponseEntity<ErrorResponseDto> handleDataAccessException(DataAccessException e) {
         log.error("Database Error", e);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(
-                        ErrorResponseDto.of(ErrorCode.DATABASE_ERROR.getCode(), ErrorCode.DATABASE_ERROR.getMessage())
-                );
+                .body(ErrorResponseDto.of(
+                        ErrorCode.DATABASE_ERROR.getCode(), ErrorCode.DATABASE_ERROR.getMessage()
+                ));
+    }
+
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponseDto> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        log.error("Image Size Error", e);
+
+        return ResponseEntity
+                .status(ErrorCode.IMAGE_SIZE_EXCEEDED.getStatus())
+                .body(ErrorResponseDto.of(
+                        ErrorCode.IMAGE_SIZE_EXCEEDED.getCode(), ErrorCode.IMAGE_SIZE_EXCEEDED.getMessage()
+                ));
     }
 }
