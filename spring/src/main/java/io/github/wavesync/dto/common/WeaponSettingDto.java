@@ -28,7 +28,7 @@ public class WeaponSettingDto {
 
     private String imageUrl;
 
-    public static WeaponSettingDto from(UserResonator userResonator) {
+    public static WeaponSettingDto from(UserResonator userResonator, String weaponImage) {
         WeaponMaster weaponMaster = userResonator.getWeaponMaster();
 
         return new WeaponSettingDto(
@@ -39,7 +39,7 @@ public class WeaponSettingDto {
                 weaponMaster.getRefine3Value(),
                 weaponMaster.getRefine4Value(),
                 weaponMaster.getRefine5Value(),
-                weaponMaster.getImage()
+                weaponImage
         );
     }
 }

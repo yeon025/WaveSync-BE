@@ -211,8 +211,11 @@ public class ResonatorService {
                 .map(node -> ResonanceNodeDto.from(node, nodeMaster))
                 .toList();
 
+        // 이미지를 전체 경로로 변환
+        String weaponImage = objectStorageService.createUrl(userResonator.getWeaponMaster().getImage());
+
         // 공명자 아이디로 무기 조회 후 dto로 변환
-        WeaponSettingDto weapon = WeaponSettingDto.from(userResonator);
+        WeaponSettingDto weapon = WeaponSettingDto.from(userResonator, weaponImage);
 
         return ResonatorSettingResponseDto.from(nodes, weapon);
     }
