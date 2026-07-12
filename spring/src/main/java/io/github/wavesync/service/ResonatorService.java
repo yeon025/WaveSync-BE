@@ -202,20 +202,25 @@ public class ResonatorService {
         // 공명자 조회
         UserResonator userResonator = userResonatorRepository.findById(userResonatorId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
+        log.debug("공명자 조회를 완료했습니다.");
 
         // 공명자 아이디로 노드 조회
         ResonanceNodeMaster nodeMaster = resonanceNodeMasterRepository.findByResonatorMasterId(userResonator.getResonatorMaster().getId());
+        log.debug("공명 노드 조회를 완료했습니다.");
 
         // 조회한 노드를 dto로 변환
         List<ResonanceNodeDto> nodes = userResonator.getUserResonanceNodes().stream()
                 .map(node -> ResonanceNodeDto.from(node, nodeMaster))
                 .toList();
+        log.debug("조회한 공명 노드를 dto로 변환했습니다.");
 
         // 이미지를 전체 경로로 변환
         String weaponImage = objectStorageService.createUrl(userResonator.getWeaponMaster().getImage());
+        log.debug("이미지를 전체 경로로 변환했습니다.");
 
         // 공명자 아이디로 무기 조회 후 dto로 변환
         WeaponSettingDto weapon = WeaponSettingDto.from(userResonator, weaponImage);
+        log.debug("무기 조회 후 dto로 변환했습니다.");
 
         return ResonatorSettingResponseDto.from(nodes, weapon);
     }

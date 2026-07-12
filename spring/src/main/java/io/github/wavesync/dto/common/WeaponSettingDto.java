@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
-
+import java.util.Optional;
 
 
 @Getter
@@ -31,9 +31,13 @@ public class WeaponSettingDto {
     public static WeaponSettingDto from(UserResonator userResonator, String weaponImage) {
         WeaponMaster weaponMaster = userResonator.getWeaponMaster();
 
+        String refineType = Optional.ofNullable(weaponMaster.getRefineType())
+                .map(StatType::getCode)
+                .orElse(null);
+
         return new WeaponSettingDto(
                 userResonator.getRefineLevel(),
-                weaponMaster.getRefineType().getCode(),
+                refineType,
                 weaponMaster.getRefine1Value(),
                 weaponMaster.getRefine2Value(),
                 weaponMaster.getRefine3Value(),
