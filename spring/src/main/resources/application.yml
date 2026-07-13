@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: wavesync
+
+  servlet:
+    multipart:
+      max-file-size: 500KB
+      max-request-size: 500KB
+
+
+server:
+  port: 8080
