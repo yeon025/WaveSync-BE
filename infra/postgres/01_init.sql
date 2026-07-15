@@ -57,17 +57,6 @@ CREATE TABLE IF NOT EXISTS resonance_node_master (
 
 
 -- =========================
--- echo_master
--- =========================
-CREATE TABLE IF NOT EXISTS echo_master (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    
-    name VARCHAR(50) NOT NULL UNIQUE,
-    image VARCHAR(255) NOT NULL
-);
-
-
--- =========================
 -- user_resonators
 -- =========================
 CREATE TABLE IF NOT EXISTS user_resonators (
