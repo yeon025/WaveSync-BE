@@ -101,7 +101,6 @@ services:
 
       # 버킷 이름
       MINIO_BUCKET_PROFILES: profile-images
-      MINIO_BUCKET_ECHOES: echo-images
       MINIO_BUCKET_WEAPONS: weapon-images
       MINIO_BUCKET_RESONATOR_THUMBNAILS: resonator-thumbnail-images
       MINIO_BUCKET_RESONATOR_STANDINGS: resonator-standing-images
@@ -142,13 +141,13 @@ services:
       APP_ENV: dev
 
       # MinIO 연결 정보
+      STORAGE_PROVIDER: minio
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: admin
       MINIO_SECRET_KEY: password123
 
       # 사용 버킷
       MINIO_BUCKET_PROFILES: profile-images
-      MINIO_BUCKET_ECHOES: echo-images
 
       # PostgreSQL
       POSTGRES_HOST: postgres

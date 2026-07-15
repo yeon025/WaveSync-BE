@@ -1,10 +1,13 @@
 import logging
 import sys
+import os
+
 
 logger = logging.getLogger(__name__)
 
 if not logger.handlers:
-    logger.setLevel(logging.DEBUG)
+    if os.getenv("APP_ENV") == "dev":
+        logger.setLevel(logging.DEBUG)
 
     handler = logging.StreamHandler(sys.stdout)
 

@@ -1,6 +1,5 @@
 import os
-from app.clients.object_storage_client import load_image
-from app.validators.image_validator import validate_image
+from app.storage.factory import get_storage
 from app.services.preprocess_service import crop_circles, crop_and_stack
 from app.services.resonance_chain_service import calculate_chain_level
 from app.services.ocr_service import extract_text, process_ocr_result, clean_text
@@ -27,8 +26,10 @@ def extract_info(image_path, db: Session):
     # ========================================
 
     bucket, object_name = image_path.split("/")
-    profile = load_image(bucket, object_name)
 
+    storage = get_storage()
+
+    profile = storage.load_image(bucket, object_name)
     
     
     # ========================================

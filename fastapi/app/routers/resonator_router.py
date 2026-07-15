@@ -13,7 +13,7 @@ router = APIRouter(prefix="/resonators")
 
 @router.post("/images", response_model=ResonatorImageResponse, status_code=200)
 def analyze_resonator_image(request : ResonatorImageRequest, db: Session = Depends(get_db)):
-    logger.info(f"request.imageUrl: {request.imageUrl}")
+    logger.debug(f"request.imageUrl: {request.imageUrl}")
 
     data = extract_info(request.imageUrl, db)
 
