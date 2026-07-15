@@ -54,13 +54,11 @@ services:
       done;
 
       mc mb --ignore-existing local/profile-images;
-      mc mb --ignore-existing local/echo-images;
       mc mb --ignore-existing local/weapon-images;
       mc mb --ignore-existing local/resonator-thumbnail-images;
       mc mb --ignore-existing local/resonator-standing-images;
 
       mc anonymous set download local/profile-images;
-      mc anonymous set download local/echo-images;
       mc anonymous set download local/weapon-images;
       mc anonymous set download local/resonator-thumbnail-images;
       mc anonymous set download local/resonator-standing-images;

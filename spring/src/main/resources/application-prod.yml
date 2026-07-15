@@ -32,3 +32,13 @@ supabase:
     weapons: weapon-images
     resonator-thumbnails: resonator-thumbnail-images
     resonator-standings: resonator-standing-images
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
