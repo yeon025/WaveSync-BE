@@ -31,7 +31,7 @@ public class SupabaseStorageService implements ObjectStorageService {
 
     @Override
     public String createUrl(String path) {
-        return publicUrl + "/" + path;
+        return publicUrl + "/storage/v1/object/public/" + path;
     }
 
     @Override
