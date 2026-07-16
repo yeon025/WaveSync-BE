@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS resonance_node_master (
     inner_top_node_value NUMERIC(5,1) NOT NULL,
     inner_middle_node_value NUMERIC(5,1) NOT NULL,
 
-    resonator_master_id INT NOT NULL UNIQUE,
+    resonator_master_id BIGINT NOT NULL UNIQUE,
 
     CONSTRAINT fk_resonance_node_resonator
         FOREIGN KEY (resonator_master_id)
@@ -67,8 +67,8 @@ CREATE TABLE IF NOT EXISTS user_resonators (
 
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
-    resonator_master_id INT NOT NULL,
-    weapon_master_id INT NOT NULL,
+    resonator_master_id BIGINT NOT NULL,
+    weapon_master_id BIGINT NOT NULL,
 
     CONSTRAINT fk_user_resonator_master
         FOREIGN KEY (resonator_master_id)
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS user_echoes (
     secondary_type VARCHAR(50) NOT NULL,
     secondary_value INT NOT NULL,
 
-    user_resonator_id INT NOT NULL,
+    user_resonator_id BIGINT NOT NULL,
 
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS user_echo_sub (
     type VARCHAR(50) NOT NULL,
     value NUMERIC(7,1) NOT NULL,
 
-    user_echo_id INT NOT NULL,
+    user_echo_id BIGINT NOT NULL,
 
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS user_resonance_nodes (
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
-    user_resonator_id INT NOT NULL,
+    user_resonator_id BIGINT NOT NULL,
 
     CONSTRAINT fk_user_node_resonator
         FOREIGN KEY (user_resonator_id)
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS final_stats (
     havoc_damage_bonus NUMERIC(5,1) NOT NULL,
     healing_bonus NUMERIC(5,1) NOT NULL,
 
-    user_resonator_id INT NOT NULL,
+    user_resonator_id BIGINT NOT NULL,
 
     CONSTRAINT fk_final_stats_resonator
         FOREIGN KEY (user_resonator_id)
