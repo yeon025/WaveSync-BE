@@ -16,9 +16,9 @@ class MinioStorageService:
         )
 
 
-def load_image(self, bucket: str, path: str):
+    def load_image(self, bucket: str, path: str):
 
-    response = self.client.get_object(bucket, path)
-    data = response.read()
+        response = self.client.get_object(bucket, path)
+        data = response.read()
 
-    return Image.open(BytesIO(data)).convert("RGB")
+        return Image.open(BytesIO(data)).convert("RGB")

@@ -4,17 +4,17 @@ from app.config.logger import logger
 
 
 def _check_chain_level(chain_path, template_path):
-    threshold = 5
+    threshold = 11
 
     chain = Image.open(chain_path).convert("RGB")
     template = Image.open(template_path).convert("RGB")
 
-    chain_hash = imagehash.phash(chain)
-    template_hash = imagehash.phash(template)
+    chain_hash = imagehash.average_hash(chain)
+    template_hash = imagehash.average_hash(template)
 
     distance = chain_hash - template_hash
 
-    logger.warning(f"hash distance: {distance}")
+    logger.debug(f"hash distance: {distance}")
 
     # 템플릿과 유사하면 미돌파
     if distance <= threshold:
