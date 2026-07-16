@@ -2,7 +2,7 @@
 -- weapon_master
 -- =========================
 CREATE TABLE IF NOT EXISTS weapon_master (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(50) NOT NULL UNIQUE,
     attack_value INT NOT NULL,
     main_type VARCHAR(50) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS weapon_master (
 -- resonator_master
 -- =========================
 CREATE TABLE IF NOT EXISTS resonator_master (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(20) NOT NULL UNIQUE,
     element VARCHAR(20) NOT NULL,
     rarity INT NOT NULL CHECK (rarity IN (4, 5)),
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS resonator_master (
 -- resonance_node_master
 -- =========================
 CREATE TABLE IF NOT EXISTS resonance_node_master (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     outer_node_type VARCHAR(50) NOT NULL,
     outer_top_node_value NUMERIC(5,1) NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS resonance_node_master (
 -- user_resonators
 -- =========================
 CREATE TABLE IF NOT EXISTS user_resonators (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     resonance_chain_level INT NOT NULL CHECK (resonance_chain_level BETWEEN 0 AND 6),
     refine_level INT NOT NULL CHECK (refine_level BETWEEN 1 AND 5),
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS user_resonators (
 -- user_echoes
 -- =========================
 CREATE TABLE IF NOT EXISTS user_echoes (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     main_type VARCHAR(50) NOT NULL,
     main_value NUMERIC(5,1) NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS user_echoes (
 -- user_echo_sub
 -- =========================
 CREATE TABLE IF NOT EXISTS user_echo_sub (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     type VARCHAR(50) NOT NULL,
     value NUMERIC(7,1) NOT NULL,
@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS user_echo_sub (
 -- user_resonance_nodes
 -- =========================
 CREATE TABLE IF NOT EXISTS user_resonance_nodes (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     branch_position VARCHAR(20) NOT NULL CHECK (branch_position IN ('LEFT_OUTER', 'LEFT_INNER', 'CENTER', 'RIGHT_OUTER', 'RIGHT_INNER')),
     node_position VARCHAR(20) NOT NULL CHECK (node_position IN ('TOP', 'MIDDLE')),
@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS user_resonance_nodes (
 -- final_stats
 -- =========================
 CREATE TABLE IF NOT EXISTS final_stats (
-    id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     hp INT NOT NULL,
     attack INT NOT NULL,
