@@ -1,3 +1,12 @@
+# Build
+FROM gradle:8.8-jdk21 AS builder
+
+WORKDIR /app
+
+COPY . .
+
+RUN gradle bootJar --no-daemon
+
 # Java 21 실행 환경 사용
 FROM eclipse-temurin:21-jdk
 
