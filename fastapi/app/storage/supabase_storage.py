@@ -1,7 +1,7 @@
 import os
 import requests
-import numpy as np
-import cv2
+from PIL import Image
+from io import BytesIO
 
 
 class SupabaseStorageService:
@@ -24,6 +24,4 @@ class SupabaseStorageService:
 
         response.raise_for_status()
 
-        np_arr = np.frombuffer(response.content, np.uint8)
-
-        return cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        return Image.open(BytesIO(response.content)).convert("RGB")

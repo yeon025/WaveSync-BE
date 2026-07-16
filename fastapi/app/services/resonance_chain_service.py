@@ -1,41 +1,38 @@
-import cv2
+from PIL import Image
+import imagehash
 from app.config.logger import logger
 
 
+def _check_chain_level(chain_path, template_path):
+    threshold = 5
 
+    chain = Image.open(chain_path).convert("RGB")
+    template = Image.open(template_path).convert("RGB")
 
-def _check_chain_level(chain, template):
-    threshold=0.95
-    
-    # 템플릿 매칭 점수 계산
-    results = cv2.matchTemplate(chain, template, cv2.TM_CCOEFF_NORMED)
-    score = results.max()
+    chain_hash = imagehash.phash(chain)
+    template_hash = imagehash.phash(template)
 
-    logger.warning(f"score: {score}")
+    distance = chain_hash - template_hash
 
-    # 미돌파 템플릿과 유사 → 돌파 안됨
-    if score >= threshold:
+    logger.warning(f"hash distance: {distance}")
+
+    # 템플릿과 유사하면 미돌파
+    if distance <= threshold:
         return False
-    
-    # 유사하지 않음 → 돌파됨
+
+    # 유사하지 않으면 돌파
     return True
-
-
-
-
 
 
 def calculate_chain_level(chain_img_paths, template_path):
 
     chain_level = 0
-    
-    template = cv2.imread(template_path)
-    
+
     for chain_path in chain_img_paths:
-        chain = cv2.imread(chain_path)
-        is_awakened = _check_chain_level(chain, template)
-        
-        if is_awakened == True:
-            chain_level = chain_level + 1
-            
+
+        is_awakened = _check_chain_level(chain_path, template_path)
+
+        if is_awakened:
+            chain_level += 1
+
     return chain_level

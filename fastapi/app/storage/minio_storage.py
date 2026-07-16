@@ -1,9 +1,6 @@
-# storage/minio_storage.py
-
 from minio import Minio
 from PIL import Image
-import numpy as np
-import cv2
+from io import BytesIO
 import os
 
 
@@ -19,11 +16,9 @@ class MinioStorageService:
         )
 
 
-    def load_image(self, bucket: str, path: str):
+def load_image(self, bucket: str, path: str):
 
-        response = self.client.get_object(bucket, path)
-        data = response.read()
+    response = self.client.get_object(bucket, path)
+    data = response.read()
 
-        np_arr = np.frombuffer(data, np.uint8)
-
-        return cv2.imdecode(np_arr,cv2.IMREAD_COLOR)
+    return Image.open(BytesIO(data)).convert("RGB")
