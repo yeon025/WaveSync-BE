@@ -11,6 +11,8 @@ from app.validators.echo_sub_validator import validate_sub
 from app.mapper.echo import EchoMapper
 from app.config.constant import TMP_DIR, CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR
 from app.schemas.response import ExtractData
+from app.exceptions.custom_exception import CustomException
+from app.exceptions.error_code import ErrorCode
 from app.config.logger import logger
 from sqlalchemy.orm import Session
 
@@ -26,8 +28,16 @@ def extract_info(image_path, db: Session):
     # ========================================
     # 이미지 가져오기
     # ========================================
-    response = requests.get(image_path)
-    response.raise_for_status()
+    response = requests.get(image_path, timeout=10)
+
+    if response.status_code == 404:
+        raise CustomException(ErrorCode.IMAGE_NOT_FOUND)
+
+    if response.status_code == 403:
+        raise CustomException(ErrorCode.IMAGE_ACCESS_DENIED)
+
+    if response.status_code >= 400:
+        raise CustomException(ErrorCode.IMAGE_LOAD_FAILED)
 
     profile = Image.open(BytesIO(response.content)).convert("RGB")
     
