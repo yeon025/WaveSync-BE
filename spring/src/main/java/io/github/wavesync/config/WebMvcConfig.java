@@ -2,7 +2,6 @@ package io.github.wavesync.config;
 import io.github.wavesync.interceptor.LoggerInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -24,16 +23,5 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/swagger-ui/**",
                         "/v3/api-docs/**"
                 );
-    }
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns(
-                        "http://localhost:3000",
-                        "https://*.vercel.app"
-                )
-                .allowedMethods("*")
-                .allowedHeaders("*");
     }
 }
