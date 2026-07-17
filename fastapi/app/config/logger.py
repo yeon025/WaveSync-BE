@@ -23,5 +23,7 @@ if not logger.handlers:
             "%(levelname)s: [%(filename)s:%(lineno)d] %(message)s"
         )
 
+    handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
+
     logger.addHandler(handler)
