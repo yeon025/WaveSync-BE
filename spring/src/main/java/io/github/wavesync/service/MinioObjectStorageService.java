@@ -22,6 +22,9 @@ public class MinioObjectStorageService implements ObjectStorageService {
 
     private final MinioClient minioClient;
 
+    @Value("${MINIO_ENDPOINT}")
+    private String endpoint;
+
     @Value("${MINIO_PUBLIC_URL}")
     private String publicUrl;
 
@@ -58,6 +61,6 @@ public class MinioObjectStorageService implements ObjectStorageService {
             throw new CustomException(ErrorCode.IMAGE_PROCESSING_FAILED);
         }
 
-        return profileBucket + "/" + objectName;
+        return endpoint+ "/" + profileBucket + "/" + objectName;
     }
 }

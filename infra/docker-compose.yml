@@ -138,21 +138,8 @@ services:
       # 실행 환경
       APP_ENV: dev
 
-      # MinIO 연결 정보
-      STORAGE_PROVIDER: minio
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: admin
-      MINIO_SECRET_KEY: password123
-
-      # 사용 버킷
-      MINIO_BUCKET_PROFILES: profile-images
-
       # PostgreSQL
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: wawu
-      POSTGRES_USER: wawu
-      POSTGRES_PASSWORD: wawu
+      DATABASE_URL: postgresql+psycopg2://wawu:wawu@postgres:5432/wawu
 
       TZ: Asia/Seoul
 

@@ -1,5 +1,7 @@
 import os
-from app.storage.factory import get_storage
+import requests
+from PIL import Image
+from io import BytesIO
 from app.services.preprocess_service import crop_circles, crop_and_stack
 from app.services.resonance_chain_service import calculate_chain_level
 from app.services.ocr_service import extract_text, process_ocr_result, clean_text
@@ -24,14 +26,13 @@ def extract_info(image_path, db: Session):
     # ========================================
     # 이미지 가져오기
     # ========================================
+    response = requests.get(image_path)
+    response.raise_for_status()
 
-    bucket, object_name = image_path.split("/")
-
-    storage = get_storage()
-
-    profile = storage.load_image(bucket, object_name)
+    profile = Image.open(BytesIO(response.content)).convert("RGB")
     
     
+
     # ========================================
     # 전처리
     # ========================================

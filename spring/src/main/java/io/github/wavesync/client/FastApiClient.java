@@ -26,12 +26,6 @@ public class FastApiClient {
 
     public ApiResponseDto<ExtractProfileResponseDto> extractImage(ExtractProfileRequestDto request) {
 
-        try {
-            log.info(objectMapper.writeValueAsString(request));
-        } catch (Exception e) {
-            log.error("JSON serialize failed", e);
-        }
-
         return webClient.post()
                 .uri("/api/resonators/images")
                 .contentType(MediaType.APPLICATION_JSON)

@@ -58,15 +58,6 @@ public class SupabaseStorageService implements ObjectStorageService {
             throw new CustomException(ErrorCode.IMAGE_PROCESSING_FAILED);
         }
 
-        return getPublicUrl(objectName);
-    }
-
-    private String getPublicUrl(String objectName) {
-        return supabaseRestClient
-                .get()
-                .uri("/storage/v1/object/public/" + profileBucket + "/" + objectName)
-                .retrieve()
-                .toEntity(String.class)
-                .getBody();
+        return createUrl(objectName);
     }
 }
