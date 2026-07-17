@@ -58,6 +58,6 @@ public class SupabaseStorageService implements ObjectStorageService {
             throw new CustomException(ErrorCode.IMAGE_PROCESSING_FAILED);
         }
 
-        return createUrl(objectName);
+        return createUrl(profileBucket + "/" + objectName);
     }
 }
