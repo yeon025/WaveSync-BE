@@ -26,5 +26,5 @@ public interface ResonatorMasterRepository extends JpaRepository<ResonatorMaster
             m.release_version DESC,
             m.name COLLATE "ko-KR-x-icu"
         """, nativeQuery = true)
-    List<Object[]> findResonatorSummary();;
+    List<Object[]> findResonatorSummary();
 }

@@ -14,7 +14,7 @@ logging:
     io.github.wavesync: INFO
     org.hibernate.SQL: WARN
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%logger{36}] %msg%n"
+    console: "%-5level: [%logger{36}] %msg%n"
 
 storage:
   provider: supabase
