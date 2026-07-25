@@ -5,6 +5,10 @@ spring:
     multipart:
       max-file-size: 500KB
       max-request-size: 500KB
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
 
 
 server:
