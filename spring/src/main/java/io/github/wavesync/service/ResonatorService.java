@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StopWatch;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,6 +43,7 @@ public class ResonatorService {
 
     @Transactional
     public CreateResonatorResponseDto createResonator(MultipartFile resonatorProfile) {
+        StopWatch stopWatch = new StopWatch();
 
         // 공명자 프로필 이미지 저장
         String profileUrl = objectStorageService.uploadProfileImage(resonatorProfile);
@@ -60,12 +62,15 @@ public class ResonatorService {
         ExtractProfileResponseDto extractedTexts = response.getData();
 
         // 이름을 기준으로 DB 조회
+        stopWatch.start("findByName");
         ResonatorMaster rm = resonatorMasterRepository.findByName(extractedTexts.getResonatorName());
         WeaponMaster wm = weaponMasterRepository.findByName(extractedTexts.getWeaponName());
         ResonanceNodeMaster rnm = resonanceNodeMasterRepository.findByResonatorMasterId(rm.getId());
+        stopWatch.stop();
         log.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.");
 
         // 저장 전에 동일한 공명자는 삭제
+        stopWatch.start("deleteResonator");
         List<Long> targetId = userResonatorRepository.findIdsByResonatorName(extractedTexts.getResonatorName());
 
         if (!CollectionUtils.isEmpty(targetId)) {
@@ -79,8 +84,10 @@ public class ResonatorService {
 
             log.debug("동일한 공명자 정보를 삭제했습니다.");
         }
+        stopWatch.stop();
 
         // UserResonator 객체 생성 후 저장
+        stopWatch.start("createNode");
         UserResonator userResonator = UserResonator.builder()
                 .resonanceChainLevel(extractedTexts.getResonanceChainLevel())
                 .refineLevel(1)
@@ -109,8 +116,10 @@ public class ResonatorService {
         List<ResonanceNodeDto> nodes = userResonanceNodes.stream()
                 .map(node -> ResonanceNodeDto.from(node, rnm))
                 .toList();
+        stopWatch.stop();
 
         // Echo 객체 생성
+        stopWatch.start("createEcho");
         List<UserEcho> userEchoes = new ArrayList<>();
         List<UserEchoSub> userEchoSubs = new ArrayList<>();
 
@@ -143,17 +152,31 @@ public class ResonatorService {
                 userEchoSubs.add(userEchoSub);
             }
         }
+        stopWatch.stop();
 
         // UserEcho, UserEchoSub 저장
+        stopWatch.start("saveUserEchoes");
         userEchoRepository.saveAll(userEchoes);
+        stopWatch.stop();
+
+        stopWatch.start("saveUserEchoSubs");
         userEchoSubRepository.saveAll(userEchoSubs);
+        stopWatch.stop();
 
         // 최종 스펙 계산
+        stopWatch.start("calculateFinalStat");
         FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, nodes);
+        stopWatch.stop();
 
         // 최종 스펙을 DB에 저장
+        stopWatch.start("saveFinalStat");
         finalStatRepository.save(finalStat);
+        stopWatch.stop();
         log.debug("최종 스펙을 데이터베이스에 저장했습니다.");
+
+        log.info("\n{}", stopWatch.prettyPrint());
+
+        log.info("===== return 직전 =====");
 
         return CreateResonatorResponseDto.from(rm);
     }
