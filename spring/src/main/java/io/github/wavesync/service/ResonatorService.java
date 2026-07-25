@@ -87,7 +87,7 @@ public class ResonatorService {
         stopWatch.stop();
 
         // UserResonator 객체 생성 후 저장
-        stopWatch.start("createNode");
+        stopWatch.start("saveUserResonator");
         UserResonator userResonator = UserResonator.builder()
                 .resonanceChainLevel(extractedTexts.getResonanceChainLevel())
                 .refineLevel(1)
@@ -95,8 +95,10 @@ public class ResonatorService {
                 .weaponMaster(wm)
                 .build();
         UserResonator savedUserResonator = userResonatorRepository.save(userResonator);
+        stopWatch.stop();
 
         // UserResonanceNode 객체 생성 후 저장
+        stopWatch.start("buildNodes");
         List<UserResonanceNode> userResonanceNodes = new ArrayList<>();
 
         for (BranchPosition branchPosition : BranchPosition.values()) {
@@ -110,9 +112,14 @@ public class ResonatorService {
                 );
             }
         }
+        stopWatch.stop();
+
+        stopWatch.start("saveNodes");
         userResonanceNodeRepository.saveAll(userResonanceNodes);
+        stopWatch.stop();
 
         // 노드를 dto로 변환
+        stopWatch.start("convertNodeDto");
         List<ResonanceNodeDto> nodes = userResonanceNodes.stream()
                 .map(node -> ResonanceNodeDto.from(node, rnm))
                 .toList();
@@ -175,8 +182,6 @@ public class ResonatorService {
         log.debug("최종 스펙을 데이터베이스에 저장했습니다.");
 
         log.info("\n{}", stopWatch.prettyPrint());
-
-        log.info("===== return 직전 =====");
 
         return CreateResonatorResponseDto.from(rm);
     }
