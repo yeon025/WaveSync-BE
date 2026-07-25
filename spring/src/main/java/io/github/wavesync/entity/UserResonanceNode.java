@@ -15,7 +15,12 @@ import lombok.*;
 public class UserResonanceNode {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_node_seq")
+    @SequenceGenerator(
+            name = "user_node_seq",
+            sequenceName = "user_node_seq",
+            allocationSize = 50
+    )
     private Long id;
 
     @Enumerated(EnumType.STRING)

@@ -62,29 +62,47 @@ public class ResonatorService {
         ExtractProfileResponseDto extractedTexts = response.getData();
 
         // 이름을 기준으로 DB 조회
-        stopWatch.start("findByName");
+        stopWatch.start("resonatorMasterFindByName");
         ResonatorMaster rm = resonatorMasterRepository.findByName(extractedTexts.getResonatorName());
+        stopWatch.stop();
+
+        stopWatch.start("weaponMasterFindByName");
         WeaponMaster wm = weaponMasterRepository.findByName(extractedTexts.getWeaponName());
+        stopWatch.stop();
+
+        stopWatch.start("resonanceNodeMasterFindByName");
         ResonanceNodeMaster rnm = resonanceNodeMasterRepository.findByResonatorMasterId(rm.getId());
         stopWatch.stop();
         log.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.");
 
         // 저장 전에 동일한 공명자는 삭제
-        stopWatch.start("deleteResonator");
         List<Long> targetId = userResonatorRepository.findIdsByResonatorName(extractedTexts.getResonatorName());
 
         if (!CollectionUtils.isEmpty(targetId)) {
             log.debug("조회한 id: {}", targetId);
 
+            stopWatch.start("deleteUserResonator");
             userResonatorRepository.softDeleteByIds(targetId);
+            stopWatch.stop();
+
+            stopWatch.start("deleteUserResonanceNode");
             userResonanceNodeRepository.softDeleteByUserResonatorIds(targetId);
+            stopWatch.stop();
+
+            stopWatch.start("deleteUserEcho");
             userEchoRepository.softDeleteByUserResonatorIds(targetId);
+            stopWatch.stop();
+
+            stopWatch.start("deleteUserEchoSub");
             userEchoSubRepository.softDeleteByUserResonatorIds(targetId);
+            stopWatch.stop();
+
+            stopWatch.start("deleteFinalStat");
             finalStatRepository.deleteByUserResonatorIds(targetId);
+            stopWatch.stop();
 
             log.debug("동일한 공명자 정보를 삭제했습니다.");
         }
-        stopWatch.stop();
 
         // UserResonator 객체 생성 후 저장
         stopWatch.start("saveUserResonator");

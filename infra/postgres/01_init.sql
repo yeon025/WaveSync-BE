@@ -105,8 +105,13 @@ CREATE TABLE IF NOT EXISTS user_echoes (
 -- =========================
 -- user_echo_sub
 -- =========================
+CREATE SEQUENCE IF NOT EXISTS user_echo_sub_seq
+    START WITH 1
+    INCREMENT BY 50
+    CACHE 50;
+
 CREATE TABLE IF NOT EXISTS user_echo_sub (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY DEFAULT nextval('user_echo_sub_seq'),
 
     type VARCHAR(50) NOT NULL,
     value NUMERIC(7,1) NOT NULL,
@@ -124,8 +129,13 @@ CREATE TABLE IF NOT EXISTS user_echo_sub (
 -- =========================
 -- user_resonance_nodes
 -- =========================
+CREATE SEQUENCE IF NOT EXISTS user_node_seq
+    START WITH 1
+    INCREMENT BY 50
+    CACHE 50;
+
 CREATE TABLE IF NOT EXISTS user_resonance_nodes (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY DEFAULT nextval('user_node_seq'),
 
     branch_position VARCHAR(20) NOT NULL CHECK (branch_position IN ('LEFT_OUTER', 'LEFT_INNER', 'CENTER', 'RIGHT_OUTER', 'RIGHT_INNER')),
     node_position VARCHAR(20) NOT NULL CHECK (node_position IN ('TOP', 'MIDDLE')),

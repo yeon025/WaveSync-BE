@@ -14,7 +14,12 @@ import java.math.BigDecimal;
 @Builder
 public class UserEchoSub {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_echo_sub_seq")
+    @SequenceGenerator(
+            name = "user_echo_sub_seq",
+            sequenceName = "user_echo_sub_seq",
+            allocationSize = 50
+    )
     private Long id;
 
     @Enumerated(EnumType.STRING)
