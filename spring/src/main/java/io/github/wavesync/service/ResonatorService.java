@@ -232,7 +232,7 @@ public class ResonatorService {
     public void updateResonator(Long userResonatorId, UpdateResonatorRequestDto data) {
 
         // id로 userResonator 조회
-        UserResonator userResonator = userResonatorRepository.findById(userResonatorId)
+        UserResonator userResonator = userResonatorRepository.findByIdForUpdate(userResonatorId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESONATOR_NOT_FOUND));
 
         Set<StatType> requiredType = new HashSet<>();
