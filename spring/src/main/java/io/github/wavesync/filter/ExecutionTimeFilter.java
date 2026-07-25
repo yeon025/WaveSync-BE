@@ -32,7 +32,7 @@ public class ExecutionTimeFilter extends OncePerRequestFilter {
             long duration = System.currentTimeMillis() - start;
 
             // 응답 로그 출력
-            log.info("{} {} 응답이 완료되었습니다. |  time={}ms", request.getMethod(), request.getRequestURI(), duration);
+            log.info("{} {} 응답이 완료되었습니다. | status={} | time={}ms", request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
         }
     }
 }
