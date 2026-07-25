@@ -52,8 +52,9 @@ public class ResonatorService {
 
         // fastAPI 호출
         log.info("fastApi 요청을 시작합니다.");
+        long start = System.currentTimeMillis();
         ApiResponseDto<ExtractProfileResponseDto> response = fastApiClient.extractImage(request);
-        log.info("fastApi 요청이 완료되었습니다.");
+        log.info("fastApi 요청이 완료되었습니다. | time={}ms", System.currentTimeMillis() - start);
 
         // Dto에서 data만 추출
         ExtractProfileResponseDto extractedTexts = response.getData();
