@@ -35,4 +35,9 @@ management:
         include: health
   endpoint:
     health:
-      show-details: never
+      # DB 등의 세부 Health Indicator 상태를 실제로 수행하도록 설정
+      show-details: always
+  # Health Indicator 중 db 체크가 켜져 있는지 확인 (기본적으로 true)
+  health:
+    db:
+      enabled: true
