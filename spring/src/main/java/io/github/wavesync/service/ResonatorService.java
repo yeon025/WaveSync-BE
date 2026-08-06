@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StopWatch;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,7 +42,6 @@ public class ResonatorService {
 
     @Transactional
     public CreateResonatorResponseDto createResonator(MultipartFile resonatorProfile) {
-        StopWatch stopWatch = new StopWatch();
 
         // 공명자 프로필 이미지 저장
         String profileUrl = objectStorageService.uploadProfileImage(resonatorProfile);
@@ -62,17 +60,11 @@ public class ResonatorService {
         ExtractProfileResponseDto extractedTexts = response.getData();
 
         // 이름을 기준으로 DB 조회
-        stopWatch.start("resonatorMasterFindByName");
         ResonatorMaster rm = resonatorMasterRepository.findByName(extractedTexts.getResonatorName());
-        stopWatch.stop();
 
-        stopWatch.start("weaponMasterFindByName");
         WeaponMaster wm = weaponMasterRepository.findByName(extractedTexts.getWeaponName());
-        stopWatch.stop();
 
-        stopWatch.start("resonanceNodeMasterFindByName");
         ResonanceNodeMaster rnm = resonanceNodeMasterRepository.findByResonatorMasterId(rm.getId());
-        stopWatch.stop();
         log.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.");
 
         // 저장 전에 동일한 공명자는 삭제
@@ -81,31 +73,20 @@ public class ResonatorService {
         if (!CollectionUtils.isEmpty(targetId)) {
             log.debug("조회한 id: {}", targetId);
 
-            stopWatch.start("deleteUserResonator");
             userResonatorRepository.softDeleteByIds(targetId);
-            stopWatch.stop();
 
-            stopWatch.start("deleteUserResonanceNode");
             userResonanceNodeRepository.softDeleteByUserResonatorIds(targetId);
-            stopWatch.stop();
 
-            stopWatch.start("deleteUserEcho");
             userEchoRepository.softDeleteByUserResonatorIds(targetId);
-            stopWatch.stop();
 
-            stopWatch.start("deleteUserEchoSub");
             userEchoSubRepository.softDeleteByUserResonatorIds(targetId);
-            stopWatch.stop();
 
-            stopWatch.start("deleteFinalStat");
             finalStatRepository.deleteByUserResonatorIds(targetId);
-            stopWatch.stop();
 
             log.debug("동일한 공명자 정보를 삭제했습니다.");
         }
 
         // UserResonator 객체 생성 후 저장
-        stopWatch.start("saveUserResonator");
         UserResonator userResonator = UserResonator.builder()
                 .resonanceChainLevel(extractedTexts.getResonanceChainLevel())
                 .refineLevel(1)
@@ -113,10 +94,8 @@ public class ResonatorService {
                 .weaponMaster(wm)
                 .build();
         UserResonator savedUserResonator = userResonatorRepository.save(userResonator);
-        stopWatch.stop();
 
         // UserResonanceNode 객체 생성 후 저장
-        stopWatch.start("buildNodes");
         List<UserResonanceNode> userResonanceNodes = new ArrayList<>();
 
         for (BranchPosition branchPosition : BranchPosition.values()) {
@@ -130,21 +109,15 @@ public class ResonatorService {
                 );
             }
         }
-        stopWatch.stop();
 
-        stopWatch.start("saveNodes");
         userResonanceNodeRepository.saveAll(userResonanceNodes);
-        stopWatch.stop();
 
         // 노드를 dto로 변환
-        stopWatch.start("convertNodeDto");
         List<ResonanceNodeDto> nodes = userResonanceNodes.stream()
                 .map(node -> ResonanceNodeDto.from(node, rnm))
                 .toList();
-        stopWatch.stop();
 
         // Echo 객체 생성
-        stopWatch.start("createEcho");
         List<UserEcho> userEchoes = new ArrayList<>();
         List<UserEchoSub> userEchoSubs = new ArrayList<>();
 
@@ -177,29 +150,18 @@ public class ResonatorService {
                 userEchoSubs.add(userEchoSub);
             }
         }
-        stopWatch.stop();
 
         // UserEcho, UserEchoSub 저장
-        stopWatch.start("saveUserEchoes");
         userEchoRepository.saveAll(userEchoes);
-        stopWatch.stop();
 
-        stopWatch.start("saveUserEchoSubs");
         userEchoSubRepository.saveAll(userEchoSubs);
-        stopWatch.stop();
 
         // 최종 스펙 계산
-        stopWatch.start("calculateFinalStat");
         FinalStat finalStat = specCalculationService.calculateFinalStat(savedUserResonator, nodes);
-        stopWatch.stop();
 
         // 최종 스펙을 DB에 저장
-        stopWatch.start("saveFinalStat");
         finalStatRepository.save(finalStat);
-        stopWatch.stop();
         log.debug("최종 스펙을 데이터베이스에 저장했습니다.");
-
-        log.info("\n{}", stopWatch.prettyPrint());
 
         return CreateResonatorResponseDto.from(rm);
     }
