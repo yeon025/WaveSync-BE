@@ -3,6 +3,11 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      # 앱이 시작될 때 미리 생성해 둘 최소 커넥션 개수 (기본값보다 커넥션을 항상 유지함)
+      minimum-idle: 2
+      # 커넥션이 오랫동안 쉬지 않도록 보조 핑 쿼리 지정 (PostgreSQL, MySQL 등 공통)
+      connection-test-query: SELECT 1
   jpa:
     hibernate:
       ddl-auto: validate
