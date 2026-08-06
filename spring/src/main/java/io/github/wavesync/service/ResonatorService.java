@@ -12,14 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.text.Collator;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Objects;
-import java.util.Map;
 
 
 @Slf4j
@@ -32,12 +29,12 @@ public class ResonatorService {
     private final SpecCalculationService specCalculationService;
     private final ResonatorMasterRepository resonatorMasterRepository;
     private final WeaponMasterRepository weaponMasterRepository;
-    private final ResonanceNodeMasterRepository resonanceNodeMasterRepository;
     private final FinalStatRepository finalStatRepository;
     private final UserResonatorRepository userResonatorRepository;
     private final UserResonanceNodeRepository userResonanceNodeRepository;
     private final UserEchoRepository userEchoRepository;
     private final UserEchoSubRepository userEchoSubRepository;
+    private static final Collator KOREAN_COLLATOR = Collator.getInstance(Locale.KOREAN);
 
 
     @Transactional
@@ -64,7 +61,7 @@ public class ResonatorService {
 
         WeaponMaster wm = weaponMasterRepository.findByName(extractedTexts.getWeaponName());
 
-        ResonanceNodeMaster rnm = resonanceNodeMasterRepository.findByResonatorMasterId(rm.getId());
+        ResonanceNodeMaster rnm = rm.getResonanceNodeMaster();
         log.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.");
 
         // 저장 전에 동일한 공명자는 삭제
@@ -73,15 +70,7 @@ public class ResonatorService {
         if (!CollectionUtils.isEmpty(targetId)) {
             log.debug("조회한 id: {}", targetId);
 
-            userResonatorRepository.softDeleteByIds(targetId);
-
-            userResonanceNodeRepository.softDeleteByUserResonatorIds(targetId);
-
-            userEchoRepository.softDeleteByUserResonatorIds(targetId);
-
-            userEchoSubRepository.softDeleteByUserResonatorIds(targetId);
-
-            finalStatRepository.deleteByUserResonatorIds(targetId);
+            delete(targetId);
 
             log.debug("동일한 공명자 정보를 삭제했습니다.");
         }
@@ -171,16 +160,19 @@ public class ResonatorService {
     @Transactional(readOnly = true)
     public List<ResonatorSummaryResponseDto> getResonatorSummary() {
 
-        return resonatorMasterRepository.findResonatorSummary()
-                .stream()
-                .map(row -> new ResonatorSummaryResponseDto(
-                        row[0] == null ? null : ((Number) row[0]).longValue(),
-                        (String) row[1],
-                        ((Number) row[2]).intValue(),
-                        ((Number) row[3]).intValue(),
-                        row[4] == null ? null : objectStorageService.createUrl((String) row[4])
-                ))
-                .toList();
+        List<ResonatorSummaryResponseDto> resonators = resonatorMasterRepository.findResonatorSummary();
+
+        resonators.sort(
+                Comparator.comparing(ResonatorSummaryResponseDto::getReleaseVersion)
+                        .reversed()
+                        .thenComparing(ResonatorSummaryResponseDto::getResonatorName, KOREAN_COLLATOR)
+        );
+
+        resonators.forEach(resonator ->
+                resonator.setThumbnailImageUrl(objectStorageService.createUrl(resonator.getThumbnailImageUrl()))
+        );
+
+        return resonators;
     }
 
 
@@ -214,7 +206,7 @@ public class ResonatorService {
         log.debug("공명자 조회를 완료했습니다.");
 
         // 공명자 아이디로 노드 조회
-        ResonanceNodeMaster nodeMaster = resonanceNodeMasterRepository.findByResonatorMasterId(userResonator.getResonatorMaster().getId());
+        ResonanceNodeMaster nodeMaster = userResonator.getResonatorMaster().getResonanceNodeMaster();
         log.debug("공명 노드 조회를 완료했습니다.");
 
         // 조회한 노드를 dto로 변환
@@ -285,19 +277,25 @@ public class ResonatorService {
     public void deleteResonator(DeleteResonatorRequestDto data) {
         List<Long> ids = data.getUserResonatorIds();
 
+        delete(ids);
+    }
+
+
+
+    private void delete(List<Long> targetId) {
         // user_resonators (soft delete)
-        userResonatorRepository.softDeleteByIds(ids);
+        userResonatorRepository.softDeleteByIds(targetId);
 
         // user_resonance_nodes (soft delete)
-        userResonanceNodeRepository.softDeleteByUserResonatorIds(ids);
+        userResonanceNodeRepository.softDeleteByUserResonatorIds(targetId);
 
         // user_echo (soft delete)
-        userEchoRepository.softDeleteByUserResonatorIds(ids);
+        userEchoRepository.softDeleteByUserResonatorIds(targetId);
 
         // user_echo_sub (soft delete)
-        userEchoSubRepository.softDeleteByUserResonatorIds(ids);
+        userEchoSubRepository.softDeleteByUserResonatorIds(targetId);
 
         // final_stat (hard delete)
-        finalStatRepository.deleteByUserResonatorIds(ids);
+        finalStatRepository.deleteByUserResonatorIds(targetId);
     }
 }
