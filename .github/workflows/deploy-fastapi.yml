@@ -63,7 +63,9 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} .
+            -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} \
+            -f fastapi/Dockerfile \
+            fastapi
 
       # Artifact Registry에 이미지 업로드
       - name: Push Docker image
