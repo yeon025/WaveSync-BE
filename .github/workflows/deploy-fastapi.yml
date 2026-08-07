@@ -63,9 +63,6 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            # 이미지 태그
-            # 예시:
-            # asia-northeast3-docker.pkg.dev/concrete-flare-495107-c0/fastapi/wawu-fastapi:3af84c1
             -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} .
 
       # Artifact Registry에 이미지 업로드
