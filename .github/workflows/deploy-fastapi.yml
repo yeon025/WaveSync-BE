@@ -73,15 +73,11 @@ jobs:
           docker push \
             $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }}
 
-      # Cloud Run 배포
+      # Artifact Registry 이미지로 Cloud Run 배포 및 외부 접근 허용
       - name: Deploy Cloud Run
         run: |
           gcloud run deploy $SERVICE \
-            # 방금 업로드한 이미지를 사용
             --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} \
-            # Cloud Run 리전
             --region $REGION \
-            # 관리형 Cloud Run 사용
             --platform managed \
-            # 인증 없이 누구나 접근 가능하도록 설정
             --allow-unauthenticated
