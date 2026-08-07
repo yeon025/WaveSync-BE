@@ -1,0 +1,88 @@
+# 워크플로우 이름
+name: Deploy FastAPI to Cloud Run
+
+# 실행 조건
+on:
+  push:
+    # main 브랜치에 push될 때 실행
+    branches:
+      - main
+
+# 워크플로우 전체에서 사용할 환경 변수
+env:
+  # GCP 프로젝트 ID (GitHub Secret)
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+  # Cloud Run 및 Artifact Registry 리전
+  REGION: ${{ secrets.REGION }}
+
+  # Artifact Registry 저장소 이름
+  REPOSITORY: fastapi
+
+  # Cloud Run 서비스 이름
+  SERVICE: wawu-fastapi
+
+  # Docker 이미지 이름
+  IMAGE: wawu-fastapi
+
+jobs:
+  deploy:
+    # Ubuntu 최신 환경에서 실행
+    runs-on: ubuntu-latest
+
+    # GitHub Actions 권한 설정
+    permissions:
+      # 저장소 코드 읽기 권한
+      contents: read
+
+      # Google Cloud 인증(OIDC 또는 auth 액션) 권한
+      id-token: write
+
+    steps:
+      # 저장소 코드 다운로드
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Google Cloud 인증
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          # GitHub Secret에 저장한 서비스 계정 JSON 사용
+          credentials_json: "${{ secrets.GCP_SA_KEY }}"
+
+      # gcloud CLI 설치
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Docker가 Artifact Registry에 로그인하도록 설정
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker $REGION-docker.pkg.dev
+
+      # Docker 이미지 빌드
+      - name: Build Docker image
+        run: |
+          docker build \
+            # 이미지 태그
+            # 예시:
+            # asia-northeast3-docker.pkg.dev/concrete-flare-495107-c0/fastapi/wawu-fastapi:3af84c1
+            -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} .
+
+      # Artifact Registry에 이미지 업로드
+      - name: Push Docker image
+        run: |
+          docker push \
+            $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }}
+
+      # Cloud Run 배포
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy $SERVICE \
+            # 방금 업로드한 이미지를 사용
+            --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} \
+            # Cloud Run 리전
+            --region $REGION \
+            # 관리형 Cloud Run 사용
+            --platform managed \
+            # 인증 없이 누구나 접근 가능하도록 설정
+            --allow-unauthenticated
