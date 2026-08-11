@@ -26,6 +26,7 @@ public class ResonatorService {
 
     private final ObjectStorageService objectStorageService;
     private final FastApiClient fastApiClient;
+    private final ExtractProfileValidationService extractProfileValidationService;
     private final SpecCalculationService specCalculationService;
     private final ResonatorMasterRepository resonatorMasterRepository;
     private final WeaponMasterRepository weaponMasterRepository;
@@ -56,10 +57,13 @@ public class ResonatorService {
         // Dto에서 data만 추출
         ExtractProfileResponseDto extractedTexts = response.getData();
 
+        // 검증 로직
+        String validatedWeaponName = extractProfileValidationService.validate(extractedTexts);
+
         // 이름을 기준으로 DB 조회
         ResonatorMaster rm = resonatorMasterRepository.findByName(extractedTexts.getResonatorName());
 
-        WeaponMaster wm = weaponMasterRepository.findByName(extractedTexts.getWeaponName());
+        WeaponMaster wm = weaponMasterRepository.findByName(validatedWeaponName);
 
         ResonanceNodeMaster rnm = rm.getResonanceNodeMaster();
         log.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.");

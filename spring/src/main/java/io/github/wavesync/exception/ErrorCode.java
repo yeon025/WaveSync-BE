@@ -12,6 +12,7 @@ public enum ErrorCode {
     INVALID_IMAGE_RESOLUTION(HttpStatus.BAD_REQUEST, "INVALID_IMAGE_RESOLUTION", "1920×1080 해상도의 이미지만 업로드 가능합니다. 다른 이미지를 선택해주세요."),
     IMAGE_SIZE_EXCEEDED(HttpStatus.PAYLOAD_TOO_LARGE, "IMAGE_SIZE_EXCEEDED", "이미지 크기는 500KB 이하만 업로드할 수 있습니다. 다른 이미지를 선택해주세요."),
     DATA_NOT_FOUND(HttpStatus.UNPROCESSABLE_ENTITY, "DATA_NOT_FOUND", "이미지 인식 결과를 확인할 수 없습니다. 다른 이미지를 선택해주세요."),
+    VALIDATION_FAILED(HttpStatus.UNPROCESSABLE_ENTITY, "VALIDATION_FAILED", "추출된 데이터가 유효하지 않습니다."),
     DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "DATABASE_ERROR", "데이터 처리 중 오류가 발생했습니다. 다시 시도해주세요."),
     IMAGE_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_PROCESSING_FAILED", "이미지 처리 중 오류가 발생했습니다. 다시 시도해주세요."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.");

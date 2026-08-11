@@ -26,4 +26,6 @@ public interface ResonatorMasterRepository extends JpaRepository<ResonatorMaster
        AND ur.isDeleted = false
     """)
     List<ResonatorSummaryResponseDto> findResonatorSummary();
+
+    boolean existsByName(String name);
 }

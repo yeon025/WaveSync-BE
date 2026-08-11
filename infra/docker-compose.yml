@@ -122,7 +122,6 @@ services:
     # 개발 시 코드 변경 즉시 반영
     volumes:
       - ../fastapi:/app
-      - C:/Users/user/Downloads:/downloads
 
     ports:
       - "8000:8000"
