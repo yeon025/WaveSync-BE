@@ -81,7 +81,9 @@ public class ExtractProfileValidationService {
     private void validateSubValue(StatDto sub, int echoNumber, int subNumber) {
         Set<BigDecimal> validValues = VALID_SUB_VALUES.get(sub.getType());
 
-        if (sub.getValue() == null || !validValues.contains(sub.getValue())) {
+        if (sub.getValue() == null ||
+                validValues.stream().noneMatch(validValue -> validValue.compareTo(sub.getValue()) == 0)) {
+
             log.warn(
                     "{}번 에코의 {}번 서브 속성 값이 마스터 데이터에 존재하지 않습니다. subValue={}",
                     echoNumber,
