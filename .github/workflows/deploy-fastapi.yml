@@ -25,13 +25,13 @@ env:
   REGION: ${{ secrets.REGION }}
 
   # Artifact Registry 저장소 이름
-  REPOSITORY: wawu
+  REPOSITORY: wuwa
 
   # Cloud Run 서비스 이름
-  SERVICE: wawu-fastapi
+  SERVICE: wuwa-fastapi
 
   # Docker 이미지 이름
-  IMAGE: wawu-fastapi
+  IMAGE: wuwa-fastapi
 
 jobs:
   deploy:
