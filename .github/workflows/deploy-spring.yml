@@ -1,5 +1,5 @@
 # 워크플로우 이름
-name: Deploy FastAPI to Cloud Run
+name: Deploy Spring to Cloud Run
 
 # 실행 조건
 on:
@@ -8,12 +8,12 @@ on:
     branches:
       - main
 
-    # FastAPI 관련 파일이 변경된 경우에만 실행
+    # Spring 관련 파일이 변경된 경우에만 실행
     paths:
-      # FastAPI 소스 및 설정 파일 변경 시 실행
+      # Spring 소스 및 설정 파일 변경 시 실행
       - "spring/**"
 
-      # FastAPI 배포 워크플로우 자체가 변경된 경우 실행
+      # Spring 배포 워크플로우 자체가 변경된 경우 실행
       - ".github/workflows/deploy-spring.yml"
 
 # 워크플로우 전체에서 사용할 환경 변수
@@ -72,8 +72,8 @@ jobs:
         run: |
           docker build \
             -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} \
-            -f fastapi/Dockerfile \
-            fastapi
+            -f spring/Dockerfile \
+            spring
 
       # Artifact Registry에 이미지 업로드
       - name: Push Docker image
