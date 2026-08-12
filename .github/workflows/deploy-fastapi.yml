@@ -8,6 +8,14 @@ on:
     branches:
       - main
 
+    # FastAPI 관련 파일이 변경된 경우에만 실행
+    paths:
+      # FastAPI 소스 및 설정 파일 변경 시 실행
+      - "fastapi/**"
+
+      # FastAPI 배포 워크플로우 자체가 변경된 경우 실행
+      - ".github/workflows/deploy-fastapi.yml"
+
 # 워크플로우 전체에서 사용할 환경 변수
 env:
   # GCP 프로젝트 ID (GitHub Secret)
@@ -17,7 +25,7 @@ env:
   REGION: ${{ secrets.REGION }}
 
   # Artifact Registry 저장소 이름
-  REPOSITORY: fastapi
+  REPOSITORY: wawu
 
   # Cloud Run 서비스 이름
   SERVICE: wawu-fastapi
