@@ -1,0 +1,91 @@
+# 워크플로우 이름
+name: Deploy FastAPI to Cloud Run
+
+# 실행 조건
+on:
+  push:
+    # main 브랜치에 push될 때 실행
+    branches:
+      - main
+
+    # FastAPI 관련 파일이 변경된 경우에만 실행
+    paths:
+      # FastAPI 소스 및 설정 파일 변경 시 실행
+      - "spring/**"
+
+      # FastAPI 배포 워크플로우 자체가 변경된 경우 실행
+      - ".github/workflows/deploy-spring.yml"
+
+# 워크플로우 전체에서 사용할 환경 변수
+env:
+  # GCP 프로젝트 ID (GitHub Secret)
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+  # Cloud Run 및 Artifact Registry 리전
+  REGION: ${{ secrets.REGION }}
+
+  # Artifact Registry 저장소 이름
+  REPOSITORY: wawu
+
+  # Cloud Run 서비스 이름
+  SERVICE: wawu-spring
+
+  # Docker 이미지 이름
+  IMAGE: wawu-spring
+
+jobs:
+  deploy:
+    # Ubuntu 최신 환경에서 실행
+    runs-on: ubuntu-latest
+
+    # GitHub Actions 권한 설정
+    permissions:
+      # 저장소 코드 읽기 권한
+      contents: read
+
+      # Google Cloud 인증(OIDC 또는 auth 액션) 권한
+      id-token: write
+
+    steps:
+      # 저장소 코드 다운로드
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Google Cloud 인증
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          # GitHub Secret에 저장한 서비스 계정 JSON 사용
+          credentials_json: "${{ secrets.GCP_SA_KEY }}"
+
+      # gcloud CLI 설치
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Docker가 Artifact Registry에 로그인하도록 설정
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker $REGION-docker.pkg.dev
+
+      # Docker 이미지 빌드
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} \
+            -f fastapi/Dockerfile \
+            fastapi
+
+      # Artifact Registry에 이미지 업로드
+      - name: Push Docker image
+        run: |
+          docker push \
+            $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }}
+
+      # Artifact Registry 이미지로 Cloud Run 배포 및 외부 접근 허용
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy $SERVICE \
+            --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }} \
+            --region $REGION \
+            --platform managed \
+            --allow-unauthenticated
