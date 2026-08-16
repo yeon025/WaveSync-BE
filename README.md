@@ -2,7 +2,6 @@
 
 > 《명조: 워더링 웨이브》 캐릭터 프로필 이미지에서 텍스트를 추출해 최종 스펙을 계산해주는 개인 서비스
 
-🔗 서비스 링크: https://resocollector.com<br>
 📅 개발 기간: 2026.05 ~ Present (배포 완료)<br>
 👤 인원: 1명 (기획 · 설계 · 개발 · 배포 전 과정 개인 진행)
 
@@ -99,20 +98,7 @@ Google Cloud Run + Vercel 조합을 선택한 이유
 
 ## 아키텍처
 
-<!-- TODO: 전체 시스템 구조도를 이미지로 삽입하는 것을 추천합니다.
-이미지 업로드 → Vision API 텍스트 추출 → 파싱 → 스펙 계산 → 저장/응답 흐름과
-Vercel / Cloud Run / DB / Storage 배포 구조를 함께 표현하면 좋습니다.
-필요하시면 다이어그램 제작을 도와드릴 수 있습니다. -->
-
-```
-[사용자] → [Next.js (Vercel)] → [Spring Boot API (Cloud Run)]
-                                        ↓
-                          [FastAPI (이미지 전처리 / Vision API 연동)]
-                                        ↓
-                    [PostgreSQL]     [Supabase / MinIO Storage]
-```
-
-> 위 다이어그램은 초안입니다. 실제 요청 흐름과 서비스 간 통신 방식(동기/비동기, REST 등)에 맞게 수정해주세요.
+![img1](images\architecture.png)
 
 <br>
 
@@ -129,33 +115,11 @@ Vercel / Cloud Run / DB / Storage 배포 구조를 함께 표현하면 좋습니
 **결과**<br>
 API 호출 횟수 7회 → 1회로 단축, 무료 할당량 내에서 안정적으로 운영 가능해졌습니다.
 
-```python
-def crop_and_stack(image):
-    crops = [image.crop((x1, y1, x2, y2)) for (x1, y1, x2, y2) in RECTANGLES]
-
-    if not crops:
-        return None
-
-    max_width = max(crop.width for crop in crops)
-    aligned = []
-
-    for crop in crops:
-        padded = Image.new("RGB", (max_width, crop.height + 10), (0, 0, 0))
-        padded.paste(crop, (0, 0))
-        aligned.append(padded)
-
-    total_height = sum(img.height for img in aligned)
-    merged = Image.new("RGB", (max_width, total_height))
-
-    y = 0
-    for img in aligned:
-        merged.paste(img, (0, y))
-        y += img.height
-
-    save_path = os.path.join(TMP_DIR, "merged.png")
-    merged.save(save_path)
-    logger.debug(f"{save_path}가 저장되었습니다.")
-```
+<p align="center">
+  <img src="./images/before_crop.png" width="45%" />
+  →
+  <img src="./images/after_Crop.png" width="45%" />
+</p>
 
 이미지에서 필요한 영역(`RECTANGLES`)만 잘라낸 뒤, 가장 넓은 폭에 맞춰 여백을 채우고 세로로 이어 붙여 한 장의 이미지로 병합합니다. 이렇게 만든 단일 이미지로 Vision API를 한 번만 호출합니다.
 
