@@ -98,7 +98,7 @@ Google Cloud Run + Vercel 조합을 선택한 이유
 
 ## 아키텍처
 
-![img1](images\architecture.png)
+![architecture](./images/architecture.png)
 
 <br>
 
@@ -116,9 +116,9 @@ Google Cloud Run + Vercel 조합을 선택한 이유
 API 호출 횟수 7회 → 1회로 단축, 무료 할당량 내에서 안정적으로 운영 가능해졌습니다.
 
 <p align="center">
-  <img src="./images/before_crop.png" width="45%" />
+  <img src="./images/before_crop.jpg" width="45%" />
   →
-  <img src="./images/after_Crop.png" width="45%" />
+  <img src="./images/after_crop.png" width="45%" />
 </p>
 
 이미지에서 필요한 영역(`RECTANGLES`)만 잘라낸 뒤, 가장 넓은 폭에 맞춰 여백을 채우고 세로로 이어 붙여 한 장의 이미지로 병합합니다. 이렇게 만든 단일 이미지로 Vision API를 한 번만 호출합니다.
