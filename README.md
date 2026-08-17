@@ -205,7 +205,7 @@ public class SupabaseStorageService implements ObjectStorageService {
 `default_batch_fetch_size`를 적용해, 연관 엔티티를 개별 쿼리로 하나씩 조회하는 대신 지정한 크기만큼 묶어서 `IN` 절로 한 번에 조회하도록 개선했습니다.
 
 **결과**<br>
-응답 시간을 875ms → 579ms로 단축했습니다. (약 34% 개선)
+응답 시간을 182ms → 120.63ms로 단축했습니다. (약 34% 개선)
 
 ```yaml
 jpa:
