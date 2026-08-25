@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/services/extract_profile_validation_service.py
 package io.github.wavesync.service;
 
 import io.github.wavesync.dto.common.EchoDto;

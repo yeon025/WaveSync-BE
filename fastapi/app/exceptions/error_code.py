@@ -56,3 +56,9 @@ class ErrorCode(Enum):
         "INTERNAL_SERVER_ERROR",
         "서버 내부 오류가 발생했습니다."
     )
+
+    VALIDATION_FAILED = (
+        422,
+        "VALIDATION_FAILED",
+        "추출된 데이터가 유효하지 않습니다."
+    )
