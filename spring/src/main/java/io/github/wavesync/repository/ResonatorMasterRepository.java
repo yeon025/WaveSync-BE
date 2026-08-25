@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/repositories/resonator_master_repository.py
 package io.github.wavesync.repository;
 import io.github.wavesync.dto.response.ResonatorSummaryResponseDto;
 import io.github.wavesync.entity.ResonatorMaster;
