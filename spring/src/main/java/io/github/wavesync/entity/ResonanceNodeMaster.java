@@ -1,3 +1,5 @@
+// MIGRATED to fastapi/app/models/resonance_node_master.py
+// (getStat()은 fastapi/app/mapper/resonance_node_mapper.py의 get_stat() 함수로 분리)
 package io.github.wavesync.entity;
 import io.github.wavesync.dto.common.StatDto;
 import jakarta.persistence.*;

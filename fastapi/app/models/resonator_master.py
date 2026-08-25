@@ -1,5 +1,6 @@
 from sqlalchemy import Column, BigInteger, String, Integer
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 from app.models.element import Element
 
@@ -24,5 +25,12 @@ class ResonatorMaster(Base):
     thumbnail_image = Column(String(255), nullable=False)
     standing_image = Column(String(255), nullable=True)
 
-    # Resonator(UserResonator)/ResonanceNode 도메인을 이관할 때 여기에
-    # relationship을 추가할 것 (Spring @OneToOne/@OneToMany(mappedBy=...) 대응)
+    # Spring @OneToOne(mappedBy = "resonatorMaster") 대응
+    resonance_node_master = relationship(
+        "ResonanceNodeMaster", back_populates="resonator_master", uselist=False
+    )
+
+    # Resonator(UserResonator) 도메인을 이관할 때 여기에
+    # user_resonators = relationship("UserResonator", back_populates="resonator_master")
+    # (Spring @OneToMany(mappedBy = "resonatorMaster") 대응)
+    # 를 추가할 것
