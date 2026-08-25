@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/repositories/user_resonance_node_repository.py
 package io.github.wavesync.repository;
 import io.github.wavesync.entity.UserResonanceNode;
 import org.springframework.data.jpa.repository.JpaRepository;

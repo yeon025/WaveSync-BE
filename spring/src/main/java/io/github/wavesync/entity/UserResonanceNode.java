@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/models/user_resonance_node.py
 package io.github.wavesync.entity;
 import jakarta.persistence.*;
 import lombok.*;
