@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/services/supabase_storage_service.py (client 구성이 서비스 생성자로 흡수됨)
 package io.github.wavesync.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

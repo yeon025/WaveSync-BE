@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/services/minio_object_storage_service.py (client 구성이 서비스 생성자로 흡수됨)
 package io.github.wavesync.config;
 import io.minio.MinioClient;
 import org.springframework.beans.factory.annotation.Value;

@@ -140,6 +140,18 @@ services:
       # PostgreSQL
       DATABASE_URL: postgresql+psycopg2://wawu:wawu@postgres:5432/wawu
 
+      # MinIO 연결 정보
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_PUBLIC_URL: http://localhost:9000
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: password123
+
+      # 버킷 이름
+      MINIO_BUCKET_PROFILES: profile-images
+      MINIO_BUCKET_WEAPONS: weapon-images
+      MINIO_BUCKET_RESONATOR_THUMBNAILS: resonator-thumbnail-images
+      MINIO_BUCKET_RESONATOR_STANDINGS: resonator-standing-images
+
       TZ: Asia/Seoul
 
     # MinIO가 먼저 시작되어야 함
