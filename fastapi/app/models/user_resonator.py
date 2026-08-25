@@ -25,3 +25,9 @@ class UserResonator(Base):
 
     # Spring @OneToOne(mappedBy = "userResonator") 대응
     final_stat = relationship("FinalStat", uselist=False, back_populates="user_resonator")
+
+    # Spring @OneToMany(mappedBy = "userResonator") 대응 (ResonatorService.java 217, 270행 실사용)
+    user_resonance_nodes = relationship("UserResonanceNode", back_populates="user_resonator")
+
+    # Spring @OneToMany(mappedBy = "userResonator") 대응 (ResonatorService.java/SpecCalculationService.java 실사용)
+    user_echoes = relationship("UserEcho", back_populates="user_resonator")

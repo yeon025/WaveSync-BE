@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 
 
@@ -30,3 +30,13 @@ class ResonatorImageResponse(BaseModel):
     code: str
     message: str
     data: ExtractData
+
+
+
+# Spring dto.response.ResonatorSummaryResponseDto 대응
+class ResonatorSummaryResponseDto(BaseModel):
+    userResonatorId: Optional[int] = None  # LEFT JOIN이라 매칭되는 UserResonator가 없으면 None
+    resonatorName: str
+    rarity: int
+    releaseVersion: int
+    thumbnailImageUrl: str  # 주의: Spring 원본도 실제 URL이 아니라 raw path를 그대로 담음(변환 전)

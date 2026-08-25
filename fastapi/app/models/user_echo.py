@@ -23,6 +23,5 @@ class UserEcho(Base):
 
     user_resonator_id = Column(BigInteger, ForeignKey("user_resonators.id"), nullable=False)
 
-    # UserResonator.user_echoes는 아직 없어 단방향으로만 연결
-    # (UserResonator 쪽 back_populates는 그 필드를 실제로 쓰는 시점에 연결)
-    user_resonator = relationship("UserResonator")
+    # ResonatorService.java/SpecCalculationService.java에서 실사용 확인됨 — 양방향 연결
+    user_resonator = relationship("UserResonator", back_populates="user_echoes")
