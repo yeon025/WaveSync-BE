@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/repositories/final_stat_repository.py
 package io.github.wavesync.repository;
 import io.github.wavesync.entity.FinalStat;
 import org.springframework.data.jpa.repository.JpaRepository;

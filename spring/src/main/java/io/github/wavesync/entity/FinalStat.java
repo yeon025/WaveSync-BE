@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/models/final_stat.py
 package io.github.wavesync.entity;
 import jakarta.persistence.*;
 import lombok.*;

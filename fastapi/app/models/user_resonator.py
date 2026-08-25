@@ -22,3 +22,6 @@ class UserResonator(Base):
     # (resonator_master.py/weapon_master.py는 수정하지 않음)
     resonator_master = relationship("ResonatorMaster")
     weapon_master = relationship("WeaponMaster")
+
+    # Spring @OneToOne(mappedBy = "userResonator") 대응
+    final_stat = relationship("FinalStat", uselist=False, back_populates="user_resonator")

@@ -30,6 +30,7 @@ def find_by_id(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
         .options(
             joinedload(UserResonator.resonator_master),
             joinedload(UserResonator.weapon_master),
+            joinedload(UserResonator.final_stat),
         )
         .where(UserResonator.id == user_resonator_id, UserResonator.is_deleted.is_(False))
     )
@@ -42,6 +43,7 @@ def find_by_id_for_update(db: Session, user_resonator_id: int) -> Optional[UserR
         .options(
             joinedload(UserResonator.resonator_master),
             joinedload(UserResonator.weapon_master),
+            joinedload(UserResonator.final_stat),
         )
         .where(UserResonator.id == user_resonator_id, UserResonator.is_deleted.is_(False))
     )
