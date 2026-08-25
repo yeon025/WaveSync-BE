@@ -3,6 +3,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session, joinedload, selectinload
 from app.models.user_resonator import UserResonator
 from app.models.resonator_master import ResonatorMaster
+from app.models.user_echo import UserEcho
 
 
 def find_ids_by_resonator_name(db: Session, name: str) -> List[int]:
@@ -47,8 +48,10 @@ def find_by_id_for_update(db: Session, user_resonator_id: int) -> Optional[UserR
             # selectinload 사용 이유: Spring 원본이 SELECT DISTINCT를 쓴 건 컬렉션을
             # JOIN FETCH하면 부모 행이 자식 수만큼 중복되기 때문 — joinedload로 컬렉션을
             # 물면 같은 문제가 재발하므로, 별도 IN 쿼리로 배치 조회하는 selectinload를 쓴다
-            # (CLAUDE.md N+1 방지 원칙과도 부합).
-            selectinload(UserResonator.user_echoes),
+            # (CLAUDE.md N+1 방지 원칙과도 부합). SpecCalculationService가 각 UserEcho의
+            # user_echo_subs까지 순회하므로 한 단계 더 체이닝해서 배치 조회한다
+            # (안 하면 UserEcho 개수만큼 지연 로딩되는 진짜 N+1이 발생함)
+            selectinload(UserResonator.user_echoes).selectinload(UserEcho.user_echo_subs),
         )
         .where(UserResonator.id == user_resonator_id, UserResonator.is_deleted.is_(False))
     )

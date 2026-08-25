@@ -30,5 +30,5 @@ class UserEchoSub(Base):
 
     user_echo_id = Column(BigInteger, ForeignKey("user_echoes.id"), nullable=False)
 
-    # UserEcho.user_echo_subs는 아직 없어 단방향으로만 연결
-    user_echo = relationship("UserEcho")
+    # SpecCalculationService.java 실사용 확인됨 — 양방향 연결
+    user_echo = relationship("UserEcho", back_populates="user_echo_subs")

@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/services/spec_calculation_service.py
 package io.github.wavesync.service;
 import io.github.wavesync.dto.common.ResonanceNodeDto;
 import io.github.wavesync.entity.*;

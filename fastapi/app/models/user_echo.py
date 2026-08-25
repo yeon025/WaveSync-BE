@@ -25,3 +25,6 @@ class UserEcho(Base):
 
     # ResonatorService.java/SpecCalculationService.java에서 실사용 확인됨 — 양방향 연결
     user_resonator = relationship("UserResonator", back_populates="user_echoes")
+
+    # Spring @OneToMany(mappedBy = "userEcho") 대응 (SpecCalculationService.java 실사용)
+    user_echo_subs = relationship("UserEchoSub", back_populates="user_echo")
