@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/repositories/user_echo_repository.py
 package io.github.wavesync.repository;
 import io.github.wavesync.entity.UserEcho;
 import org.springframework.data.jpa.repository.JpaRepository;

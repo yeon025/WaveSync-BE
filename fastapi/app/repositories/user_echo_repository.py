@@ -1,0 +1,14 @@
+from typing import List
+from sqlalchemy import update
+from sqlalchemy.orm import Session
+from app.models.user_echo import UserEcho
+
+
+def soft_delete_by_user_resonator_ids(db: Session, ids: List[int]) -> None:
+    stmt = (
+        update(UserEcho)
+        .where(UserEcho.user_resonator_id.in_(ids), UserEcho.is_deleted.is_(False))
+        .values(is_deleted=True)
+    )
+    db.execute(stmt)
+    # 커밋은 호출부(서비스 계층) 책임 — user_resonator_repository.soft_delete_by_ids와 동일 원칙
