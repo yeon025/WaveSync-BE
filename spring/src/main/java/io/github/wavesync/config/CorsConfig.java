@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/main.py (CORSMiddleware)
 package io.github.wavesync.config;
 
 import org.springframework.context.annotation.Bean;
