@@ -44,3 +44,15 @@ class ErrorCode(Enum):
         "IMAGE_PROCESSING_FAILED",
         "이미지 처리 중 오류가 발생했습니다. 다시 시도해주세요."
     )
+
+    DATABASE_ERROR = (
+        500,
+        "DATABASE_ERROR",
+        "데이터 처리 중 오류가 발생했습니다. 다시 시도해주세요."
+    )
+
+    INTERNAL_SERVER_ERROR = (
+        500,
+        "INTERNAL_SERVER_ERROR",
+        "서버 내부 오류가 발생했습니다."
+    )
