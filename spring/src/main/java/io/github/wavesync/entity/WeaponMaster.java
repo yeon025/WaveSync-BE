@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/models/weapon_master.py
 package io.github.wavesync.entity;
 import jakarta.persistence.*;
 import java.util.ArrayList;

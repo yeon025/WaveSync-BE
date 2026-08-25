@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/repositories/weapon_master_repository.py
 package io.github.wavesync.repository;
 import io.github.wavesync.entity.WeaponMaster;
 import org.springframework.data.jpa.repository.JpaRepository;
