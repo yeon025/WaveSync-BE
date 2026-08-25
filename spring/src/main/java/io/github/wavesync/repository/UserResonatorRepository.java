@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/repositories/user_resonator_repository.py
 package io.github.wavesync.repository;
 import io.github.wavesync.entity.UserResonator;
 import org.jetbrains.annotations.NotNull;

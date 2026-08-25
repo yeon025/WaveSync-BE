@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/models/user_resonator.py
 package io.github.wavesync.entity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,13 +39,16 @@ public class UserResonator {
     @JoinColumn(name = "weapon_master_id", nullable = false)
     private WeaponMaster weaponMaster;
 
+    // finalStat 관계는 fastapi/app/models/user_resonator.py에도 양방향으로 미러링됨
     @OneToOne(mappedBy = "userResonator")
     private FinalStat finalStat;
 
+    // userResonanceNodes 관계는 fastapi/app/models/user_resonator.py에도 양방향으로 미러링됨
     @Builder.Default
     @OneToMany(mappedBy = "userResonator")
     private List<UserResonanceNode> userResonanceNodes = new ArrayList<>();
 
+    // userEchoes 관계는 fastapi/app/models/user_resonator.py에도 양방향으로 미러링됨
     @Builder.Default
     @OneToMany(mappedBy = "userResonator")
     private List<UserEcho> userEchoes = new ArrayList<>();
