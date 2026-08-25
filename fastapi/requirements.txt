@@ -7,3 +7,4 @@ requests
 minio
 SQLAlchemy
 psycopg2-binary
+python-multipart

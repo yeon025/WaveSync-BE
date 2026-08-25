@@ -4,6 +4,11 @@ from sqlalchemy.orm import Session
 from app.models.user_resonance_node import UserResonanceNode
 
 
+def save_all(db: Session, nodes: List[UserResonanceNode]) -> None:
+    # Spring JpaRepository.saveAll() 대응. 커밋은 호출부 책임
+    db.add_all(nodes)
+
+
 def find_all_by_user_resonator_id(db: Session, user_resonator_id: int) -> List[UserResonanceNode]:
     stmt = (
         select(UserResonanceNode)

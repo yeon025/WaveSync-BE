@@ -6,6 +6,15 @@ from app.models.resonator_master import ResonatorMaster
 from app.models.user_echo import UserEcho
 
 
+def save(db: Session, user_resonator: UserResonator) -> UserResonator:
+    # Spring JpaRepository.save() 대응. commit은 호출부(서비스 계층) 책임 — 다른
+    # repository 함수들과 동일 원칙. relationship으로 연결된 자식(예: FinalStat,
+    # UserResonanceNode)은 SQLAlchemy의 기본 save-update cascade로 같은 flush에
+    # 함께 반영된다.
+    db.add(user_resonator)
+    return user_resonator
+
+
 def find_ids_by_resonator_name(db: Session, name: str) -> List[int]:
     stmt = (
         select(UserResonator.id)

@@ -6,9 +6,17 @@ from app.exceptions.error_code import ErrorCode
 from app.config.logger import logger
 
 
+MAX_IMAGE_SIZE_BYTES = 500 * 1024  # Spring spring.servlet.multipart.max-file-size: 500KB
+
+
 def validate_image(file: UploadFile) -> bytes:
     content = file.file.read()
     file.file.seek(0)
+
+    # 이미지 크기 제한 — Spring은 서블릿 컨테이너 레벨에서 걸러(MaxUploadSizeExceededException)
+    # 애플리케이션 코드보다 먼저 막는다. FastAPI엔 이런 자동 장치가 없어 여기서 가장 먼저 체크한다.
+    if len(content) > MAX_IMAGE_SIZE_BYTES:
+        raise CustomException(ErrorCode.IMAGE_SIZE_EXCEEDED)
 
     # 빈 이미지인지 확인
     if not content:

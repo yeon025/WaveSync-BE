@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/routers/resonator_router.py
 package io.github.wavesync.controller;
 import io.github.wavesync.dto.request.*;
 import io.github.wavesync.dto.response.*;

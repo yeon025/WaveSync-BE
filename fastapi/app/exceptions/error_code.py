@@ -45,6 +45,12 @@ class ErrorCode(Enum):
         "이미지 처리 중 오류가 발생했습니다. 다시 시도해주세요."
     )
 
+    RESONATOR_NOT_FOUND = (
+        400,
+        "RESONATOR_NOT_FOUND",
+        "등록하지 않은 공명자입니다."
+    )
+
     DATABASE_ERROR = (
         500,
         "DATABASE_ERROR",
@@ -61,4 +67,10 @@ class ErrorCode(Enum):
         422,
         "VALIDATION_FAILED",
         "추출된 데이터가 유효하지 않습니다."
+    )
+
+    IMAGE_SIZE_EXCEEDED = (
+        413,
+        "IMAGE_SIZE_EXCEEDED",
+        "이미지 크기는 500KB 이하만 업로드할 수 있습니다. 다른 이미지를 선택해주세요."
     )

@@ -1,3 +1,4 @@
+// MIGRATED to fastapi/app/services/resonator_service.py
 package io.github.wavesync.service;
 import io.github.wavesync.client.FastApiClient;
 import io.github.wavesync.dto.common.*;

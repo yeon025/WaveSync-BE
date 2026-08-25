@@ -5,6 +5,11 @@ from app.models.user_echo_sub import UserEchoSub
 from app.models.user_echo import UserEcho
 
 
+def save_all(db: Session, echo_subs: List[UserEchoSub]) -> None:
+    # Spring JpaRepository.saveAll() 대응. 커밋은 호출부 책임
+    db.add_all(echo_subs)
+
+
 def soft_delete_by_user_resonator_ids(db: Session, ids: List[int]) -> None:
     # ues.userEcho.userResonator.id in :ids — Postgres UPDATE ... FROM으로 2단계 JOIN 재현
     stmt = (
