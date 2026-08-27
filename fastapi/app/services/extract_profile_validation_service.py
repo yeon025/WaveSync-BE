@@ -3,7 +3,7 @@ from typing import List, Set
 from sqlalchemy.orm import Session
 from app.models.stat_type import StatType
 from app.repositories import resonator_master_repository, weapon_master_repository
-from app.schemas.response import ExtractData, Echo, Stat
+from app.schemas.common import ExtractData, Echo, ExtractedStat
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.config.logger import logger
@@ -12,7 +12,7 @@ from app.config.logger import logger
 # Spring service.ExtractProfileValidationService 대응.
 #
 # Spring의 StatDto{type: StatType, value: BigDecimal}는 Jackson이 JSON 역직렬화 단계에서
-# 자동으로 만들어주지만, FastAPI의 ExtractData/Echo/Stat(이미 존재하는 OCR 결과 스키마)는
+# 자동으로 만들어주지만, FastAPI의 ExtractData/Echo/ExtractedStat(이미 존재하는 OCR 결과 스키마)는
 # type이 소문자 code 문자열(예: "hp_percent"), value가 float라 여기서 직접 변환한다.
 # StatType.from_code() 실패(KeyError)는 Spring에선 Jackson 역직렬화 단계에서 걸러져
 # 이 서비스까지 도달할 수 없던 경우지만, 여기선 sub.getType() == null과 동일하게 취급한다.
@@ -75,7 +75,7 @@ def _validate_subs(echoes: List[Echo]) -> None:
             _validate_sub_value(stat_type, sub, i + 1, j + 1)
 
 
-def _validate_sub_type(sub: Stat, echo_number: int, sub_number: int) -> StatType:
+def _validate_sub_type(sub: ExtractedStat, echo_number: int, sub_number: int) -> StatType:
     try:
         return StatType.from_code(sub.type)
     except KeyError:
@@ -86,7 +86,7 @@ def _validate_sub_type(sub: Stat, echo_number: int, sub_number: int) -> StatType
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
 
-def _validate_sub_value(stat_type: StatType, sub: Stat, echo_number: int, sub_number: int) -> None:
+def _validate_sub_value(stat_type: StatType, sub: ExtractedStat, echo_number: int, sub_number: int) -> None:
     valid_values = _VALID_SUB_VALUES.get(stat_type)
 
     # float -> Decimal은 반드시 str을 거친다. Decimal(sub.value)는 IEEE754 이진 오차가

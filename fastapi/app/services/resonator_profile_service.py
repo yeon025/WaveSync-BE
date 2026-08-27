@@ -7,7 +7,7 @@ from app.services.resonance_chain_service import calculate_chain_level
 from app.services.ocr_service import extract_text, process_ocr_result, clean_text
 from app.mapper.echo import EchoMapper
 from app.config.constant import TMP_DIR, CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR
-from app.schemas.response import ExtractData
+from app.schemas.common import ExtractData
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.config.logger import logger

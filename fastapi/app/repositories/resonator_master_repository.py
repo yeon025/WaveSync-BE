@@ -3,7 +3,7 @@ from sqlalchemy import select, exists
 from sqlalchemy.orm import Session
 from app.models.resonator_master import ResonatorMaster
 from app.models.user_resonator import UserResonator
-from app.schemas.response import ResonatorSummaryResponseDto
+from app.schemas.response import ResonatorSummaryResponse
 
 
 def find_by_name(db: Session, name: str) -> Optional[ResonatorMaster]:
@@ -16,7 +16,7 @@ def exists_by_name(db: Session, name: str) -> bool:
     )
 
 
-def find_resonator_summary(db: Session) -> List[ResonatorSummaryResponseDto]:
+def find_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:
     # relationship 대신 명시적 JOIN 사용 (ResonatorMaster.user_resonators는 미사용 필드라 안 걸어둠)
     stmt = (
         select(
@@ -37,7 +37,7 @@ def find_resonator_summary(db: Session) -> List[ResonatorSummaryResponseDto]:
     rows = db.execute(stmt).all()
 
     return [
-        ResonatorSummaryResponseDto(
+        ResonatorSummaryResponse(
             userResonatorId=row.id,
             resonatorName=row.name,
             rarity=row.rarity,

@@ -1,6 +1,6 @@
 import re
 from enum import Enum, auto
-from app.schemas.response import Echo, Stat
+from app.schemas.common import Echo, ExtractedStat
 from app.config.logger import logger
 from app.config.constant import MAIN_STAT_MAP, SECONDARY_STAT_MAP, SUB_STAT_PERCENT_MAP, SUB_STAT_FLAT_MAP
 
@@ -17,8 +17,8 @@ class EchoMapper:
     def __init__(self):
         self.final_list = []
         self.current_echo = Echo(
-            main=Stat(type="", value=0),
-            secondary=Stat(type="", value=0)
+            main=ExtractedStat(type="", value=0),
+            secondary=ExtractedStat(type="", value=0)
         )
         self.current_subs = []
         self.state = ParseState.START
@@ -32,8 +32,8 @@ class EchoMapper:
             self.final_list.append(self.current_echo)
         
         self.current_echo = Echo(
-            main=Stat(type="", value=0),
-            secondary=Stat(type="", value=0)
+            main=ExtractedStat(type="", value=0),
+            secondary=ExtractedStat(type="", value=0)
         )
         self.current_subs = []
 
@@ -93,7 +93,7 @@ class EchoMapper:
                 label = SUB_STAT_FLAT_MAP.get(raw_label, raw_label)
 
             value = float(value) if '.' in value else int(value)
-            new_sub = Stat(type=label, value=value)
+            new_sub = ExtractedStat(type=label, value=value)
             self.current_subs.append(new_sub)
             logger.debug(
                 f"{len(self.final_list) + 1}번 에코의 {len(self.current_subs)}번 sub는 "

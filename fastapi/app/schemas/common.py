@@ -1,20 +1,20 @@
 from decimal import Decimal
-from typing import Optional
-from pydantic import BaseModel, field_serializer, field_validator
+from typing import List, Optional
+from pydantic import BaseModel, Field, field_serializer, field_validator
 from app.models.stat_type import StatType
 from app.models.branch_position import BranchPosition
 from app.models.node_position import NodePosition
 
 
-# Spring dto.common.StatDto 대응.
+# Spring dto.common.Stat 대응.
 # type은 Spring @JsonValue(StatType.getCode())와 동일하게 code 값으로 직렬화한다
 # (DB/Python 내부값은 여전히 대문자 멤버 이름 — models/stat_type.py 참고).
 #
 # 입력측(예: updateResonator 요청 바디)도 이 클래스를 쓰므로, 클라이언트가 code
 # 문자열(예: "attack_percent")을 그대로 돌려보내는 경우를 from_code()로 흡수한다.
-# 서비스 코드에서 이미 StatType 인스턴스로 생성하는 기존 호출부(예: WeaponDetailDto)는
+# 서비스 코드에서 이미 StatType 인스턴스로 생성하는 기존 호출부(예: WeaponDetail)는
 # 영향 없다 — isinstance 체크로 그대로 통과시킨다.
-class StatDto(BaseModel):
+class Stat(BaseModel):
     type: StatType
     value: Decimal
 
@@ -33,15 +33,15 @@ class StatDto(BaseModel):
         return value.code
 
 
-# Spring dto.common.ResonanceNodeDto 대응.
+# Spring dto.common.ResonanceNode 대응.
 # branchPosition/nodePosition은 Spring 필드 타입 자체가 enum이라(String으로 미리
 # 변환하지 않음) Jackson @JsonValue처럼 code로 직렬화한다.
-# StatDto와 동일한 이유로 입력측 from_code() 변환도 같이 둔다.
-class ResonanceNodeDto(BaseModel):
+# Stat과 동일한 이유로 입력측 from_code() 변환도 같이 둔다.
+class ResonanceNode(BaseModel):
     branchPosition: BranchPosition
     nodePosition: NodePosition
     active: bool
-    stat: Optional[StatDto] = None
+    stat: Optional[Stat] = None
 
     @field_validator("branchPosition", mode="before")
     @classmethod
@@ -72,8 +72,8 @@ class ResonanceNodeDto(BaseModel):
         return value.code
 
 
-# Spring dto.common.ResonatorStatDto 대응.
-class ResonatorStatDto(BaseModel):
+# Spring dto.common.ResonatorStat 대응.
+class ResonatorStat(BaseModel):
     hp: int
     attack: int
     defense: int
@@ -96,7 +96,7 @@ class ResonatorStatDto(BaseModel):
     healingBonus: Decimal
 
     @classmethod
-    def from_final_stat(cls, final_stat) -> "ResonatorStatDto":
+    def from_final_stat(cls, final_stat) -> "ResonatorStat":
         return cls(
             hp=final_stat.hp,
             attack=final_stat.attack,
@@ -118,30 +118,30 @@ class ResonatorStatDto(BaseModel):
         )
 
 
-# Spring dto.common.WeaponDetailDto 대응.
-class WeaponDetailDto(BaseModel):
+# Spring dto.common.WeaponDetail 대응.
+class WeaponDetail(BaseModel):
     name: str
     attackValue: int
-    main: StatDto
+    main: Stat
     refineLevel: int
     imageUrl: str
 
     @classmethod
-    def from_user_resonator(cls, user_resonator, weapon_image_url: str) -> "WeaponDetailDto":
+    def from_user_resonator(cls, user_resonator, weapon_image_url: str) -> "WeaponDetail":
         weapon = user_resonator.weapon_master
         return cls(
             name=weapon.name,
             attackValue=weapon.attack_value,
-            main=StatDto(type=weapon.main_type, value=weapon.main_value),
+            main=Stat(type=weapon.main_type, value=weapon.main_value),
             refineLevel=user_resonator.refine_level,
             imageUrl=weapon_image_url,
         )
 
 
-# Spring dto.common.WeaponSettingDto 대응.
+# Spring dto.common.WeaponSetting 대응.
 # refineType은 Spring도 DTO 필드 자체가 String이라(Optional.map(StatType::getCode))
 # 여기서도 그대로 code 문자열로 담는다 — 별도 field_serializer 불필요.
-class WeaponSettingDto(BaseModel):
+class WeaponSetting(BaseModel):
     refineLevel: int
     refineType: Optional[str] = None
     refine1Value: Optional[Decimal] = None
@@ -152,7 +152,7 @@ class WeaponSettingDto(BaseModel):
     imageUrl: str
 
     @classmethod
-    def from_user_resonator(cls, user_resonator, weapon_image_url: str) -> "WeaponSettingDto":
+    def from_user_resonator(cls, user_resonator, weapon_image_url: str) -> "WeaponSetting":
         weapon = user_resonator.weapon_master
         return cls(
             refineLevel=user_resonator.refine_level,
@@ -164,3 +164,25 @@ class WeaponSettingDto(BaseModel):
             refine5Value=weapon.refine_5_value,
             imageUrl=weapon_image_url,
         )
+
+
+# Echo — OCR 추출 결과 스키마 (Request/Response 접미사가 없는 하위 DTO라 common으로 이동).
+class ExtractedStat(BaseModel):
+    type: str
+    value: float
+
+
+class Echo(BaseModel):
+    # name: str
+    # imageUrl: str
+    main: ExtractedStat
+    secondary: ExtractedStat
+    subs: List[ExtractedStat] = Field(default_factory=list)
+
+
+# 공명자 정보
+class ExtractData(BaseModel):
+    resonatorName: str
+    resonanceChainLevel: int
+    weaponName: str
+    echoes: List[Echo]

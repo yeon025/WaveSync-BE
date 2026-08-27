@@ -1,41 +1,10 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Optional
-from app.schemas.common import ResonanceNodeDto, ResonatorStatDto, WeaponDetailDto, WeaponSettingDto
+from app.schemas.common import ResonanceNode, ResonatorStat, WeaponDetail, WeaponSetting
 
 
-
-# Echo
-class Stat(BaseModel):
-    type: str
-    value: float
-
-
-class Echo(BaseModel):
-    # name: str
-    # imageUrl: str
-    main: Stat
-    secondary: Stat
-    subs: List[Stat] = Field(default_factory=list)
-
-
-
-# 공명자 정보
-class ExtractData(BaseModel):
-    resonatorName: str
-    resonanceChainLevel: int
-    weaponName: str
-    echoes: List[Echo]
-
-
-class ResonatorImageResponse(BaseModel):
-    code: str
-    message: str
-    data: ExtractData
-
-
-
-# Spring dto.response.ResonatorSummaryResponseDto 대응
-class ResonatorSummaryResponseDto(BaseModel):
+# Spring dto.response.ResonatorSummaryResponse 대응
+class ResonatorSummaryResponse(BaseModel):
     userResonatorId: Optional[int] = None  # LEFT JOIN이라 매칭되는 UserResonator가 없으면 None
     resonatorName: str
     rarity: int
@@ -43,24 +12,23 @@ class ResonatorSummaryResponseDto(BaseModel):
     thumbnailImageUrl: str  # 주의: Spring 원본도 실제 URL이 아니라 raw path를 그대로 담음(변환 전)
 
 
-
-# Spring dto.response.ResonatorDetailResponseDto 대응
-class ResonatorDetailResponseDto(BaseModel):
+# Spring dto.response.ResonatorDetailResponse 대응
+class ResonatorDetailResponse(BaseModel):
     userResonatorId: int
     resonatorName: str
     element: str  # Spring도 DTO 필드가 String이라(Element::getCode) code 문자열을 그대로 담음
     standingImageUrl: str
     resonanceChainLevel: int
-    weapon: WeaponDetailDto
-    stat: ResonatorStatDto
+    weapon: WeaponDetail
+    stat: ResonatorStat
 
 
-# Spring dto.response.ResonatorSettingResponseDto 대응
-class ResonatorSettingResponseDto(BaseModel):
-    nodes: List[ResonanceNodeDto]
-    weapon: WeaponSettingDto
+# Spring dto.response.ResonatorSettingResponse 대응
+class ResonatorSettingResponse(BaseModel):
+    nodes: List[ResonanceNode]
+    weapon: WeaponSetting
 
 
-# Spring dto.response.CreateResonatorResponseDto 대응
-class CreateResonatorResponseDto(BaseModel):
+# Spring dto.response.CreateResonatorResponse 대응
+class CreateResonatorResponse(BaseModel):
     resonatorName: str

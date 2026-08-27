@@ -105,7 +105,7 @@ cd spring && ./gradlew bootRun
 Spring은 `ApiResponseDto<T>{code, message, data}` 공용 래퍼를 쓰고, `@JsonInclude(NON_NULL)`로 `data`가 없을 때(에러 응답 등) 필드 자체를 생략한다. 에러는 `ErrorResponseDto.of(code, message)`로 `data` 없이 내려간다.
 
 - `code` 필드는 `ErrorCode`의 `code` 문자열에서 온다 — 그래서 `error_code.py`가 `(status, code, message)` 3-튜플이다
-- **성공 응답은 `schemas/api_response.py`의 제네릭 `ApiResponse[T]{code, message, data}`로 확정됐다** (ResonatorService 이관 때 결정). 라우터에서 `response_model=ApiResponse[SomeDto]` + `response_model_exclude_none=True`로 선언하면 `data`가 `None`일 때 Jackson `@JsonInclude(NON_NULL)`과 동일하게 필드 자체가 응답에서 빠진다. 새 도메인 라우터를 만들 때도 이 패턴을 그대로 쓸 것 (도메인별 개별 응답 모델 새로 정의하지 않기 — `ResonatorImageResponse`처럼 이관 전부터 있던 것만 예외로 유지)
+- **성공 응답은 `schemas/api_response.py`의 제네릭 `ApiResponse[T]{code, message, data}`로 확정됐다** (ResonatorService 이관 때 결정). 라우터에서 `response_model=ApiResponse[SomeDto]` + `response_model_exclude_none=True`로 선언하면 `data`가 `None`일 때 Jackson `@JsonInclude(NON_NULL)`과 동일하게 필드 자체가 응답에서 빠진다. 새 도메인 라우터를 만들 때도 이 패턴을 그대로 쓸 것 (도메인별 개별 응답 모델 새로 정의하지 않기). 과거엔 이관 전부터 있던 `ResonatorImageResponse`(`/resonators/images` 엔드포인트)만 예외로 유지했으나, 이 엔드포인트는 프레임워크 통합으로 더 이상 쓰이지 않아 삭제됐다 — 현재는 예외 없이 전부 이 패턴을 따른다
 - `exceptions/exception_handler.py`는 3단계로 처리한다: `CustomException`(도메인 예외, `{code, message}`) → `SQLAlchemyError`(Spring `DataAccessException` 대응, `DATABASE_ERROR`) → 나머지 전부(Spring `Exception` catch-all 대응, `INTERNAL_SERVER_ERROR` + `detail`). `main.py`에 `add_exception_handler`로 이 순서와 무관하게 각자 등록돼 있고, Starlette가 예외 타입의 MRO로 가장 구체적인 핸들러를 골라준다
 
 ### 의도적으로 Spring과 다르게 둔 것 (ResonatorService 이관 시 확정)

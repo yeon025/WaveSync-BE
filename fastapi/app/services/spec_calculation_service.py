@@ -5,12 +5,12 @@ from app.models.final_stat import FinalStat
 from app.models.user_echo import UserEcho
 from app.models.user_resonator import UserResonator
 from app.models.weapon_master import WeaponMaster
-from app.schemas.common import ResonanceNodeDto
+from app.schemas.common import ResonanceNode
 from app.config.logger import logger
 
 
 # Spring service.SpecCalculationService 대응.
-# DB I/O 없음 — 이미 로드된 UserResonator/ResonanceNodeDto만으로 계산하는 순수 함수 모음.
+# DB I/O 없음 — 이미 로드된 UserResonator/ResonanceNode만으로 계산하는 순수 함수 모음.
 # 클래스로 감싸지 않은 이유: Spring도 상태 없는 @Service(인스턴스 필드 없음)이고,
 # 지금까지 FastAPI services/의 함수형 컨벤션(resonator_profile_service 등)과도 일치.
 
@@ -105,7 +105,7 @@ def _get_weapon_stat_percent(
 
 
 # 공명 노드에서 획득한 백분율 스탯 합산
-def _get_node_stat_percent(nodes: List[ResonanceNodeDto], stat_type: StatType) -> Decimal:
+def _get_node_stat_percent(nodes: List[ResonanceNode], stat_type: StatType) -> Decimal:
     percent = Decimal(0)
 
     for node in nodes:
@@ -119,7 +119,7 @@ def _calculate_stat(
     base_stat: int,
     echoes: List[UserEcho],
     weapon_master: WeaponMaster,
-    nodes: List[ResonanceNodeDto],
+    nodes: List[ResonanceNode],
     percent_stat_type: StatType,
     echo_flat_type: StatType,
     weapon_refine_level: int,
@@ -160,7 +160,7 @@ def _calculate_percent_stat(
     base_value: Decimal,
     echoes: List[UserEcho],
     weapon_master: WeaponMaster,
-    nodes: List[ResonanceNodeDto],
+    nodes: List[ResonanceNode],
     stat_type: StatType,
     refine_level: int,
 ) -> Decimal:
@@ -187,7 +187,7 @@ def _calculate_percent_stat(
     return result
 
 
-def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNodeDto]) -> FinalStat:
+def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNode]) -> FinalStat:
     """공명자 최초 등록 시 스펙 전체 계산. 재련레벨 1 고정 (createResonator 대응)."""
     user_echoes = user_resonator.user_echoes
     resonator_master = user_resonator.resonator_master
@@ -253,7 +253,7 @@ def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNod
 def re_calculate_final_stat(
     required_type: Set[StatType],
     user_resonator: UserResonator,
-    nodes: List[ResonanceNodeDto],
+    nodes: List[ResonanceNode],
     weapon_refine_level: int,
 ) -> None:
     """updateResonator 대응 — required_type에 담긴 스탯만 부분 재계산해 final_stat을 in-place 수정한다.
