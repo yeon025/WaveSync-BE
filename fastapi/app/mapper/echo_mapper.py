@@ -98,6 +98,5 @@ class EchoMapper:
             new_sub = ExtractedStat(type=label, value=value)
             self.current_subs.append(new_sub)
             logger.debug(
-                f"{len(self.final_list) + 1}번 에코의 {len(self.current_subs)}번 sub는 "
-                f"{label}, {value}입니다."
+                f"{len(self.final_list) + 1}번 에코의 {len(self.current_subs)}번 sub는 {label}, {value}입니다."
             )

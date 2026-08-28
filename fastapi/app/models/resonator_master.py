@@ -27,9 +27,7 @@ class ResonatorMaster(Base):
     standing_image = Column(String(255), nullable=True)
 
     # Spring @OneToOne(mappedBy = "resonatorMaster") 대응
-    resonance_node_master = relationship(
-        "ResonanceNodeMaster", back_populates="resonator_master", uselist=False
-    )
+    resonance_node_master = relationship("ResonanceNodeMaster", back_populates="resonator_master", uselist=False)
 
     # Resonator(UserResonator) 도메인을 이관할 때 여기에
     # user_resonators = relationship("UserResonator", back_populates="resonator_master")

@@ -26,7 +26,5 @@ class ResonanceNodeMaster(Base):
     inner_top_node_value = Column(Numeric(5, 1), nullable=False)
     inner_middle_node_value = Column(Numeric(5, 1), nullable=False)
 
-    resonator_master_id = Column(
-        BigInteger, ForeignKey("resonator_master.id"), nullable=False, unique=True
-    )
+    resonator_master_id = Column(BigInteger, ForeignKey("resonator_master.id"), nullable=False, unique=True)
     resonator_master = relationship("ResonatorMaster", back_populates="resonance_node_master")

@@ -28,13 +28,9 @@ _DAMAGE_BONUS_VALUES = _decimals("6.4", "7.1", "7.9", "8.6", "9.4", "10.1", "10.
 # Spring ExtractProfileValidationService.createValidSubValues() 1:1 포팅 (13개 키)
 _VALID_SUB_VALUES = {
     StatType.CRITICAL_RATE: _decimals("6.3", "6.9", "7.5", "8.1", "8.7", "9.3", "9.9", "10.5"),
-    StatType.CRITICAL_DAMAGE: _decimals(
-        "12.6", "13.8", "15.0", "16.2", "17.4", "18.6", "19.8", "21.0"
-    ),
+    StatType.CRITICAL_DAMAGE: _decimals("12.6", "13.8", "15.0", "16.2", "17.4", "18.6", "19.8", "21.0"),
     StatType.ENERGY_REGEN: _decimals("6.8", "7.6", "8.4", "9.2", "10.0", "10.8", "11.6", "12.4"),
-    StatType.DEFENSE_PERCENT: _decimals(
-        "8.1", "9.0", "10.0", "10.9", "11.8", "12.8", "13.8", "14.7"
-    ),
+    StatType.DEFENSE_PERCENT: _decimals("8.1", "9.0", "10.0", "10.9", "11.8", "12.8", "13.8", "14.7"),
     StatType.DEFENSE: _decimals("40", "50", "60", "70"),
     StatType.ATTACK_PERCENT: _decimals("6.4", "7.1", "7.9", "8.6", "9.4", "10.1", "10.9", "11.6"),
     StatType.ATTACK: _decimals("30", "40", "50", "60"),
@@ -59,9 +55,7 @@ def validate(db: Session, dto: ExtractData) -> str:
 
 def _validate_resonator(db: Session, resonator_name: str) -> None:
     if not resonator_master_repository.exists_by_name(db, resonator_name):
-        logger.warning(
-            f"공명자 이름이 마스터 데이터에 존재하지 않습니다. resonatorName={resonator_name}"
-        )
+        logger.warning(f"공명자 이름이 마스터 데이터에 존재하지 않습니다. resonatorName={resonator_name}")
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
 
@@ -69,9 +63,7 @@ def _validate_weapon(db: Session, extracted_name: str) -> str:
     weapon = weapon_master_repository.find_by_name_without_spaces(db, extracted_name)
 
     if weapon is None:
-        logger.warning(
-            f"무기 이름이 마스터 데이터에 존재하지 않습니다. weaponName={extracted_name}"
-        )
+        logger.warning(f"무기 이름이 마스터 데이터에 존재하지 않습니다. weaponName={extracted_name}")
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
     return weapon.name
@@ -95,9 +87,7 @@ def _validate_sub_type(sub: ExtractedStat, echo_number: int, sub_number: int) ->
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
 
-def _validate_sub_value(
-    stat_type: StatType, sub: ExtractedStat, echo_number: int, sub_number: int
-) -> None:
+def _validate_sub_value(stat_type: StatType, sub: ExtractedStat, echo_number: int, sub_number: int) -> None:
     valid_values = _VALID_SUB_VALUES.get(stat_type)
 
     # float -> Decimal은 반드시 str을 거친다. Decimal(sub.value)는 IEEE754 이진 오차가

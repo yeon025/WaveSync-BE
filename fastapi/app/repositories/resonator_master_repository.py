@@ -29,8 +29,7 @@ def find_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:
         .select_from(ResonatorMaster)
         .join(
             UserResonator,
-            (UserResonator.resonator_master_id == ResonatorMaster.id)
-            & (UserResonator.is_deleted.is_(False)),
+            (UserResonator.resonator_master_id == ResonatorMaster.id) & (UserResonator.is_deleted.is_(False)),
             isouter=True,
         )
     )

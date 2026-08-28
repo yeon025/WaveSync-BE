@@ -220,9 +220,7 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
-    node_map = {
-        f"{node.branchPosition.value}_{node.nodePosition.value}": node for node in data.nodes
-    }
+    node_map = {f"{node.branchPosition.value}_{node.nodePosition.value}": node for node in data.nodes}
 
     # Spring 원본엔 없는 방어 로직 — 10개 위치가 요청에 전부 없으면 아래 루프에서
     # 조용히 실패하는 대신 여기서 명확히 거부한다. 누락 위치는 로그에 남긴다.
@@ -233,17 +231,11 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
     }
     missing_keys = required_keys - node_map.keys()
     if missing_keys:
-        logger.warning(
-            f"업데이트 요청에 누락된 공명 노드 위치가 있습니다. missing={sorted(missing_keys)}"
-        )
+        logger.warning(f"업데이트 요청에 누락된 공명 노드 위치가 있습니다. missing={sorted(missing_keys)}")
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
     # 10개의 공명 노드에서 모든 StatType 수집
-    required_type = {
-        node.stat.type
-        for node in data.nodes
-        if node.stat is not None and node.stat.type is not None
-    }
+    required_type = {node.stat.type for node in data.nodes if node.stat is not None and node.stat.type is not None}
 
     # 무기의 재련 옵션 추가
     refine_type = user_resonator.weapon_master.refine_type
@@ -251,9 +243,7 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
         required_type.add(refine_type)
 
     # 스펙 재계산
-    spec_calculation_service.re_calculate_final_stat(
-        required_type, user_resonator, data.nodes, data.weaponRefineLevel
-    )
+    spec_calculation_service.re_calculate_final_stat(required_type, user_resonator, data.nodes, data.weaponRefineLevel)
 
     # 무기 재련 레벨 변경
     user_resonator.refine_level = data.weaponRefineLevel

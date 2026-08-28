@@ -49,8 +49,7 @@ async def execution_time_middleware(request: Request, call_next):
         duration_ms = int((time.perf_counter() - start) * 1000)
         status = response.status_code if response is not None else 500
         logger.info(
-            f"{request.method} {request.url.path} 응답이 완료되었습니다. "
-            f"| status={status} | time={duration_ms}ms"
+            f"{request.method} {request.url.path} 응답이 완료되었습니다. | status={status} | time={duration_ms}ms"
         )
 
 

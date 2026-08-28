@@ -49,9 +49,7 @@ def _is_basic_or_heavy_damage_type(stat_type: StatType) -> bool:
 
 
 # 에코에서 획득한 백분율 스탯과 고정 스탯을 합산 (메인/보조/서브 전부)
-def _get_echo_stat(
-    echoes: List[UserEcho], percent_type: StatType, flat_type: StatType
-) -> Tuple[Decimal, Decimal]:
+def _get_echo_stat(echoes: List[UserEcho], percent_type: StatType, flat_type: StatType) -> Tuple[Decimal, Decimal]:
     percent = Decimal(0)
     flat = Decimal(0)
 
@@ -75,9 +73,7 @@ def _get_echo_stat(
 
 
 # 무기에서 획득한 백분율 스탯 합산
-def _get_weapon_stat_percent(
-    weapon_master: WeaponMaster, stat_type: StatType, weapon_refine_level: int
-) -> Decimal:
+def _get_weapon_stat_percent(weapon_master: WeaponMaster, stat_type: StatType, weapon_refine_level: int) -> Decimal:
     percent = Decimal(0)
 
     attr = _REFINE_VALUE_ATTRS.get(weapon_refine_level)
@@ -94,10 +90,7 @@ def _get_weapon_stat_percent(
         percent += refine_value
 
     # 전체 속성 피해 보너스
-    if (
-        _is_element_damage_type(stat_type)
-        and weapon_master.refine_type == StatType.ALL_ATTRIBUTE_DAMAGE_BONUS
-    ):
+    if _is_element_damage_type(stat_type) and weapon_master.refine_type == StatType.ALL_ATTRIBUTE_DAMAGE_BONUS:
         percent += refine_value
 
     # 일반 공격 + 강공격 피해 보너스
@@ -133,9 +126,7 @@ def _calculate_stat(
     logger.debug(f"{echo_flat_type} baseStat: {base_stat}")
 
     # 무기에서 획득한 백분율 스탯
-    weapon_stat_percent = _get_weapon_stat_percent(
-        weapon_master, percent_stat_type, weapon_refine_level
-    )
+    weapon_stat_percent = _get_weapon_stat_percent(weapon_master, percent_stat_type, weapon_refine_level)
 
     # 공명 노드에서 획득한 백분율 스탯
     node_stat_percent = _get_node_stat_percent(nodes, percent_stat_type)
@@ -202,15 +193,7 @@ def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNod
     weapon_master = user_resonator.weapon_master
 
     return FinalStat(
-        hp=_calculate_stat(
-            resonator_master.hp,
-            user_echoes,
-            weapon_master,
-            nodes,
-            StatType.HP_PERCENT,
-            StatType.HP,
-            1,
-        ),
+        hp=_calculate_stat(resonator_master.hp, user_echoes, weapon_master, nodes, StatType.HP_PERCENT, StatType.HP, 1),
         attack=_calculate_stat(
             resonator_master.attack + weapon_master.attack_value,
             user_echoes,
@@ -221,20 +204,10 @@ def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNod
             1,
         ),
         defense=_calculate_stat(
-            resonator_master.defense,
-            user_echoes,
-            weapon_master,
-            nodes,
-            StatType.DEFENSE_PERCENT,
-            StatType.DEFENSE,
-            1,
+            resonator_master.defense, user_echoes, weapon_master, nodes, StatType.DEFENSE_PERCENT, StatType.DEFENSE, 1
         ),
-        energy_regen=_calculate_percent_stat(
-            Decimal(100), user_echoes, weapon_master, nodes, StatType.ENERGY_REGEN, 1
-        ),
-        critical_rate=_calculate_percent_stat(
-            Decimal(5), user_echoes, weapon_master, nodes, StatType.CRITICAL_RATE, 1
-        ),
+        energy_regen=_calculate_percent_stat(Decimal(100), user_echoes, weapon_master, nodes, StatType.ENERGY_REGEN, 1),
+        critical_rate=_calculate_percent_stat(Decimal(5), user_echoes, weapon_master, nodes, StatType.CRITICAL_RATE, 1),
         critical_damage=_calculate_percent_stat(
             Decimal(150), user_echoes, weapon_master, nodes, StatType.CRITICAL_DAMAGE, 1
         ),
@@ -248,12 +221,7 @@ def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNod
             Decimal(0), user_echoes, weapon_master, nodes, StatType.HEAVY_ATTACK_DAMAGE_BONUS, 1
         ),
         resonance_liberation_damage_bonus=_calculate_percent_stat(
-            Decimal(0),
-            user_echoes,
-            weapon_master,
-            nodes,
-            StatType.RESONANCE_LIBERATION_DAMAGE_BONUS,
-            1,
+            Decimal(0), user_echoes, weapon_master, nodes, StatType.RESONANCE_LIBERATION_DAMAGE_BONUS, 1
         ),
         glacio_damage_bonus=_calculate_percent_stat(
             Decimal(0), user_echoes, weapon_master, nodes, StatType.GLACIO_DAMAGE_BONUS, 1
@@ -273,9 +241,7 @@ def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNod
         havoc_damage_bonus=_calculate_percent_stat(
             Decimal(0), user_echoes, weapon_master, nodes, StatType.HAVOC_DAMAGE_BONUS, 1
         ),
-        healing_bonus=_calculate_percent_stat(
-            Decimal(0), user_echoes, weapon_master, nodes, StatType.HEALING_BONUS, 1
-        ),
+        healing_bonus=_calculate_percent_stat(Decimal(0), user_echoes, weapon_master, nodes, StatType.HEALING_BONUS, 1),
         user_resonator=user_resonator,
     )
 
@@ -334,92 +300,47 @@ def re_calculate_final_stat(
 
         elif stat_type == StatType.CRITICAL_RATE:
             final_stat.critical_rate = _calculate_percent_stat(
-                Decimal(5),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.CRITICAL_RATE,
-                weapon_refine_level,
+                Decimal(5), user_echoes, weapon_master, nodes, StatType.CRITICAL_RATE, weapon_refine_level
             )
 
         elif stat_type == StatType.CRITICAL_DAMAGE:
             final_stat.critical_damage = _calculate_percent_stat(
-                Decimal(150),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.CRITICAL_DAMAGE,
-                weapon_refine_level,
+                Decimal(150), user_echoes, weapon_master, nodes, StatType.CRITICAL_DAMAGE, weapon_refine_level
             )
 
         elif stat_type == StatType.FUSION_DAMAGE_BONUS:
             final_stat.fusion_damage_bonus = _calculate_percent_stat(
-                Decimal(0),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.FUSION_DAMAGE_BONUS,
-                weapon_refine_level,
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.FUSION_DAMAGE_BONUS, weapon_refine_level
             )
 
         elif stat_type == StatType.GLACIO_DAMAGE_BONUS:
             final_stat.glacio_damage_bonus = _calculate_percent_stat(
-                Decimal(0),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.GLACIO_DAMAGE_BONUS,
-                weapon_refine_level,
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.GLACIO_DAMAGE_BONUS, weapon_refine_level
             )
 
         elif stat_type == StatType.AERO_DAMAGE_BONUS:
             final_stat.aero_damage_bonus = _calculate_percent_stat(
-                Decimal(0),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.AERO_DAMAGE_BONUS,
-                weapon_refine_level,
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.AERO_DAMAGE_BONUS, weapon_refine_level
             )
 
         elif stat_type == StatType.CONDUCTO_DAMAGE_BONUS:
             final_stat.conducto_damage_bonus = _calculate_percent_stat(
-                Decimal(0),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.CONDUCTO_DAMAGE_BONUS,
-                weapon_refine_level,
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.CONDUCTO_DAMAGE_BONUS, weapon_refine_level
             )
 
         elif stat_type == StatType.SPECTRA_DAMAGE_BONUS:
             final_stat.spectra_damage_bonus = _calculate_percent_stat(
-                Decimal(0),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.SPECTRA_DAMAGE_BONUS,
-                weapon_refine_level,
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.SPECTRA_DAMAGE_BONUS, weapon_refine_level
             )
 
         elif stat_type == StatType.HAVOC_DAMAGE_BONUS:
             final_stat.havoc_damage_bonus = _calculate_percent_stat(
-                Decimal(0),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.HAVOC_DAMAGE_BONUS,
-                weapon_refine_level,
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.HAVOC_DAMAGE_BONUS, weapon_refine_level
             )
 
         elif stat_type == StatType.HEALING_BONUS:
             final_stat.healing_bonus = _calculate_percent_stat(
-                Decimal(0),
-                user_echoes,
-                weapon_master,
-                nodes,
-                StatType.HEALING_BONUS,
-                weapon_refine_level,
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.HEALING_BONUS, weapon_refine_level
             )
 
         # 나머지 StatType은 Spring 원본의 default -> {} 와 동일하게 무시

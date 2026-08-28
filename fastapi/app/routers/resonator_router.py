@@ -74,9 +74,7 @@ def get_resonator_setting(user_resonator_id: int, db: Session = Depends(get_db))
     response_model_exclude_none=True,
     status_code=200,
 )
-def update_resonator(
-    user_resonator_id: int, data: UpdateResonatorRequest, db: Session = Depends(get_db)
-):
+def update_resonator(user_resonator_id: int, data: UpdateResonatorRequest, db: Session = Depends(get_db)):
     resonator_service.update_resonator(db, user_resonator_id, data)
 
     return ApiResponse(code="OK", message="공명자 정보가 수정되었습니다.")
