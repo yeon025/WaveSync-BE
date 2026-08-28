@@ -63,7 +63,6 @@ def _group_into_lines(words_data):
 
 
 def clean_text(raw_texts):
-    texts_without_lv = []
     final_texts = []
 
     # LV 제거
