@@ -1,7 +1,8 @@
 from typing import Annotated, List
-from pydantic import BaseModel, Field
-from app.schemas.common import ResonanceNode
 
+from pydantic import BaseModel, Field
+
+from app.schemas.common import ResonanceNode
 
 # Spring dto.request.DeleteResonatorRequest 대응
 # @NotEmpty List<@NotNull @Positive Long> userResonatorIds

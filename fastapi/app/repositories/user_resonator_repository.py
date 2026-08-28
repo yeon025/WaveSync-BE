@@ -1,9 +1,11 @@
 from typing import List, Optional
+
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session, joinedload, selectinload
-from app.models.user_resonator import UserResonator
+
 from app.models.resonator_master import ResonatorMaster
 from app.models.user_echo import UserEcho
+from app.models.user_resonator import UserResonator
 
 
 def save(db: Session, user_resonator: UserResonator) -> UserResonator:

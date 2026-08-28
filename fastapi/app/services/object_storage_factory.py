@@ -1,7 +1,8 @@
 import os
 from functools import lru_cache
-from app.services.object_storage_service import ObjectStorageService
+
 from app.services.minio_object_storage_service import MinioObjectStorageService
+from app.services.object_storage_service import ObjectStorageService
 from app.services.supabase_storage_service import SupabaseStorageService
 
 

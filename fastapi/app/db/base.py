@@ -1,6 +1,5 @@
 from sqlalchemy.orm import declarative_base
 
-
 # 모든 SQLAlchemy 모델이 상속하는 베이스.
 #
 # 테이블 생성/변경은 infra/postgres/*.sql이 담당하므로 Base.metadata.create_all()은

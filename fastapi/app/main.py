@@ -1,17 +1,18 @@
+import logging
 import time
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
-from app.routers import resonator_router
-import logging
+
+from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.exception_handler import (
     custom_exception_handler,
-    sqlalchemy_exception_handler,
     global_exception_handler,
+    sqlalchemy_exception_handler,
 )
-from app.config.logger import logger
-
+from app.routers import resonator_router
 
 logging.getLogger("uvicorn").disabled = True
 # logging.getLogger("uvicorn.error").disabled = True

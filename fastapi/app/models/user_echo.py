@@ -1,6 +1,7 @@
-from sqlalchemy import Column, BigInteger, Integer, Numeric, Boolean, ForeignKey
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, Numeric
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 from app.models.stat_type import StatType
 

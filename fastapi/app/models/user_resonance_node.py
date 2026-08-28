@@ -1,6 +1,7 @@
-from sqlalchemy import Column, BigInteger, Boolean, ForeignKey, Sequence
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Sequence
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 from app.models.branch_position import BranchPosition
 from app.models.node_position import NodePosition

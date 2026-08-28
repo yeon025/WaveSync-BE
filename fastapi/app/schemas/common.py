@@ -1,9 +1,11 @@
 from decimal import Decimal
 from typing import List, Optional
+
 from pydantic import BaseModel, Field, field_serializer, field_validator
-from app.models.stat_type import StatType
+
 from app.models.branch_position import BranchPosition
 from app.models.node_position import NodePosition
+from app.models.stat_type import StatType
 
 
 # Spring dto.common.Stat 대응.

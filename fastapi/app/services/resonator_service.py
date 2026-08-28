@@ -1,39 +1,40 @@
 from decimal import Decimal
 from typing import List
+
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
-from app.repositories import (
-    resonator_master_repository,
-    weapon_master_repository,
-    user_resonator_repository,
-    user_resonance_node_repository,
-    user_echo_repository,
-    user_echo_sub_repository,
-    final_stat_repository,
-)
-from app.services.object_storage_factory import get_object_storage_service
-from app.services.resonator_profile_service import extract_info
-from app.services import extract_profile_validation_service, spec_calculation_service
-from app.mapper.resonance_node_mapper import get_stat
-from app.models.stat_type import StatType
-from app.models.branch_position import BranchPosition
-from app.models.node_position import NodePosition
-from app.models.user_resonator import UserResonator
-from app.models.user_resonance_node import UserResonanceNode
-from app.models.user_echo import UserEcho
-from app.models.user_echo_sub import UserEchoSub
-from app.schemas.response import (
-    ResonatorSummaryResponse,
-    ResonatorDetailResponse,
-    ResonatorSettingResponse,
-    CreateResonatorResponse,
-)
-from app.schemas.request import UpdateResonatorRequest
-from app.schemas.common import ResonanceNode, ResonatorStat, WeaponDetail, WeaponSetting
+
+from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
-from app.config.logger import logger
-
+from app.mapper.resonance_node_mapper import get_stat
+from app.models.branch_position import BranchPosition
+from app.models.node_position import NodePosition
+from app.models.stat_type import StatType
+from app.models.user_echo import UserEcho
+from app.models.user_echo_sub import UserEchoSub
+from app.models.user_resonance_node import UserResonanceNode
+from app.models.user_resonator import UserResonator
+from app.repositories import (
+    final_stat_repository,
+    resonator_master_repository,
+    user_echo_repository,
+    user_echo_sub_repository,
+    user_resonance_node_repository,
+    user_resonator_repository,
+    weapon_master_repository,
+)
+from app.schemas.common import ResonanceNode, ResonatorStat, WeaponDetail, WeaponSetting
+from app.schemas.request import UpdateResonatorRequest
+from app.schemas.response import (
+    CreateResonatorResponse,
+    ResonatorDetailResponse,
+    ResonatorSettingResponse,
+    ResonatorSummaryResponse,
+)
+from app.services import extract_profile_validation_service, spec_calculation_service
+from app.services.object_storage_factory import get_object_storage_service
+from app.services.resonator_profile_service import extract_info
 
 # Spring service.ResonatorService 대응.
 
@@ -220,8 +221,7 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
     node_map = {
-        f"{node.branchPosition.value}_{node.nodePosition.value}": node
-        for node in data.nodes
+        f"{node.branchPosition.value}_{node.nodePosition.value}": node for node in data.nodes
     }
 
     # Spring 원본엔 없는 방어 로직 — 10개 위치가 요청에 전부 없으면 아래 루프에서
@@ -233,7 +233,9 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
     }
     missing_keys = required_keys - node_map.keys()
     if missing_keys:
-        logger.warning(f"업데이트 요청에 누락된 공명 노드 위치가 있습니다. missing={sorted(missing_keys)}")
+        logger.warning(
+            f"업데이트 요청에 누락된 공명 노드 위치가 있습니다. missing={sorted(missing_keys)}"
+        )
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
     # 10개의 공명 노드에서 모든 StatType 수집

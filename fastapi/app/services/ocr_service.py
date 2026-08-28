@@ -1,8 +1,9 @@
-from google.cloud import vision
-from app.clients.vision_client import create_vision_client
 import re
-from app.validators.image_validator import validate_image
 
+from google.cloud import vision
+
+from app.clients.vision_client import create_vision_client
+from app.validators.image_validator import validate_image
 
 
 def extract_text(image_path):
@@ -34,9 +35,7 @@ def _extract_words(annotation):
                 for word in paragraph.words:
                     text = "".join([s.text for s in word.symbols])
                     vertices = word.bounding_box.vertices
-                    words_data.append(
-                        {"text": text, "x": vertices[0].x, "y": vertices[0].y}
-                    )
+                    words_data.append({"text": text, "x": vertices[0].x, "y": vertices[0].y})
     return words_data
 
 
@@ -63,12 +62,10 @@ def _group_into_lines(words_data):
     return result
 
 
-
-
 def clean_text(raw_texts):
     texts_without_lv = []
     final_texts = []
-    
+
     # LV 제거
     for text in raw_texts:
         cleaned = re.sub(r"LV[.\s]?\d+", "", text).strip()
@@ -80,5 +77,5 @@ def clean_text(raw_texts):
 
     # 무기 이름에서 공백 제거
     final_texts[1] = final_texts[1].replace(" ", "")
-            
+
     return final_texts

@@ -1,6 +1,8 @@
 from typing import List, Optional
-from sqlalchemy import select, exists
+
+from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
+
 from app.models.resonator_master import ResonatorMaster
 from app.models.user_resonator import UserResonator
 from app.schemas.response import ResonatorSummaryResponse
@@ -11,9 +13,7 @@ def find_by_name(db: Session, name: str) -> Optional[ResonatorMaster]:
 
 
 def exists_by_name(db: Session, name: str) -> bool:
-    return db.scalar(
-        select(exists().where(ResonatorMaster.name == name))
-    )
+    return db.scalar(select(exists().where(ResonatorMaster.name == name)))
 
 
 def find_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:

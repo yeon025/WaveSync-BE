@@ -1,8 +1,10 @@
 from typing import List
+
 from sqlalchemy import update
 from sqlalchemy.orm import Session
-from app.models.user_echo_sub import UserEchoSub
+
 from app.models.user_echo import UserEcho
+from app.models.user_echo_sub import UserEchoSub
 
 
 def save_all(db: Session, echo_subs: List[UserEchoSub]) -> None:

@@ -1,10 +1,11 @@
 import io
-from PIL import Image
+
 from fastapi import UploadFile
+from PIL import Image
+
+from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
-from app.config.logger import logger
-
 
 MAX_IMAGE_SIZE_BYTES = 500 * 1024  # Spring spring.servlet.multipart.max-file-size: 500KB
 
@@ -48,4 +49,4 @@ def get_extension(file: UploadFile) -> str:
     if not filename or "." not in filename:
         return ""
 
-    return filename[filename.rfind("."):]
+    return filename[filename.rfind(".") :]

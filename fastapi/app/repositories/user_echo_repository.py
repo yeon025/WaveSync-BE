@@ -1,6 +1,8 @@
 from typing import List
+
 from sqlalchemy import update
 from sqlalchemy.orm import Session
+
 from app.models.user_echo import UserEcho
 
 

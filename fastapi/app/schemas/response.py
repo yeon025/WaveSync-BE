@@ -1,5 +1,7 @@
-from pydantic import BaseModel
 from typing import List, Optional
+
+from pydantic import BaseModel
+
 from app.schemas.common import ResonanceNode, ResonatorStat, WeaponDetail, WeaponSetting
 
 

@@ -2,17 +2,18 @@ import io
 import os
 import uuid
 from urllib.parse import urlparse
-from minio import Minio
+
 from fastapi import UploadFile
-from app.services.object_storage_service import ObjectStorageService
-from app.validators.storage_validator import validate_image, get_extension
+from minio import Minio
+
+from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
-from app.config.logger import logger
+from app.services.object_storage_service import ObjectStorageService
+from app.validators.storage_validator import get_extension, validate_image
 
 
 class MinioObjectStorageService(ObjectStorageService):
-
     def __init__(self):
         self.endpoint = os.getenv("MINIO_ENDPOINT")
         self.public_url = os.getenv("MINIO_PUBLIC_URL")

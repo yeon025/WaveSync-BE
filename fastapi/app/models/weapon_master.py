@@ -1,5 +1,6 @@
-from sqlalchemy import Column, BigInteger, String, Integer, Numeric
+from sqlalchemy import BigInteger, Column, Integer, Numeric, String
 from sqlalchemy import Enum as SAEnum
+
 from app.db.base import Base
 from app.models.stat_type import StatType
 

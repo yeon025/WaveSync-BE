@@ -1,6 +1,8 @@
 from typing import List
+
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
+
 from app.models.final_stat import FinalStat
 
 

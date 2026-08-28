@@ -1,6 +1,7 @@
-from sqlalchemy import Column, BigInteger, String, Integer
+from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 from app.models.element import Element
 

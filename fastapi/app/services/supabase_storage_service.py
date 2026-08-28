@@ -1,20 +1,20 @@
 import os
 import uuid
+
 import requests
 from fastapi import UploadFile
-from app.services.object_storage_service import ObjectStorageService
-from app.validators.storage_validator import validate_image, get_extension
+
+from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
-from app.config.logger import logger
-
+from app.services.object_storage_service import ObjectStorageService
+from app.validators.storage_validator import get_extension, validate_image
 
 # Spring application-prod.yml의 supabase.bucket.profiles 값과 동일 (설정으로 뺄 필요 없는 고정값)
 PROFILE_BUCKET = "profile-images"
 
 
 class SupabaseStorageService(ObjectStorageService):
-
     def __init__(self):
         self.public_url = os.getenv("SUPABASE_URL")
         self.service_key = os.getenv("SUPABASE_SERVICE_KEY")

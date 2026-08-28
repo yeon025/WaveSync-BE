@@ -1,6 +1,6 @@
 from PIL import Image
-from app.config.logger import logger
 
+from app.config.logger import logger
 
 
 def validate_image(image_path):

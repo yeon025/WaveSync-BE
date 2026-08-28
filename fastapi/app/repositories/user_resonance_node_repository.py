@@ -1,6 +1,8 @@
 from typing import List
+
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
+
 from app.models.user_resonance_node import UserResonanceNode
 
 

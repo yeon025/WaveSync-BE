@@ -1,6 +1,7 @@
-from sqlalchemy import Column, BigInteger, Numeric, Boolean, ForeignKey, Sequence
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Numeric, Sequence
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
+
 from app.db.base import Base
 from app.models.stat_type import StatType
 
@@ -18,7 +19,11 @@ class UserEchoSub(Base):
 
     __tablename__ = "user_echo_sub"
 
-    id = Column(BigInteger, Sequence("user_echo_sub_seq", start=1, increment=50), primary_key=True)
+    id = Column(
+        BigInteger,
+        Sequence("user_echo_sub_seq", start=1, increment=50),
+        primary_key=True,
+    )
 
     # native_enum=False 필수 — CLAUDE.md "Enum 처리" 참고 (DB 컬럼은 VARCHAR)
     # 컬럼명은 DB/Spring과 동일하게 `type` 유지 (Python builtin과 이름만 겹칠 뿐, 인스턴스
