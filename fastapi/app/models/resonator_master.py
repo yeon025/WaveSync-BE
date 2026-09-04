@@ -2,20 +2,20 @@ from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 
-from app.db.base import Base
+from app.db.base import Base, enum_values
 from app.models.element import Element
 
 
 class ResonatorMaster(Base):
-    """Spring entity.ResonatorMaster 대응. 읽기 전용 마스터 데이터."""
+    """공명자 마스터 데이터 (읽기 전용)."""
 
     __tablename__ = "resonator_master"
 
     id = Column(BigInteger, primary_key=True)
     name = Column(String(20), nullable=False, unique=True)
 
-    # native_enum=False 필수 — CLAUDE.md "Enum 처리" 참고 (DB 컬럼은 VARCHAR)
-    element = Column(SAEnum(Element, native_enum=False, length=20), nullable=False)
+    # native_enum=False 필수 — DB 컬럼은 VARCHAR (CLAUDE.md "Enum 처리")
+    element = Column(SAEnum(Element, native_enum=False, length=20, values_callable=enum_values), nullable=False)
 
     rarity = Column(Integer, nullable=False)
     hp = Column(Integer, nullable=False)

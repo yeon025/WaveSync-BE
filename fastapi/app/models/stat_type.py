@@ -2,50 +2,47 @@ from enum import Enum
 
 
 class StatType(str, Enum):
-    """Spring entity.StatType 대응.
+    """스탯 종류. 멤버 이름은 대문자, 값(DB/API 노출값)은 소문자다 (예: HP_PERCENT = "hp_percent").
 
-    DB 저장값은 Spring @Enumerated(EnumType.STRING)과 동일하게 enum 멤버 이름
-    (예: ATTACK_PERCENT)이지만, Spring @JsonValue의 code 필드(예: attack_percent)와는
-    다르다. Resonator 도메인에서 API 응답 스키마를 만들 때 code 값으로 변환하는 로직
-    (예: Pydantic field_serializer)이 반드시 필요하다.
+    값 <-> 멤버 변환은 code / from_code로 한다. SAEnum 컬럼엔 values_callable=enum_values 필수.
     """
 
-    HP = "HP"
-    HP_PERCENT = "HP_PERCENT"
+    HP = "hp"
+    HP_PERCENT = "hp_percent"
 
-    ATTACK = "ATTACK"
-    ATTACK_PERCENT = "ATTACK_PERCENT"
+    ATTACK = "attack"
+    ATTACK_PERCENT = "attack_percent"
 
-    DEFENSE = "DEFENSE"
-    DEFENSE_PERCENT = "DEFENSE_PERCENT"
+    DEFENSE = "defense"
+    DEFENSE_PERCENT = "defense_percent"
 
-    CRITICAL_RATE = "CRITICAL_RATE"
-    CRITICAL_DAMAGE = "CRITICAL_DAMAGE"
+    CRITICAL_RATE = "critical_rate"
+    CRITICAL_DAMAGE = "critical_damage"
 
-    ENERGY_REGEN = "ENERGY_REGEN"
+    ENERGY_REGEN = "energy_regen"
 
-    FUSION_DAMAGE_BONUS = "FUSION_DAMAGE_BONUS"
-    GLACIO_DAMAGE_BONUS = "GLACIO_DAMAGE_BONUS"
-    AERO_DAMAGE_BONUS = "AERO_DAMAGE_BONUS"
-    CONDUCTO_DAMAGE_BONUS = "CONDUCTO_DAMAGE_BONUS"
-    SPECTRA_DAMAGE_BONUS = "SPECTRA_DAMAGE_BONUS"
-    HAVOC_DAMAGE_BONUS = "HAVOC_DAMAGE_BONUS"
+    FUSION_DAMAGE_BONUS = "fusion_damage_bonus"
+    GLACIO_DAMAGE_BONUS = "glacio_damage_bonus"
+    AERO_DAMAGE_BONUS = "aero_damage_bonus"
+    CONDUCTO_DAMAGE_BONUS = "conducto_damage_bonus"
+    SPECTRA_DAMAGE_BONUS = "spectra_damage_bonus"
+    HAVOC_DAMAGE_BONUS = "havoc_damage_bonus"
 
-    BASIC_ATTACK_DAMAGE_BONUS = "BASIC_ATTACK_DAMAGE_BONUS"
-    HEAVY_ATTACK_DAMAGE_BONUS = "HEAVY_ATTACK_DAMAGE_BONUS"
-    RESONANCE_SKILL_DAMAGE_BONUS = "RESONANCE_SKILL_DAMAGE_BONUS"
-    RESONANCE_LIBERATION_DAMAGE_BONUS = "RESONANCE_LIBERATION_DAMAGE_BONUS"
-    HEALING_BONUS = "HEALING_BONUS"
+    BASIC_ATTACK_DAMAGE_BONUS = "basic_attack_damage_bonus"
+    HEAVY_ATTACK_DAMAGE_BONUS = "heavy_attack_damage_bonus"
+    RESONANCE_SKILL_DAMAGE_BONUS = "resonance_skill_damage_bonus"
+    RESONANCE_LIBERATION_DAMAGE_BONUS = "resonance_liberation_damage_bonus"
+    HEALING_BONUS = "healing_bonus"
 
-    ALL_ATTRIBUTE_DAMAGE_BONUS = "ALL_ATTRIBUTE_DAMAGE_BONUS"
-    BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS = "BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS"
+    ALL_ATTRIBUTE_DAMAGE_BONUS = "all_attribute_damage_bonus"
+    BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS = "basic_and_heavy_attack_damage_bonus"
 
     @property
     def code(self) -> str:
-        """Spring @JsonValue의 code 필드 대응 (예: ATTACK_PERCENT -> attack_percent)."""
-        return self.value.lower()
+        """API/DB 노출용 값 (예: hp_percent)."""
+        return self.value
 
     @classmethod
     def from_code(cls, code: str) -> "StatType":
-        """code 문자열(예: attack_percent)을 멤버로 역변환. 요청 바디 파싱 등 입력 경로에서 사용."""
-        return cls[code.upper()]
+        """값(예: hp_percent)을 멤버로 역변환."""
+        return cls(code)

@@ -1,80 +1,28 @@
 from decimal import Decimal
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, Field
 
 from app.models.branch_position import BranchPosition
 from app.models.node_position import NodePosition
 from app.models.stat_type import StatType
 
 
-# Spring dto.common.Stat 대응.
-# type은 Spring @JsonValue(StatType.getCode())와 동일하게 code 값으로 직렬화한다
-# (DB/Python 내부값은 여전히 대문자 멤버 이름 — models/stat_type.py 참고).
-#
-# 입력측(예: updateResonator 요청 바디)도 이 클래스를 쓰므로, 클라이언트가 code
-# 문자열(예: "attack_percent")을 그대로 돌려보내는 경우를 from_code()로 흡수한다.
-# 서비스 코드에서 이미 StatType 인스턴스로 생성하는 기존 호출부(예: WeaponDetail)는
-# 영향 없다 — isinstance 체크로 그대로 통과시킨다.
+# 스탯 (type + value). Pydantic이 StatType 문자열 <-> 멤버 변환을 네이티브 처리한다.
 class Stat(BaseModel):
     type: StatType
     value: Decimal
 
-    @field_validator("type", mode="before")
-    @classmethod
-    def _coerce_type(cls, v):
-        if isinstance(v, str):
-            try:
-                return StatType.from_code(v)
-            except KeyError:
-                pass  # from_code 실패 시 그대로 두고 Pydantic 표준 422로 처리
-        return v
 
-    @field_serializer("type")
-    def serialize_type(self, value: StatType) -> str:
-        return value.code
-
-
-# Spring dto.common.ResonanceNode 대응.
-# branchPosition/nodePosition은 Spring 필드 타입 자체가 enum이라(String으로 미리
-# 변환하지 않음) Jackson @JsonValue처럼 code로 직렬화한다.
-# Stat과 동일한 이유로 입력측 from_code() 변환도 같이 둔다.
+# 공명 노드 (위치 + 활성 여부 + 스탯).
 class ResonanceNode(BaseModel):
     branchPosition: BranchPosition
     nodePosition: NodePosition
     active: bool
     stat: Optional[Stat] = None
 
-    @field_validator("branchPosition", mode="before")
-    @classmethod
-    def _coerce_branch_position(cls, v):
-        if isinstance(v, str):
-            try:
-                return BranchPosition.from_code(v)
-            except KeyError:
-                pass
-        return v
 
-    @field_validator("nodePosition", mode="before")
-    @classmethod
-    def _coerce_node_position(cls, v):
-        if isinstance(v, str):
-            try:
-                return NodePosition.from_code(v)
-            except KeyError:
-                pass
-        return v
-
-    @field_serializer("branchPosition")
-    def serialize_branch_position(self, value: BranchPosition) -> str:
-        return value.code
-
-    @field_serializer("nodePosition")
-    def serialize_node_position(self, value: NodePosition) -> str:
-        return value.code
-
-
-# Spring dto.common.ResonatorStat 대응.
+# 공명자 최종 스탯.
 class ResonatorStat(BaseModel):
     hp: int
     attack: int
@@ -120,7 +68,7 @@ class ResonatorStat(BaseModel):
         )
 
 
-# Spring dto.common.WeaponDetail 대응.
+# 무기 상세.
 class WeaponDetail(BaseModel):
     name: str
     attackValue: int
@@ -140,9 +88,7 @@ class WeaponDetail(BaseModel):
         )
 
 
-# Spring dto.common.WeaponSetting 대응.
-# refineType은 Spring도 DTO 필드 자체가 String이라(Optional.map(StatType::getCode))
-# 여기서도 그대로 code 문자열로 담는다 — 별도 field_serializer 불필요.
+# 무기 설정 (재련). refineType은 code 문자열로 담는다.
 class WeaponSetting(BaseModel):
     refineLevel: int
     refineType: Optional[str] = None
@@ -158,7 +104,7 @@ class WeaponSetting(BaseModel):
         weapon = user_resonator.weapon_master
         return cls(
             refineLevel=user_resonator.refine_level,
-            refineType=weapon.refine_type.code if weapon.refine_type else None,
+            refineType=weapon.refine_type.value if weapon.refine_type else None,
             refine1Value=weapon.refine_1_value,
             refine2Value=weapon.refine_2_value,
             refine3Value=weapon.refine_3_value,
@@ -168,7 +114,7 @@ class WeaponSetting(BaseModel):
         )
 
 
-# Echo — OCR 추출 결과 스키마 (Request/Response 접미사가 없는 하위 DTO라 common으로 이동).
+# OCR 추출 결과 스키마.
 class ExtractedStat(BaseModel):
     type: str
     value: float

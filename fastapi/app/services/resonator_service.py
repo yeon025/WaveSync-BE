@@ -70,7 +70,7 @@ def get_resonator_detail(db: Session, user_resonator_id: int) -> ResonatorDetail
     return ResonatorDetailResponse(
         userResonatorId=user_resonator.id,
         resonatorName=user_resonator.resonator_master.name,
-        element=user_resonator.resonator_master.element.code,
+        element=user_resonator.resonator_master.element.value,
         standingImageUrl=standing_image_url,
         resonanceChainLevel=user_resonator.resonance_chain_level,
         weapon=weapon,

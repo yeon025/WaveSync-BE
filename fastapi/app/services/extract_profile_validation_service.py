@@ -10,13 +10,8 @@ from app.models.stat_type import StatType
 from app.repositories import resonator_master_repository, weapon_master_repository
 from app.schemas.common import Echo, ExtractData, ExtractedStat
 
-# Spring service.ExtractProfileValidationService 대응.
-#
-# Spring의 StatDto{type: StatType, value: BigDecimal}는 Jackson이 JSON 역직렬화 단계에서
-# 자동으로 만들어주지만, FastAPI의 ExtractData/Echo/ExtractedStat(이미 존재하는 OCR 결과 스키마)는
-# type이 소문자 code 문자열(예: "hp_percent"), value가 float라 여기서 직접 변환한다.
-# StatType.from_code() 실패(KeyError)는 Spring에선 Jackson 역직렬화 단계에서 걸러져
-# 이 서비스까지 도달할 수 없던 경우지만, 여기선 sub.getType() == null과 동일하게 취급한다.
+# OCR 결과(type: 소문자 문자열, value: float)를 검증한다.
+# StatType.from_code 실패는 잘못된 타입으로 간주해 VALIDATION_FAILED로 처리한다.
 
 
 def _decimals(*values: str) -> Set[Decimal]:
@@ -79,7 +74,7 @@ def _validate_subs(echoes: List[Echo]) -> None:
 def _validate_sub_type(sub: ExtractedStat, echo_number: int, sub_number: int) -> StatType:
     try:
         return StatType.from_code(sub.type)
-    except KeyError:
+    except ValueError:
         logger.warning(
             f"{echo_number}번 에코의 {sub_number}번 서브 속성 이름이 마스터 데이터에 존재하지 않습니다. "
             f"subType={sub.type}"

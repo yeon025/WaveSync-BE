@@ -2,27 +2,24 @@ from enum import Enum
 
 
 class Element(str, Enum):
-    """Spring entity.Element 대응.
+    """공명자 속성(원소) 종류. 멤버 이름은 대문자, 값(DB/API 노출값)은 소문자다.
 
-    DB 저장값은 Spring @Enumerated(EnumType.STRING)과 동일하게 enum 멤버 이름
-    (예: GLACIO)이지만, Spring @JsonValue의 code 필드(예: glacio)와는 다르다.
-    Resonator 도메인에서 API 응답 스키마를 만들 때 code 값으로 변환하는 로직
-    (예: Pydantic field_serializer)이 반드시 필요하다.
+    값 <-> 멤버 변환은 code / from_code로 한다. SAEnum 컬럼엔 values_callable=enum_values 필수.
     """
 
-    GLACIO = "GLACIO"
-    FUSION = "FUSION"
-    AERO = "AERO"
-    CONDUCTO = "CONDUCTO"
-    SPECTRA = "SPECTRA"
-    HAVOC = "HAVOC"
+    GLACIO = "glacio"
+    FUSION = "fusion"
+    AERO = "aero"
+    CONDUCTO = "conducto"
+    SPECTRA = "spectra"
+    HAVOC = "havoc"
 
     @property
     def code(self) -> str:
-        """Spring @JsonValue의 code 필드 대응 (예: GLACIO -> glacio)."""
-        return self.value.lower()
+        """API/DB 노출용 값 (예: glacio)."""
+        return self.value
 
     @classmethod
     def from_code(cls, code: str) -> "Element":
-        """code 문자열(예: glacio)을 멤버로 역변환."""
-        return cls[code.upper()]
+        """값(예: glacio)을 멤버로 역변환."""
+        return cls(code)
