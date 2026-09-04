@@ -211,7 +211,15 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
     final_stat_repository.save(db, final_stat)
     logger.debug("최종 스펙을 데이터베이스에 저장했습니다.")
 
-    return CreateResonatorResponse(resonatorName=rm.name)
+    # 응답 생성에 필요한 값은 commit 전에 확보한다 (commit이 인스턴스를 expire시키므로).
+    resonator_name = rm.name
+
+    # 응답을 만들기 전에 명시적으로 커밋한다 — 여기서 실패하면 라우터를 거쳐
+    # SQLAlchemyError 핸들러가 500(DATABASE_ERROR)을 내려주고 클라이언트는 성공 응답을 받지 않는다.
+    db.commit()
+    logger.debug("공명자 등록 트랜잭션을 커밋했습니다.")
+
+    return CreateResonatorResponse(resonatorName=resonator_name)
 
 
 def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorRequest) -> None:
@@ -253,6 +261,9 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
         key = f"{node.branch_position.value}_{node.node_position.value}"
         node.is_active = node_map[key].active
 
+    # 변경된 엔티티(final_stat, refine_level, 노드 활성화)를 명시적으로 커밋한다.
+    db.commit()
+
 
 def _delete(db: Session, user_resonator_ids: List[int]) -> None:
     """Spring ResonatorService.delete(ids) 대응. commit/rollback 없음 — 호출자의
@@ -266,3 +277,4 @@ def _delete(db: Session, user_resonator_ids: List[int]) -> None:
 
 def delete_resonator(db: Session, user_resonator_ids: List[int]) -> None:
     _delete(db, user_resonator_ids)
+    db.commit()

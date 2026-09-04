@@ -99,6 +99,7 @@ cd spring && ./gradlew bootRun
 - 예외는 `CustomException(ErrorCode.XXX)` 형태로 발생시키고, `ErrorCode`는 `exceptions/error_code.py`의 Enum에 추가. 전역 처리는 `exception_handler.py`가 담당하므로 라우터에서 try/except로 감싸지 않는다
 - 라우터는 얇게 유지 — 실제 로직은 `services/`로 위임 (`resonator_router.py` → `resonator_profile_service.py` 패턴 참고)
 - 도메인별로 파일을 쪼갠다 (Spring 쪽 entity/repository/service 단위와 1:1 대응시키는 걸 기본으로 함)
+- **트랜잭션 커밋은 서비스 계층에서 명시적으로.** `get_db()`는 자동 commit하지 않고 미처리 예외에 rollback만 한다. `get_db()`의 `yield` 이후 코드는 FastAPI가 응답을 이미 전송한 뒤 실행돼서, 거기서 commit하면 실패해도 클라이언트는 200을 받은 상태가 된다. 쓰기(insert/update/delete)를 하는 서비스 함수는 **응답 객체를 만들기 전에** `db.commit()`을 직접 호출한다 (응답에 쓸 값은 commit이 인스턴스를 expire시키므로 commit 전에 확보). commit 실패 시 `SQLAlchemyError`가 라우터를 거쳐 `sqlalchemy_exception_handler`로 잡혀 500(`DATABASE_ERROR`)이 나간다. 여러 서비스 함수가 공유하는 내부 헬퍼(`_delete` 등)는 commit하지 않고 호출자가 트랜잭션 경계를 잡는다. repository 함수도 commit하지 않는다 (`# 커밋은 호출부 책임` 주석 유지)
 
 ## API 응답 형식
 
