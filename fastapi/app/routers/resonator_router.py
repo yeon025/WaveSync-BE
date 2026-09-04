@@ -35,7 +35,6 @@ def create_resonator(resonatorProfile: UploadFile = File(...), db: Session = Dep
 @router.get(
     "",
     response_model=ApiResponse[List[ResonatorSummaryResponse]],
-    response_model_exclude_none=True,
     status_code=200,
 )
 def get_resonator_summary(db: Session = Depends(get_db)):
