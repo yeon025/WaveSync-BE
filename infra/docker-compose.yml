@@ -68,52 +68,6 @@ services:
 
     restart: "no"
 
-  # Spring Boot 백엔드
-  spring:
-    image: gradle:8.7-jdk21
-    working_dir: /app
-
-    volumes:
-      - ../spring:/app
-      - gradle-cache:/home/gradle/.gradle
-
-    command: ./gradlew bootRun --no-daemon
-
-    ports:
-      - "8080:8080"
-
-    environment:
-      # PostgreSQL 연결 정보
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wawu
-      SPRING_DATASOURCE_USERNAME: wawu
-      SPRING_DATASOURCE_PASSWORD: wawu
-
-      # 실행 프로파일(dev, prod 등)
-      SPRING_PROFILES_ACTIVE: dev
-
-      # MinIO 연결 정보
-      MINIO_ENDPOINT: http://minio:9000
-      MINIO_PUBLIC_URL: http://localhost:9000
-      MINIO_ACCESS_KEY: admin
-      MINIO_SECRET_KEY: password123
-
-      # 버킷 이름
-      MINIO_BUCKET_PROFILES: profile-images
-      MINIO_BUCKET_WEAPONS: weapon-images
-      MINIO_BUCKET_RESONATOR_THUMBNAILS: resonator-thumbnail-images
-      MINIO_BUCKET_RESONATOR_STANDINGS: resonator-standing-images
-
-      FASTAPI_BASE_URL: http://fastapi:8000
-
-      TZ: Asia/Seoul
-
-    # DB 및 MinIO가 먼저 시작되어야 함
-    depends_on:
-      - postgres
-      - minio
-      - minio-init
-
-  # 이미지 처리 서버
   fastapi:
     build:
       context: ../fastapi
