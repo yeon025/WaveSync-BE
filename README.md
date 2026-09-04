@@ -5,9 +5,6 @@
 📅 개발 기간: 2026.05 ~ Present (배포 완료, 지속 개선 중)<br>
 👤 인원: 1명 (기획 · 설계 · 개발 · 배포 전 과정 개인 진행)
 
-<!-- 데모 스크린샷 또는 GIF를 여기에 추가하세요 -->
-<!-- ![demo](./docs/demo.gif) -->
-
 <br>
 
 ## 목차
@@ -34,11 +31,8 @@
 **핵심 기능**
 
 - **캐릭터 등록** : 캐릭터 이미지를 업로드하면 이미지를 분석해 자동으로 캐릭터 정보를 등록합니다.
-  
 - **캐릭터 목록 조회** : 등록된 캐릭터를 이미지와 이름이 담긴 카드 형태로 조회합니다.
-  
 - **캐릭터 상세 스펙 조회** : 캐릭터를 선택하면 상세 스펙 정보를 확인할 수 있습니다.
-  
 - **캐릭터 삭제** : 등록된 캐릭터와 관련 정보를 삭제합니다.
 
 <br>
@@ -58,37 +52,12 @@
 
 ## 기술 스택
 
-| 구분       | 스택                                                  |
-| ---------- | ----------------------------------------------------- |
-| 프론트엔드 | Next.js                                               |
-| 백엔드     | Spring Boot · FastAPI · PostgreSQL · Supabase · MinIO |
-| 인프라     | Docker · Vercel · Google Cloud Run                    |
-| CI/CD      | GitHub Actions                                        |
-
-**선택 이유**
-
-Spring Boot + FastAPI를 함께 사용한 이유
-
-> Spring Boot는 DB 작업을 안전하게 처리해주는 기능(JPA/Hibernate)을 잘 갖추고 있습니다. 이 덕분에 데이터가 꼬이면 안 되는 도메인 로직을 안정적으로 다룰 수 있다고 판단했습니다. <br>
-> FastAPI는 Python 기반이라 이미지 전처리, 텍스트 전처리, 템플릿 매칭 작업에 특화되어 있다고 판단해, 이미지 분석이 필요한 영역을 전담하도록 역할을 나눴습니다.
-
-PostgreSQL을 선택한 이유
-
-> 설계 초기 스펙 계산 로직을 DB 연산 함수로 처리하는 것도 고려했고, MySQL보다 PostgreSQL이 이런 계산용 함수 지원이 더 잘 되어 있다는 점을 근거로 선택했습니다.
-
-Supabase를 선택한 이유
-
-> 무료 플랜을 제공하고 PostgreSQL 기반이라 코드 수정 없이 연동할 수 있다는 점에서 선택했습니다. 또한 Supabase는 DB와 스토리지까지 하나의 플랫폼에서 함께 제공해서, 이미지 저장까지 별도 인프라 없이 같은 곳에서 관리할 수 있다는 점도 선택 이유였습니다.
-
-MinIO를 선택한 이유
-
-> 초기에는 AWS S3 사용을 고려해, S3 호환 API를 제공하는 MinIO를 선택했습니다. Docker 이미지로 관리할 수 있어 이미지나 이미지 이름 변경이 잦은 개발 단계에 적합하다고 판단했습니다.
-
-Google Cloud Run + Vercel 조합을 선택한 이유
-
-> Vercel은 Next.js와 궁합이 좋아 선택했습니다. <br>
-> Google Cloud Run은 Google Vision API 키를 별도로 업로드하지 않고 백엔드 서버까지 같은 Google 인프라 안에서 함께 관리할 수 있다는 점에서 선택했습니다. <br>
-> 두 서비스 모두 무료 플랜을 제공한다는 점도 중요한 선택 이유였습니다.
+| 구분       | 스택                                    |
+| ---------- | --------------------------------------- |
+| 프론트엔드 | Next.js                                 |
+| 백엔드     | FastAPI · PostgreSQL · Supabase · MinIO |
+| 인프라     | Docker · Vercel · Google Cloud Run      |
+| CI/CD      | GitHub Actions                          |
 
 <br>
 
@@ -119,144 +88,11 @@ API 호출 횟수 7회 → 1회로 단축, 무료 할당량 내에서 안정적�
   </tr>
 </table>
 
----
-
-### 스토리지 추상화 설계
-
-**[ 문제 상황 ]**<br>
-초기 계획으로 운영 환경은 AWS S3를 계획했고, 개발 단계에서 동일한 코드로 다른 스토리지를 사용해야 하는 상황이었습니다.
-
-**[ 선택 배경 ]**<br>
-S3 호환 API를 제공하는 MinIO를 개발 스토리지로 채택했습니다. 하지만 이후 무료 플랜의 Supabase Storage를 알게 되면서, 운영 환경에서도 별도 비용 없이 사용할 수 있는 Supabase Storage로 전환하는 것이 더 유리하다고 판단했습니다.
-
-**[ 최종 선택 ]**<br>
-환경이 바뀌어도 서비스 코드는 그대로 유지할 수 있도록, `ObjectStorageService` 공통 인터페이스를 정의하고 `@Profile`로 MinIO/Supabase 구현체를 분기했습니다. Spring이 실행 환경(dev/prod)에 맞는 구현체를 자동 주입해주기 때문에, 서비스 로직에서는 어떤 스토리지를 쓰는지 신경 쓰지 않고 인터페이스만 호출하면 됩니다.
-
-**[ 결과 ]**<br>
-환경별 스토리지 전환을 코드 수정 없이 처리할 수 있습니다. (dev: MinIO, prod: Supabase 사용 중)
-
-```java
-public interface ObjectStorageService {
-    String createUrl(String path);
-    String uploadProfileImage(MultipartFile file);
-}
-```
-
-```java
-@Profile("dev")
-public class MinioObjectStorageService implements ObjectStorageService {
-
-    @Override
-    public String uploadProfileImage(MultipartFile file) {
-        StorageUtil.validateImage(file);
-        String objectName = UUID.randomUUID() + StorageUtil.getExtension(file);
-
-        minioClient.putObject(PutObjectArgs.builder()
-                .bucket(profileBucket)
-                .object(objectName)
-                .stream(file.getInputStream(), file.getSize(), -1)
-                .contentType(file.getContentType())
-                .build()
-        );
-
-        return endpoint + "/" + profileBucket + "/" + objectName;
-    }
-}
-```
-
-```java
-@Profile("prod")
-public class SupabaseStorageService implements ObjectStorageService {
-
-    @Override
-    public String uploadProfileImage(MultipartFile file) {
-        StorageUtil.validateImage(file);
-        String objectName = UUID.randomUUID() + StorageUtil.getExtension(file);
-
-        supabaseRestClient.post()
-                .uri("/storage/v1/object/" + profileBucket + "/" + objectName)
-                .contentType(MediaType.parseMediaType(file.getContentType()))
-                .header("x-upsert", "true")
-                .body(file.getBytes())
-                .retrieve()
-                .toBodilessEntity();
-
-        return createUrl(profileBucket + "/" + objectName);
-    }
-}
-```
-
----
-
-### PATCH API N+1 문제 해결
-
-**[ 문제 상황 ]**<br>
-캐릭터 정보 하나를 업데이트할 때 연관된 서브 엔티티가 5번 개별 쿼리로 조회되는 N+1 문제가 있었고, 응답 시간이 182ms였습니다.
-
-**[ 원인 분석 ]**<br>
-전체 처리 시간을 단계별로 쪼개어 측정한 결과, 조회 로직이 가장 큰 병목임을 수치로 확인했습니다.
-
-**[ 최종 선택 ]**<br>
-`default_batch_fetch_size`를 적용해, 연관 엔티티를 개별 쿼리로 하나씩 조회하는 대신 지정한 크기만큼 묶어서 `IN` 절로 한 번에 조회하도록 개선했습니다.
-
-**[ 결과 ]**<br>
-응답 시간을 182ms → 120.63ms로 단축했습니다. (약 34% 개선)
-
-```yaml
-jpa:
-  properties:
-    hibernate:
-      default_batch_fetch_size: 100
-```
-
----
-
-### POST API 응답 지연 개선
-
-**[ 문제 상황 ]**<br>
-최종 스펙 계산 후처리 과정에 3.7초가 소요됐고, 그중 25개 데이터를 저장하는 작업이 전체의 48%(1.77초)를 차지하는 병목이었습니다.
-
-**[ 원인 분석 ]**<br>
-전체 처리 시간을 단계별로 쪼개어 측정한 결과, 저장 로직이 가장 큰 병목임을 수치로 확인했습니다.
-
-**[ 최종 선택 ]**<br>
-ID 생성 방식을 IDENTITY에서 SEQUENCE로 변경하고 batch insert를 적용했습니다. <br>
-IDENTITY는 insert 시점마다 DB가 즉시 ID를 채번해야 해서 batch insert가 불가능했습니다. 시퀀스는 호출할 때마다 `INCREMENT BY`에 설정한 수만큼 ID를 한 번에 내어줍니다. 이 값을 `hibernate.jdbc.batch_size(50)`와 같은 50으로 설정해서 Hibernate가 시퀀스를 1번만 호출해도 50건 분량의 ID를 미리 확보하도록 했습니다. 덕분에 50건을 저장할 때 DB 왕복 없이 한 번에 batch insert로 처리됩니다.
-
-**[ 결과 ]**<br>
-DB 저장 처리 시간을 1.77초 → 0.07초로 단축했습니다. (약 96% 단축)
-
-```yaml
-jpa:
-  properties:
-    hibernate:
-      jdbc:
-        batch_size: 50
-        order_inserts: true
-        order_updates: true
-```
-
-```sql
-CREATE SEQUENCE IF NOT EXISTS user_echo_sub_seq
-    START WITH 1
-    INCREMENT BY 50
-    CACHE 50;
-
-CREATE TABLE IF NOT EXISTS user_echo_sub (
-    id BIGINT PRIMARY KEY DEFAULT nextval('user_echo_sub_seq'),
-    type VARCHAR(50) NOT NULL,
-    value NUMERIC(7,1) NOT NULL,
-    user_echo_id BIGINT NOT NULL,
-    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    CONSTRAINT fk_echo_sub FOREIGN KEY (user_echo_id) REFERENCES user_echoes(id)
-);
-```
-
 <br>
 
 ## 회고
 
 **기술 선택 재검토**
 
-PostgreSQL은 초기에 스펙 계산용 함수 지원이 강점이라 판단해 선택했습니다. 하지만 실제 구현 과정에서는 계산 로직이 전부 Spring Boot 애플리케이션 레이어로 옮겨가면서 그 장점을 살리지 못했습니다.<br>
+PostgreSQL은 초기에 스펙 계산용 함수 지원이 강점이라 판단해 선택했습니다. 하지만 실제 구현 과정에서는 계산 로직이 전부 FastAPI 애플리케이션 레이어로 옮겨가면서 그 장점을 살리지 못했습니다.<br>
 기술 선택의 근거가 실제 구현 방향과 어긋날 수 있다는 걸 경험한 사례였습니다. 앞으로는 설계 초기에 "이 장점을 실제로 어느 레이어에서 활용할 것인지"까지 구체적으로 정하고 선택하려고 합니다.
