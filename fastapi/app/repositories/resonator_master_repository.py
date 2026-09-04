@@ -17,7 +17,7 @@ def exists_by_name(db: Session, name: str) -> bool:
 
 
 def find_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:
-    # relationship 대신 명시적 JOIN 사용 (ResonatorMaster.user_resonators는 미사용 필드라 안 걸어둠)
+    # relationship 대신 명시적 LEFT JOIN
     stmt = (
         select(
             UserResonator.id,

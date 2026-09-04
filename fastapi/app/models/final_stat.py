@@ -5,11 +5,9 @@ from app.db.base import Base
 
 
 class FinalStat(Base):
-    """Spring entity.FinalStat 대응.
+    """공명자 최종 스탯.
 
-    user_resonator_id는 Spring에서 @OneToOne이지만, 실제 infra/postgres/01_init.sql의
-    final_stats.user_resonator_id엔 UNIQUE 제약이 없다(resonance_node_master의
-    resonator_master_id와 다름) — DB 정의를 기준으로 unique=True는 넣지 않는다.
+    final_stats.user_resonator_id엔 DB상 UNIQUE 제약이 없어 unique=True를 넣지 않는다.
     """
 
     __tablename__ = "final_stats"

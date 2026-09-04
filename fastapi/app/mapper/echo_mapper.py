@@ -11,7 +11,7 @@ from app.config.logger import logger
 from app.schemas.common import Echo, ExtractedStat
 
 
-# 상태 정의 (Enum을 사용하여 현재 어떤 파싱 단계인지 명시)
+# 파싱 단계
 class ParseState(Enum):
     START = auto()
     MAIN_VALUE_PENDING = auto()
@@ -47,9 +47,7 @@ class EchoMapper:
             # 데이터 추출 (Type, Value, Percent 여부)
             match = re.match(r"(.*?)\s*([\d.]+)\s*(%)?$", text)
 
-            # --- 흐름 제어 (Flow Control) 핵심 로직 ---
-
-            # 새로운 Echo 세션 시작 조건 (매칭되지 않는 텍스트가 들어왔을 때)
+            # 매칭 안 되는 텍스트 = 새 Echo 세션 시작
             if not match:
                 self._finalize_echo()
 
@@ -60,7 +58,7 @@ class EchoMapper:
                 self.state = ParseState.MAIN_VALUE_PENDING
                 continue
 
-            # 상태에 따른 데이터 처리 (Strategy 역할)
+            # 상태에 따라 데이터 처리
             self._process_by_state(match)
 
         # 마지막으로 작업 중이던 객체 저장

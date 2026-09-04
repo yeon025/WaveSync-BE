@@ -5,7 +5,7 @@ from app.db.base import Base
 
 
 class UserResonator(Base):
-    """Spring entity.UserResonator 대응."""
+    """사용자가 등록한 공명자."""
 
     __tablename__ = "user_resonators"
 
@@ -18,17 +18,10 @@ class UserResonator(Base):
     resonator_master_id = Column(BigInteger, ForeignKey("resonator_master.id"), nullable=False)
     weapon_master_id = Column(BigInteger, ForeignKey("weapon_master.id"), nullable=False)
 
-    # ResonatorMaster.userResonators/WeaponMaster.userResonators는 Spring에서도
-    # 실제로 쓰이지 않는 미사용 필드라 back_populates 없이 단방향으로만 연결한다
-    # (resonator_master.py/weapon_master.py는 수정하지 않음)
+    # 역방향(user_resonators)이 미사용이라 단방향으로만 연결한다.
     resonator_master = relationship("ResonatorMaster")
     weapon_master = relationship("WeaponMaster")
 
-    # Spring @OneToOne(mappedBy = "userResonator") 대응
     final_stat = relationship("FinalStat", uselist=False, back_populates="user_resonator")
-
-    # Spring @OneToMany(mappedBy = "userResonator") 대응 (ResonatorService.java 217, 270행 실사용)
     user_resonance_nodes = relationship("UserResonanceNode", back_populates="user_resonator")
-
-    # Spring @OneToMany(mappedBy = "userResonator") 대응 (ResonatorService.java/SpecCalculationService.java 실사용)
     user_echoes = relationship("UserEcho", back_populates="user_resonator")

@@ -27,6 +27,4 @@ class WeaponMaster(Base):
 
     image = Column(String(255), nullable=False)
 
-    # UserResonator 도메인을 이관할 때 여기에
-    # user_resonators = relationship("UserResonator", back_populates="weapon_master")
-    # 추가할 것 (Spring의 @OneToMany(mappedBy = "weaponMaster") 대응)
+    # 역참조(user_resonators)는 미사용이라 추가하지 않는다 (UserResonator 쪽에서 단방향 연결).

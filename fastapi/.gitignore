@@ -3,3 +3,6 @@ myenv
 credentials
 tmp
 *.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

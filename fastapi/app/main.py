@@ -21,7 +21,7 @@ logging.getLogger("uvicorn.access").disabled = True
 
 app = FastAPI()
 
-# Spring CorsConfig.java 대응 — 허용 origin/method/header 그대로
+# CORS 허용 origin/method/header
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "https://resocollector.com"],

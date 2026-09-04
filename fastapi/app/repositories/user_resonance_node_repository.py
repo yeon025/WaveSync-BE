@@ -7,7 +7,7 @@ from app.models.user_resonance_node import UserResonanceNode
 
 
 def save_all(db: Session, nodes: List[UserResonanceNode]) -> None:
-    # Spring JpaRepository.saveAll() 대응. 커밋은 호출부 책임
+    # 커밋은 호출부 책임
     db.add_all(nodes)
 
 
@@ -33,4 +33,3 @@ def soft_delete_by_user_resonator_ids(db: Session, ids: List[int]) -> None:
         .values(is_deleted=True)
     )
     db.execute(stmt)
-    # 커밋은 호출부(서비스 계층) 책임 — user_resonator_repository.soft_delete_by_ids와 동일 원칙

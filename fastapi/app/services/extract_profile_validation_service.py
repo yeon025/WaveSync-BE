@@ -20,7 +20,7 @@ def _decimals(*values: str) -> Set[Decimal]:
 
 _DAMAGE_BONUS_VALUES = _decimals("6.4", "7.1", "7.9", "8.6", "9.4", "10.1", "10.9", "11.6")
 
-# Spring ExtractProfileValidationService.createValidSubValues() 1:1 포팅 (13개 키)
+# 서브 옵션 타입별 유효 수치 집합 (13개 키)
 _VALID_SUB_VALUES = {
     StatType.CRITICAL_RATE: _decimals("6.3", "6.9", "7.5", "8.1", "8.7", "9.3", "9.9", "10.5"),
     StatType.CRITICAL_DAMAGE: _decimals("12.6", "13.8", "15.0", "16.2", "17.4", "18.6", "19.8", "21.0"),
@@ -85,8 +85,7 @@ def _validate_sub_type(sub: ExtractedStat, echo_number: int, sub_number: int) ->
 def _validate_sub_value(stat_type: StatType, sub: ExtractedStat, echo_number: int, sub_number: int) -> None:
     valid_values = _VALID_SUB_VALUES.get(stat_type)
 
-    # float -> Decimal은 반드시 str을 거친다. Decimal(sub.value)는 IEEE754 이진 오차가
-    # 그대로 들어와 Decimal('6.29999999999999982236...') 같은 값이 되어버린다.
+    # float -> Decimal은 str을 거친다 (직접 넣으면 이진 오차가 그대로 들어옴).
     sub_value = Decimal(str(sub.value))
 
     if valid_values is None or sub_value not in valid_values:

@@ -17,9 +17,6 @@ from app.services import resonator_service
 router = APIRouter(prefix="/resonators")
 
 
-# 아래 6개는 Spring ResonatorController 대응.
-
-
 @router.post(
     "",
     response_model=ApiResponse[CreateResonatorResponse],

@@ -9,10 +9,7 @@ from app.models.user_resonator import UserResonator
 
 
 def save(db: Session, user_resonator: UserResonator) -> UserResonator:
-    # Spring JpaRepository.save() 대응. commit은 호출부(서비스 계층) 책임 — 다른
-    # repository 함수들과 동일 원칙. relationship으로 연결된 자식(예: FinalStat,
-    # UserResonanceNode)은 SQLAlchemy의 기본 save-update cascade로 같은 flush에
-    # 함께 반영된다.
+    # 커밋은 호출부 책임. relationship 자식은 기본 save-update cascade로 같은 flush에 반영된다.
     db.add(user_resonator)
     return user_resonator
 
@@ -33,7 +30,7 @@ def soft_delete_by_ids(db: Session, ids: List[int]) -> None:
         .values(is_deleted=True)
     )
     db.execute(stmt)
-    # commit은 호출부(서비스 계층)의 책임 — Spring @Transactional 경계와 동일하게 여기서 커밋하지 않는다
+    # 커밋은 호출부 책임
 
 
 def find_by_id(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
@@ -56,12 +53,8 @@ def find_by_id_for_update(db: Session, user_resonator_id: int) -> Optional[UserR
             joinedload(UserResonator.resonator_master),
             joinedload(UserResonator.weapon_master),
             joinedload(UserResonator.final_stat),
-            # selectinload 사용 이유: Spring 원본이 SELECT DISTINCT를 쓴 건 컬렉션을
-            # JOIN FETCH하면 부모 행이 자식 수만큼 중복되기 때문 — joinedload로 컬렉션을
-            # 물면 같은 문제가 재발하므로, 별도 IN 쿼리로 배치 조회하는 selectinload를 쓴다
-            # (CLAUDE.md N+1 방지 원칙과도 부합). SpecCalculationService가 각 UserEcho의
-            # user_echo_subs까지 순회하므로 한 단계 더 체이닝해서 배치 조회한다
-            # (안 하면 UserEcho 개수만큼 지연 로딩되는 진짜 N+1이 발생함)
+            # 컬렉션은 joinedload 대신 selectinload로 배치 조회 (부모 행 중복 방지, N+1 방지).
+            # user_echo_subs까지 순회하므로 한 단계 더 체이닝한다.
             selectinload(UserResonator.user_echoes).selectinload(UserEcho.user_echo_subs),
         )
         .where(UserResonator.id == user_resonator_id, UserResonator.is_deleted.is_(False))

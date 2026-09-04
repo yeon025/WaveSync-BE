@@ -10,7 +10,7 @@ from app.exceptions.error_code import ErrorCode
 from app.services.object_storage_service import ObjectStorageService
 from app.validators.storage_validator import get_extension, validate_image
 
-# Spring application-prod.yml의 supabase.bucket.profiles 값과 동일 (설정으로 뺄 필요 없는 고정값)
+# 고정값 (설정으로 뺄 필요 없음)
 PROFILE_BUCKET = "profile-images"
 
 
