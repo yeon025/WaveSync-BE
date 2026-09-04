@@ -139,7 +139,7 @@ Spring 쪽에서 트러블슈팅으로 확보한 최적화가 있다. FastAPI + 
 
 ## 배포
 
-- `.github/workflows/deploy-fastapi.yml`, `deploy-spring.yml`로 각각 배포됨 (Spring 이관 완료 후 `deploy-spring.yml`은 제거 예정)
+- `.github/workflows/deploy-fastapi.yml`로 배포됨 (`deploy-spring.yml`은 Spring 이관 완료로 제거됨)
 
 ## 이관 완료 후 정리 작업 (완료됨)
 
