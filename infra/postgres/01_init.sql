@@ -105,10 +105,11 @@ CREATE TABLE IF NOT EXISTS user_echoes (
 -- =========================
 -- user_echo_sub
 -- =========================
+-- INCREMENT BY / CACHE = 25 (에코 서브 옵션 쓰기 단위: 최대 5에코 x 5서브)
 CREATE SEQUENCE IF NOT EXISTS user_echo_sub_seq
     START WITH 1
-    INCREMENT BY 50
-    CACHE 50;
+    INCREMENT BY 25
+    CACHE 25;
 
 CREATE TABLE IF NOT EXISTS user_echo_sub (
     id BIGINT PRIMARY KEY DEFAULT nextval('user_echo_sub_seq'),
@@ -129,10 +130,11 @@ CREATE TABLE IF NOT EXISTS user_echo_sub (
 -- =========================
 -- user_resonance_nodes
 -- =========================
+-- INCREMENT BY / CACHE = 10 (공명 노드 쓰기 단위: BranchPosition 5 x NodePosition 2 고정)
 CREATE SEQUENCE IF NOT EXISTS user_node_seq
     START WITH 1
-    INCREMENT BY 50
-    CACHE 50;
+    INCREMENT BY 10
+    CACHE 10;
 
 CREATE TABLE IF NOT EXISTS user_resonance_nodes (
     id BIGINT PRIMARY KEY DEFAULT nextval('user_node_seq'),

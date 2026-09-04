@@ -9,7 +9,7 @@ from app.models.stat_type import StatType
 class UserEchoSub(Base):
     """에코의 서브 옵션.
 
-    id는 user_echo_sub_seq(INCREMENT BY 50) 기반. 매 행마다 nextval()을 호출하며
+    id는 user_echo_sub_seq(INCREMENT BY 25) 기반. 매 행마다 nextval()을 호출하며
     batch insert 이득은 db/session.py의 insertmanyvalues_page_size가 담당한다.
     """
 
@@ -17,7 +17,7 @@ class UserEchoSub(Base):
 
     id = Column(
         BigInteger,
-        Sequence("user_echo_sub_seq", start=1, increment=50),
+        Sequence("user_echo_sub_seq", start=1, increment=25),
         primary_key=True,
     )
 
