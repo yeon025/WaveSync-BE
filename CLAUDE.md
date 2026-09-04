@@ -141,9 +141,9 @@ Spring 쪽에서 트러블슈팅으로 확보한 최적화가 있다. FastAPI + 
 
 - `.github/workflows/deploy-fastapi.yml`, `deploy-spring.yml`로 각각 배포됨 (Spring 이관 완료 후 `deploy-spring.yml`은 제거 예정)
 
-## 이관 완료 후 정리 작업
+## 이관 완료 후 정리 작업 (완료됨)
 
-전체 도메인 이관이 끝나고 `spring/` 디렉토리를 제거한 뒤에 진행할 것:
+`spring/` 제거 후 진행하기로 했던 두 작업 모두 완료됨. 이력용으로 남긴다.
 
-- **Enum DB 값 소문자 전환**: 현재 `Element`, `StatType`, `BranchPosition`, `NodePosition` 등은 Spring `@Enumerated(EnumType.STRING)` 방식 때문에 DB에 대문자(`GLACIO`, `ATTACK_PERCENT` 등)로 저장되어 있다. Spring이 완전히 제거된 뒤, DB 값을 API 노출값(소문자 code)과 동일하게 UPDATE하고 FastAPI Enum 클래스들도 소문자 값으로 맞춘다. **이관 진행 중에는 절대 먼저 바꾸지 말 것** — Spring과 FastAPI가 같은 DB를 공유하는 동안 값이 갈리면 아직 이관 안 된 Spring 도메인이 깨진다.
-- **SEQUENCE INCREMENT BY 축소 검토**: `user_node_seq`(현재 `INCREMENT BY 50`)는 실제 쓰기 단위가 항상 10개(공명 노드 10개 고정 생성)라, 완전 이관 후엔 `INCREMENT BY 10`으로 줄이는 걸 검토한다. **지금은 절대 바꾸지 말 것** — Spring `@SequenceGenerator(allocationSize=50)`이 DB 시퀀스의 실제 INCREMENT BY 값과 정확히 일치해야 Hibernate hi-lo 채번이 정상 동작한다. 둘이 어긋나면 `spring/`이 아직 이 테이블에 쓰기 작업 중일 때 PRIMARY KEY 충돌이 발생한다. 또한 이 값을 바꿔도 DB 왕복 횟수엔 영향 없음(`insertmanyvalues_page_size`가 이미 담당) — ID 값 조밀도만 바뀌는 순수 미관상의 변경이라 우선순위 낮음. `user_echo_sub_seq`도 같은 원칙 적용
+- **Enum DB 값 소문자 전환** — ✅ 완료. `Element`/`StatType`/`BranchPosition`/`NodePosition`을 소문자 code 값으로 통일하고(`models/*.py`), DB 마스터 데이터와 CHECK 제약도 소문자로 전환(`infra/postgres/01~04`). SAEnum 컬럼은 `values_callable=enum_values`로 멤버 이름이 아니라 값을 저장한다. 값과 code가 같아져 `schemas/common.py`의 커스텀 직렬화 로직은 제거됨.
+- **SEQUENCE INCREMENT BY / CACHE 축소** — ✅ 완료. `infra/postgres/01_init.sql`에서 `user_node_seq`를 `INCREMENT BY 10 CACHE 10`(공명 노드 10개 고정 생성), `user_echo_sub_seq`를 `INCREMENT BY 25 CACHE 25`(게임 내 이론상 최대 5에코 × 5서브)로 낮췄다. SQLAlchemy는 행마다 `nextval()`을 호출하고 클라이언트 사이드 hi-lo가 없으므로 INCREMENT 값과 무관하게 PK 충돌은 없고 ID 조밀도만 바뀐다. (스키마 변경은 별도 마이그레이션 파일 없이 `01_init.sql`을 직접 갱신하는 게 이 프로젝트 컨벤션)
