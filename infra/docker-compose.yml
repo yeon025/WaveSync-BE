@@ -46,6 +46,11 @@ services:
     depends_on:
       - minio
 
+    volumes:
+      - ../../WaveSync-tools/resources/images/new_weapons:/seed/weapon-images:ro
+      - ../../WaveSync-tools/resources/images/thumbnails:/seed/resonator-thumbnail-images:ro
+      - ../../WaveSync-tools/resources/images/standings:/seed/resonator-standing-images:ro
+
     entrypoint: >
       /bin/sh -c "
       until mc alias set local http://minio:9000 admin password123; do
@@ -62,6 +67,10 @@ services:
       mc anonymous set download local/weapon-images;
       mc anonymous set download local/resonator-thumbnail-images;
       mc anonymous set download local/resonator-standing-images;
+
+      mc mirror --overwrite /seed/weapon-images local/weapon-images;
+      mc mirror --overwrite /seed/resonator-thumbnail-images local/resonator-thumbnail-images;
+      mc mirror --overwrite /seed/resonator-standing-images local/resonator-standing-images;
 
       echo 'MinIO initialization complete.';
       "
