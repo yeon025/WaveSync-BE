@@ -9,10 +9,7 @@ from app.models.user_resonator import UserResonator
 from app.models.weapon_master import WeaponMaster
 from app.schemas.common import ResonanceNode
 
-# Spring service.SpecCalculationService 대응.
-# DB I/O 없음 — 이미 로드된 UserResonator/ResonanceNode만으로 계산하는 순수 함수 모음.
-# 클래스로 감싸지 않은 이유: Spring도 상태 없는 @Service(인스턴스 필드 없음)이고,
-# 지금까지 FastAPI services/의 함수형 컨벤션(resonator_profile_service 등)과도 일치.
+# 이미 로드된 UserResonator/ResonanceNode만으로 최종 스탯을 계산하는 순수 함수 모음 (DB I/O 없음).
 
 
 _HUNDRED = Decimal(100)
@@ -144,8 +141,7 @@ def _calculate_stat(
     # 에코 백분율을 소수로 변환 (22 -> 0.22)
     echo_percent_rate = echo_percent / _HUNDRED
 
-    # 에코 스탯 계산 = 기초 스탯 x 에코 백분율 + 에코 고정 스탯
-    # BigDecimal.intValue()는 0 방향으로 절사 — Python도 Decimal에 int()로 동일하게 절사
+    # 에코 스탯 = 기초 스탯 x 에코 백분율 + 에코 고정 스탯. int()는 0 방향으로 절사한다.
     total_echo_stat = int(Decimal(base_stat) * echo_percent_rate + echo_flat)
     logger.debug(f"{echo_flat_type} echoFlat: {echo_flat}")
     logger.debug(f"{echo_flat_type} echoPercentRate: {echo_percent}%")
@@ -187,7 +183,7 @@ def _calculate_percent_stat(
 
 
 def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNode]) -> FinalStat:
-    """공명자 최초 등록 시 스펙 전체 계산. 재련레벨 1 고정 (createResonator 대응)."""
+    """공명자 최초 등록 시 스펙 전체 계산 (재련레벨 1 고정)."""
     user_echoes = user_resonator.user_echoes
     resonator_master = user_resonator.resonator_master
     weapon_master = user_resonator.weapon_master
@@ -252,17 +248,24 @@ def re_calculate_final_stat(
     nodes: List[ResonanceNode],
     weapon_refine_level: int,
 ) -> None:
-    """updateResonator 대응 — required_type에 담긴 스탯만 부분 재계산해 final_stat을 in-place 수정한다.
+    """required_type에 담긴 스탯만 부분 재계산해 final_stat을 in-place 수정한다.
 
-    Spring 원본과 동일하게 아래 11개 StatType만 처리한다. ENERGY_REGEN,
-    RESONANCE_SKILL_DAMAGE_BONUS, BASIC_ATTACK_DAMAGE_BONUS, HEAVY_ATTACK_DAMAGE_BONUS,
-    RESONANCE_LIBERATION_DAMAGE_BONUS는 Spring switch에도 없어서 재계산되지 않는다
-    (Spring 원본 동작 그대로 보존 — 버그로 보이더라도 임의로 고치지 않음).
+    calculate_final_stat이 계산하는 17개 스탯 전부에 분기가 있다. 계산식은
+    calculate_final_stat과 동일하고, 재련 레벨만 인자로 받은 weapon_refine_level을 쓴다.
+
+    무기 재련이 복합 타입(ALL_ATTRIBUTE_DAMAGE_BONUS / BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS)이면
+    _get_weapon_stat_percent가 개별 스탯에 파급시키므로, 그 파급 대상도 재계산 대상에 넣는다.
     """
     final_stat = user_resonator.final_stat
     user_echoes = user_resonator.user_echoes
     resonator_master = user_resonator.resonator_master
     weapon_master = user_resonator.weapon_master
+
+    required_type = set(required_type)
+    if weapon_master.refine_type == StatType.ALL_ATTRIBUTE_DAMAGE_BONUS:
+        required_type |= _ELEMENT_DAMAGE_TYPES
+    elif weapon_master.refine_type == StatType.BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS:
+        required_type |= _BASIC_OR_HEAVY_DAMAGE_TYPES
 
     for stat_type in required_type:
         if stat_type == StatType.HP_PERCENT:
@@ -298,6 +301,11 @@ def re_calculate_final_stat(
                 weapon_refine_level,
             )
 
+        elif stat_type == StatType.ENERGY_REGEN:
+            final_stat.energy_regen = _calculate_percent_stat(
+                Decimal(100), user_echoes, weapon_master, nodes, StatType.ENERGY_REGEN, weapon_refine_level
+            )
+
         elif stat_type == StatType.CRITICAL_RATE:
             final_stat.critical_rate = _calculate_percent_stat(
                 Decimal(5), user_echoes, weapon_master, nodes, StatType.CRITICAL_RATE, weapon_refine_level
@@ -306,6 +314,36 @@ def re_calculate_final_stat(
         elif stat_type == StatType.CRITICAL_DAMAGE:
             final_stat.critical_damage = _calculate_percent_stat(
                 Decimal(150), user_echoes, weapon_master, nodes, StatType.CRITICAL_DAMAGE, weapon_refine_level
+            )
+
+        elif stat_type == StatType.RESONANCE_SKILL_DAMAGE_BONUS:
+            final_stat.resonance_skill_damage_bonus = _calculate_percent_stat(
+                Decimal(0),
+                user_echoes,
+                weapon_master,
+                nodes,
+                StatType.RESONANCE_SKILL_DAMAGE_BONUS,
+                weapon_refine_level,
+            )
+
+        elif stat_type == StatType.BASIC_ATTACK_DAMAGE_BONUS:
+            final_stat.basic_attack_damage_bonus = _calculate_percent_stat(
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.BASIC_ATTACK_DAMAGE_BONUS, weapon_refine_level
+            )
+
+        elif stat_type == StatType.HEAVY_ATTACK_DAMAGE_BONUS:
+            final_stat.heavy_attack_damage_bonus = _calculate_percent_stat(
+                Decimal(0), user_echoes, weapon_master, nodes, StatType.HEAVY_ATTACK_DAMAGE_BONUS, weapon_refine_level
+            )
+
+        elif stat_type == StatType.RESONANCE_LIBERATION_DAMAGE_BONUS:
+            final_stat.resonance_liberation_damage_bonus = _calculate_percent_stat(
+                Decimal(0),
+                user_echoes,
+                weapon_master,
+                nodes,
+                StatType.RESONANCE_LIBERATION_DAMAGE_BONUS,
+                weapon_refine_level,
             )
 
         elif stat_type == StatType.FUSION_DAMAGE_BONUS:
@@ -343,4 +381,4 @@ def re_calculate_final_stat(
                 Decimal(0), user_echoes, weapon_master, nodes, StatType.HEALING_BONUS, weapon_refine_level
             )
 
-        # 나머지 StatType은 Spring 원본의 default -> {} 와 동일하게 무시
+        # 나머지 StatType은 무시
