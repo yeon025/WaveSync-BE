@@ -109,7 +109,7 @@ def get_resonator_setting(db: Session, user_resonator_id: int) -> ResonatorSetti
 def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResonatorResponse:
     # 공명자 프로필 이미지 저장
     storage = get_object_storage_service()
-    profile_url = storage.upload_profile_image(resonator_profile)
+    profile_url = storage.upload(resonator_profile)
     logger.debug(f"{profile_url} 저장을 완료했습니다.")
 
     # 인프로세스 OCR 호출 (네트워크 왕복 없음)

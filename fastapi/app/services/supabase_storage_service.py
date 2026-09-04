@@ -23,7 +23,7 @@ class SupabaseStorageService(ObjectStorageService):
     def create_url(self, path: str) -> str:
         return f"{self.public_url}/storage/v1/object/public/{path}"
 
-    def upload_profile_image(self, file: UploadFile) -> str:
+    def upload(self, file: UploadFile) -> str:
         logger.info("SupaBase 스토리지에 접근합니다.")
 
         content = validate_image(file)

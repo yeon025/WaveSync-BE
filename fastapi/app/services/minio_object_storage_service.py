@@ -30,7 +30,7 @@ class MinioObjectStorageService(ObjectStorageService):
     def create_url(self, path: str) -> str:
         return f"{self.public_url}/{path}"
 
-    def upload_profile_image(self, file: UploadFile) -> str:
+    def upload(self, file: UploadFile) -> str:
         logger.info("MinIO 스토리지에 접근합니다.")
 
         content = validate_image(file)
