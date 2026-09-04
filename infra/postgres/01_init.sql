@@ -137,8 +137,8 @@ CREATE SEQUENCE IF NOT EXISTS user_node_seq
 CREATE TABLE IF NOT EXISTS user_resonance_nodes (
     id BIGINT PRIMARY KEY DEFAULT nextval('user_node_seq'),
 
-    branch_position VARCHAR(20) NOT NULL CHECK (branch_position IN ('LEFT_OUTER', 'LEFT_INNER', 'CENTER', 'RIGHT_OUTER', 'RIGHT_INNER')),
-    node_position VARCHAR(20) NOT NULL CHECK (node_position IN ('TOP', 'MIDDLE')),
+    branch_position VARCHAR(20) NOT NULL CHECK (branch_position IN ('left_outer', 'left_inner', 'center', 'right_outer', 'right_inner')),
+    node_position VARCHAR(20) NOT NULL CHECK (node_position IN ('top', 'middle')),
 
     is_active BOOLEAN NOT NULL DEFAULT FALSE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
