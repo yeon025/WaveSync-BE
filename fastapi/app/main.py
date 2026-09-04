@@ -31,11 +31,16 @@ app.add_middleware(
 )
 
 
-# Spring filter.ExecutionTimeFilter 대응 — 요청 시작/응답 완료 시각을 로그로 남긴다.
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
+# 요청 시작/응답 완료 시각을 로그로 남긴다.
 @app.middleware("http")
 async def execution_time_middleware(request: Request, call_next):
-    # Spring도 /actuator/health는 측정 제외(과거 트러블슈팅으로 추가된 예외 — 커밋 이력 참고)
-    if request.url.path == "/actuator/health":
+    # 헬스체크는 주기적으로 들어오므로 실행시간 로그에서 제외한다.
+    if request.url.path == "/health":
         return await call_next(request)
 
     start = time.perf_counter()
