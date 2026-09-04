@@ -1,7 +1,9 @@
+import os
+
 from google.cloud import vision
 from google.oauth2 import service_account
+
 from app.config.logger import logger
-import os
 
 
 def create_vision_client():

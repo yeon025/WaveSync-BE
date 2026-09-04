@@ -4,3 +4,7 @@ google-cloud-vision
 Pillow
 ImageHash
 requests
+minio
+SQLAlchemy
+psycopg2-binary
+python-multipart

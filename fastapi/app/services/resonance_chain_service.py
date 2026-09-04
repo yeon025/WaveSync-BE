@@ -1,5 +1,6 @@
-from PIL import Image
 import imagehash
+from PIL import Image
+
 from app.config.logger import logger
 
 
@@ -29,7 +30,6 @@ def calculate_chain_level(chain_img_paths, template_path):
     chain_level = 0
 
     for chain_path in chain_img_paths:
-
         is_awakened = _check_chain_level(chain_path, template_path)
 
         if is_awakened:
