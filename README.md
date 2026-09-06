@@ -156,7 +156,7 @@ from app.routers import resonator_router
 
 **[ 결과 ]**
 
-- 컨테이너 실행 시 발생하던 `ModuleNotFoundError`가 해결되어 `docker-compose up`만으로 정상적으로 서버가 기동되었습니다.
+컨테이너 실행 시 발생하던 `ModuleNotFoundError`가 해결되어 `docker-compose up`만으로 정상적으로 서버가 기동되었습니다.
 
 <br>
 
