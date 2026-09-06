@@ -65,13 +65,16 @@
 
 ### Google Vision API 호출 최적화 (7회 → 1회)
 
-**[ 문제 상황 ]**<br>
+**[ 문제 상황 ]**
+
 요청 1건당 Vision API를 7번 호출하는 구조였고, 이는 월 무료 할당량(1,000건)을 빠르게 소진할 위험이 있었습니다.
 
-**[ 최종 선택 ]**<br>
+**[ 최종 선택 ]**
+
 필요한 텍스트가 담긴 구역만 잘라내고, 세로로 병합해 한 장의 이미지로 만든 뒤 Vision API를 한 번만 호출하도록 개선했습니다.
 
-**[ 결과 ]**<br>
+**[ 결과 ]**
+
 API 호출 횟수 7회 → 1회로 단축, 무료 할당량 내에서 안정적으로 운영 가능해졌습니다.
 
 <table border="0">
@@ -87,6 +90,73 @@ API 호출 횟수 7회 → 1회로 단축, 무료 할당량 내에서 안정적�
     </td>
   </tr>
 </table>
+
+---
+
+### FastAPI 컨테이너 실행 시 ModuleNotFoundError 발생
+
+**[ 문제 상황 ]**
+
+기존에 로컬 환경에서 직접 실행하며 개발하던 FastAPI 프로젝트를 Docker Compose 기반 개발 환경으로 전환했습니다. 기존 코드를 그대로 옮겼음에도 `docker-compose up`으로 컨테이너를 실행하자 다음과 같은 에러가 발생하며 서버가 아예 뜨지 않았습니다.
+
+```
+ModuleNotFoundError: No module named 'routers'
+```
+
+**[ 원인 분석 ]**
+
+문제의 원인을 찾기 위해 Dockerfile과 실제 실행 구조를 하나씩 점검했습니다.
+
+**Dockerfile 구조**
+```dockerfile
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}
+```
+
+- `WORKDIR /app`으로 컨테이너의 작업 디렉토리를 `/app`으로 지정했습니다.
+- `COPY . .`으로 로컬의 `fastapi/` 폴더 전체(그 안에 다시 `app/` 폴더가 존재하는 구조)를 그대로 복사했습니다.
+- 그 결과 컨테이너 내부에는 다음과 같은 **중첩 디렉토리 구조**가 생성되었습니다.
+```
+/app/                ← WORKDIR (sys.path 기준점)
+  └── app/            ← 실제 소스 코드가 위치한 폴더
+        ├── main.py
+        ├── routers/
+        ├── schemas/
+        └── services/
+```
+- 실행 명령어가 `uvicorn app.main:app`이므로, Python은 `/app`을 기준으로 `app`이라는 패키지를 인식하고 그 안의 `main.py`를 로딩합니다.
+- 이때 `main.py` 내부에 다음과 같이 작성되어 있던 import 구문이 문제였습니다.
+
+```python
+# main.py (수정 전)
+from routers import resonator_router
+```
+
+- 이 코드는 `/app/routers`를 찾으려 하지만, 실제 경로는 `/app/app/routers`이기 때문에 모듈을 찾지 못해 `ModuleNotFoundError`가 발생한 것이었습니다.
+- 반면 기존 로컬 개발 환경에서는 `fastapi/app` 폴더 내부에서 직접 실행했기 때문에 해당 폴더 자체가 최상위 기준점이 되어 `from routers import ...`가 정상적으로 동작했습니다. 즉, 코드 자체는 문제가 없었지만 실행 환경(로컬 실행 vs 컨테이너 실행)에 따라 모듈 탐색 경로(`sys.path`) 기준이 달라지면서 발생한 문제였습니다.
+
+**[ 최종 선택 ]**
+
+두 가지 해결 방법을 고려했습니다.
+
+1. **Dockerfile을 수정**해서 `COPY app/ .`처럼 `app` 폴더의 내용물만 `/app`으로 복사해 중첩 구조 자체를 없애는 방법
+2. **모든 import 경로를 `app.` 접두사를 포함한 절대 경로로 통일**해서 현재 디렉토리 구조에 코드를 맞추는 방법
+
+프로젝트 구조를 그대로 유지하면서 배포 스크립트나 실행 명령어와의 일관성(`uvicorn app.main:app`)을 지키는 것이 더 안전하다고 판단해, 2번 방법(import 경로 통일)을 선택했습니다.
+
+```python
+# main.py (수정 후)
+from app.routers import resonator_router
+```
+
+동일한 패턴으로 `mapper`, `services`, `validators`, `config` 등 프로젝트 내 모든 내부 모듈의 import 경로를 `app.`을 포함한 형태로 통일했습니다.
+
+**[ 결과 ]**
+
+- 컨테이너 실행 시 발생하던 `ModuleNotFoundError`가 해결되어 `docker-compose up`만으로 정상적으로 서버가 기동되었습니다.
 
 <br>
 
