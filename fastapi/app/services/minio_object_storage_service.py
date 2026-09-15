@@ -1,6 +1,7 @@
 import io
 import os
 import uuid
+from typing import List
 from urllib.parse import urlparse
 
 from fastapi import UploadFile
@@ -9,7 +10,7 @@ from minio import Minio
 from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
-from app.services.object_storage_service import ObjectStorageService
+from app.services.object_storage_service import ObjectStorageService, StorageObject
 from app.validators.storage_validator import get_extension, validate_image
 
 
@@ -18,6 +19,7 @@ class MinioObjectStorageService(ObjectStorageService):
         self.endpoint = os.getenv("MINIO_ENDPOINT")
         self.public_url = os.getenv("MINIO_PUBLIC_URL")
         self.profile_bucket = os.getenv("MINIO_BUCKET_PROFILES")
+        self.echo_bucket = os.getenv("MINIO_BUCKET_ECHOES")
 
         parsed = urlparse(self.endpoint)
         self.client = Minio(
@@ -53,3 +55,25 @@ class MinioObjectStorageService(ObjectStorageService):
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
         return f"{self.endpoint}/{self.profile_bucket}/{object_name}"
+
+    def list_objects(self, bucket: str) -> List[StorageObject]:
+        try:
+            objects = self.client.list_objects(bucket)
+            return [StorageObject(key=obj.object_name, etag=obj.etag) for obj in objects]
+
+        except Exception as e:
+            logger.error(f"{bucket} 목록 조회 실패: {e}")
+            raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
+
+    def download_object(self, bucket: str, key: str) -> bytes:
+        try:
+            response = self.client.get_object(bucket, key)
+            try:
+                return response.read()
+            finally:
+                response.close()
+                response.release_conn()
+
+        except Exception as e:
+            logger.error(f"{bucket} 다운로드 실패: {e} (key={key})")
+            raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)

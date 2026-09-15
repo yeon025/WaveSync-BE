@@ -21,7 +21,7 @@ services:
 
   # S3 호환 객체 스토리지
   minio:
-    image: minio/minio:latest
+    image: pgsty/minio:latest
 
     # API(9000) + 관리자 콘솔(9001)
     command: server /data --console-address ":9001"
@@ -41,7 +41,7 @@ services:
       TZ: Asia/Seoul
 
   minio-init:
-    image: minio/mc:latest
+    image: pgsty/mc:latest
 
     depends_on:
       - minio
@@ -50,6 +50,7 @@ services:
       - ../../WaveSync-tools/resources/images/new_weapons:/seed/weapon-images:ro
       - ../../WaveSync-tools/resources/images/thumbnails:/seed/resonator-thumbnail-images:ro
       - ../../WaveSync-tools/resources/images/standings:/seed/resonator-standing-images:ro
+      - ../../WaveSync-tools/resources/images/new_echoes:/seed/echo-images:ro
 
     entrypoint: >
       /bin/sh -c "
@@ -62,15 +63,18 @@ services:
       mc mb --ignore-existing local/weapon-images;
       mc mb --ignore-existing local/resonator-thumbnail-images;
       mc mb --ignore-existing local/resonator-standing-images;
+      mc mb --ignore-existing local/echo-images;
 
       mc anonymous set download local/profile-images;
       mc anonymous set download local/weapon-images;
       mc anonymous set download local/resonator-thumbnail-images;
       mc anonymous set download local/resonator-standing-images;
+      mc anonymous set download local/echo-images;
 
       mc mirror --overwrite /seed/weapon-images local/weapon-images;
       mc mirror --overwrite /seed/resonator-thumbnail-images local/resonator-thumbnail-images;
       mc mirror --overwrite /seed/resonator-standing-images local/resonator-standing-images;
+      mc mirror --overwrite /seed/echo-images local/echo-images;
 
       echo 'MinIO initialization complete.';
       "
@@ -114,6 +118,7 @@ services:
       MINIO_BUCKET_WEAPONS: weapon-images
       MINIO_BUCKET_RESONATOR_THUMBNAILS: resonator-thumbnail-images
       MINIO_BUCKET_RESONATOR_STANDINGS: resonator-standing-images
+      MINIO_BUCKET_ECHOES: echo-images
 
       TZ: Asia/Seoul
 

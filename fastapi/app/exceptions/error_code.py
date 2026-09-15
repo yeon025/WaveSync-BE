@@ -30,6 +30,8 @@ class ErrorCode(Enum):
 
     IMAGE_PROCESSING_FAILED = (500, "IMAGE_PROCESSING_FAILED", "이미지 처리 중 오류가 발생했습니다. 다시 시도해주세요.")
 
+    STORAGE_BUCKET_NOT_FOUND = (500, "STORAGE_BUCKET_NOT_FOUND", "스토리지 버킷을 찾을 수 없습니다.")
+
     DATABASE_ERROR = (500, "DATABASE_ERROR", "데이터 처리 중 오류가 발생했습니다. 다시 시도해주세요.")
 
     INTERNAL_SERVER_ERROR = (500, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.")
