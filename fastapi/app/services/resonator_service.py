@@ -174,6 +174,8 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
 
     for echo_dto in extracted.echoes:
         echo = UserEcho(
+            name=echo_dto.name,
+            image=echo_dto.imagePath,
             main_type=StatType.from_code(echo_dto.main.type),
             main_value=Decimal(str(echo_dto.main.value)),
             secondary_type=StatType.from_code(echo_dto.secondary.type),

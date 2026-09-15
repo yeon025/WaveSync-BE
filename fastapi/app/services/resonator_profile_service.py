@@ -10,8 +10,9 @@ from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.mapper.echo_mapper import EchoMapper
 from app.schemas.common import ExtractData
+from app.services.echo_matching_service import match_echo_icon
 from app.services.ocr_service import clean_text, extract_text, process_ocr_result
-from app.services.preprocess_service import crop_and_stack, crop_circles
+from app.services.preprocess_service import crop_and_stack, crop_circles, crop_echo_icons
 from app.services.resonance_chain_service import calculate_chain_level
 
 
@@ -47,6 +48,16 @@ def extract_info(image_path):
     # OCR용 텍스트 인식 정확도 향상을 위한 전처리
     crop_and_stack(profile)
 
+    # 에코 아이콘 판별(ORB 매칭)을 위한 전처리
+    echo_icons = crop_echo_icons(profile)
+
+    # ========================================
+    # 에코 아이콘 판별 (ORB 매칭)
+    # ========================================
+    # 슬롯별로 (에코 이름, 이미지 경로) 튜플, 모호하면 None
+    echo_matches = [match_echo_icon(icon) for icon in echo_icons]
+    logger.debug(f"에코 아이콘 판별 결과: {echo_matches}")
+
     # ========================================
     # 공명 체인 레벨 계산
     # ========================================
@@ -73,6 +84,10 @@ def extract_info(image_path):
     # 에코 스탯 매핑
     # ========================================
     echo_list = echoMapper.run(cleaned_texts)
+
+    for echo, match in zip(echo_list, echo_matches):
+        if match is not None:
+            echo.name, echo.imagePath = match
 
     return ExtractData(
         resonatorName=cleaned_texts[0],

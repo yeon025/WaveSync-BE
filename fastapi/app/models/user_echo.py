@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, Numeric
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, Numeric, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 
@@ -12,6 +12,10 @@ class UserEcho(Base):
     __tablename__ = "user_echoes"
 
     id = Column(BigInteger, primary_key=True)
+
+    name = Column(String(50), nullable=True)
+
+    image = Column(String(255), nullable=True)
 
     # native_enum=False 필수 — DB 컬럼은 VARCHAR (CLAUDE.md "Enum 처리")
     main_type = Column(SAEnum(StatType, native_enum=False, length=50, values_callable=enum_values), nullable=False)

@@ -86,6 +86,10 @@ CREATE TABLE IF NOT EXISTS user_resonators (
 CREATE TABLE IF NOT EXISTS user_echoes (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
+    name VARCHAR(50),
+
+    image VARCHAR(255),
+
     main_type VARCHAR(50) NOT NULL,
     main_value NUMERIC(5,1) NOT NULL,
 
