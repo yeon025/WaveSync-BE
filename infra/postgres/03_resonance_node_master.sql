@@ -50,7 +50,7 @@ INSERT INTO resonance_node_master (outer_node_type, outer_top_node_value, outer_
 VALUES ('healing_bonus', 4.20, 1.80, 'defense_percent', 5.32, 2.28, (SELECT id FROM resonator_master WHERE name = '모니에'));
 
 INSERT INTO resonance_node_master (outer_node_type, outer_top_node_value, outer_middle_node_value, inner_node_type, inner_top_node_value, inner_middle_node_value, resonator_master_id)
-VALUES ('크티리컬', 2.80, 1.20, 'attack_percent', 4.20, 1.80, (SELECT id FROM resonator_master WHERE name = '에이메스'));
+VALUES ('critical_rate', 2.80, 1.20, 'attack_percent', 4.20, 1.80, (SELECT id FROM resonator_master WHERE name = '에이메스'));
 
 INSERT INTO resonance_node_master (outer_node_type, outer_top_node_value, outer_middle_node_value, inner_node_type, inner_top_node_value, inner_middle_node_value, resonator_master_id)
 VALUES ('critical_damage', 5.60, 2.40, 'attack_percent', 4.20, 1.80, (SELECT id FROM resonator_master WHERE name = '데니아'));
@@ -110,7 +110,7 @@ INSERT INTO resonance_node_master (outer_node_type, outer_top_node_value, outer_
 VALUES ('critical_rate', 2.80, 1.20, 'attack_percent', 4.20, 1.80, (SELECT id FROM resonator_master WHERE name = '유노'));
 
 INSERT INTO resonance_node_master (outer_node_type, outer_top_node_value, outer_middle_node_value, inner_node_type, inner_top_node_value, inner_middle_node_value, resonator_master_id)
-VALUES ('크티리컬', 2.80, 1.20, 'attack_percent', 4.20, 1.80, (SELECT id FROM resonator_master WHERE name = '구원'));
+VALUES ('critical_rate', 2.80, 1.20, 'attack_percent', 4.20, 1.80, (SELECT id FROM resonator_master WHERE name = '구원'));
 
 INSERT INTO resonance_node_master (outer_node_type, outer_top_node_value, outer_middle_node_value, inner_node_type, inner_top_node_value, inner_middle_node_value, resonator_master_id)
 VALUES ('critical_rate', 2.80, 1.20, 'attack_percent', 4.20, 1.80, (SELECT id FROM resonator_master WHERE name = '시그리카'));
