@@ -1,8 +1,10 @@
 import os
+from io import BytesIO
+from typing import List, Union
 
 from PIL import Image, ImageDraw
 
-from app.config.constant import CIRCLES, RECTANGLES, TMP_DIR
+from app.config.constant import CIRCLES, ECHO_ICON_RECTANGLES, IMAGE_BG_COLOR, RECTANGLES, TMP_DIR
 from app.config.logger import logger
 
 os.makedirs(TMP_DIR, exist_ok=True)
@@ -67,3 +69,32 @@ def crop_and_stack(image):
 
     merged.save(save_path)
     logger.debug(f"{save_path}가 저장되었습니다.")
+
+
+def load_rgb(image_source: Union[str, bytes, os.PathLike]) -> Image.Image:
+    """경로 또는 바이트(스토리지에서 다운로드한 이미지 등)를 불러와 RGB로 정규화한다.
+    투명 배경(RGBA 등)은 IMAGE_BG_COLOR로 합성한다 (webp/png 등 포맷 차이 무관)."""
+
+    source = BytesIO(image_source) if isinstance(image_source, (bytes, bytearray)) else image_source
+    im = Image.open(source)
+
+    has_alpha = im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
+    if has_alpha:
+        im = im.convert("RGBA")
+        bg = Image.new("RGBA", im.size, IMAGE_BG_COLOR + (255,))
+        im = Image.alpha_composite(bg, im)
+
+    return im.convert("RGB")
+
+
+def crop_echo_icons(image: Image.Image) -> List[Image.Image]:
+    """공명자 프로필 스크린샷에서 에코 슬롯 1~5의 아이콘 영역만 크롭한다 (ORB 매칭 입력용)."""
+
+    crops = [image.crop(rect) for rect in ECHO_ICON_RECTANGLES]
+
+    for i, crop in enumerate(crops, start=1):
+        save_path = os.path.join(TMP_DIR, f"echo_{i}.png")
+        crop.save(save_path)
+        logger.debug(f"{save_path}가 저장되었습니다.")
+
+    return crops

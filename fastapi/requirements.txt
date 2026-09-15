@@ -8,3 +8,5 @@ minio
 SQLAlchemy
 psycopg2-binary
 python-multipart
+opencv-python-headless
+numpy

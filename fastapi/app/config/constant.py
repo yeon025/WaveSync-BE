@@ -80,6 +80,36 @@ CIRCLES = [
 ]
 
 
+# 에코 슬롯 1~5의 "아이콘" 영역 (ORB 매칭용)
+ECHO_ICON_RECTANGLES = [
+    (20, 648, 214, 831),  # 1 이미지
+    (398, 648, 587, 831),  # 2 이미지
+    (768, 648, 963, 831),  # 3 이미지
+    (1142, 648, 1335, 831),  # 4 이미지
+    (1518, 648, 1708, 831),  # 5 이미지
+]
+
+
+# 이미지 투명 배경을 합성할 배경색 (게임 내 슬롯이 어두우므로 검은색)
+IMAGE_BG_COLOR = (0, 0, 0)
+
+# 에코 ORB 특징 로컬 캐시 (echo-images 버킷 객체를 매번 다운로드/재계산하지 않기 위함)
+ECHO_ORB_CACHE_PATH = os.path.join(TMP_DIR, "echo_orb_cache.pkl")
+
+# cv2.ORB_create 파라미터
+ECHO_ORB_PROC_SIZE = 256  # 비교 전 통일할 이미지 크기 (정사각형, px)
+ECHO_ORB_NFEATURES = 800
+ECHO_ORB_SCALE_FACTOR = 1.2
+ECHO_ORB_NLEVELS = 8
+ECHO_ORB_FAST_THRESHOLD = 20
+
+# 매칭 방식: "ratio" (knnMatch + Lowe ratio test) | "crosscheck" (BFMatcher crossCheck=True)
+ECHO_MATCHER_MODE = "ratio"
+ECHO_LOWE_RATIO = 0.75  # Lowe ratio test 임계값 (ECHO_MATCHER_MODE == "ratio"일 때)
+ECHO_MIN_KEYPOINTS = 8  # 매칭 성립을 위한 최소 특징점 수
+ECHO_MIN_MARGIN_RATIO = 0.12  # 1등이 2등보다 (1등점수 * 이 비율) 이상 높아야 채택, 아니면 모호 → None
+
+
 MAIN_STAT_MAP = {
     "HP": "hp_percent",
     "공격력": "attack_percent",
