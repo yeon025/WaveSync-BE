@@ -46,6 +46,19 @@ def find_by_id(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
     return db.scalar(stmt)
 
 
+def find_by_id_with_echoes(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
+    stmt = (
+        select(UserResonator)
+        .options(
+            # 컬렉션은 joinedload 대신 selectinload로 배치 조회 (부모 행 중복 방지, N+1 방지).
+            # user_echo_subs까지 순회하므로 한 단계 더 체이닝한다.
+            selectinload(UserResonator.user_echoes).selectinload(UserEcho.user_echo_subs),
+        )
+        .where(UserResonator.id == user_resonator_id, UserResonator.is_deleted.is_(False))
+    )
+    return db.scalar(stmt)
+
+
 def find_by_id_for_update(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
     stmt = (
         select(UserResonator)

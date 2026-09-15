@@ -24,7 +24,7 @@ from app.repositories import (
     user_resonator_repository,
     weapon_master_repository,
 )
-from app.schemas.common import ResonanceNode, ResonatorStat, WeaponDetail, WeaponSetting
+from app.schemas.common import EchoDetail, ResonanceNode, ResonatorStat, WeaponDetail, WeaponSetting
 from app.schemas.request import UpdateResonatorRequest
 from app.schemas.response import (
     CreateResonatorResponse,
@@ -104,6 +104,18 @@ def get_resonator_setting(db: Session, user_resonator_id: int) -> ResonatorSetti
     logger.debug("무기 조회 후 dto로 변환했습니다.")
 
     return ResonatorSettingResponse(nodes=nodes, weapon=weapon)
+
+
+def get_resonator_echoes(db: Session, user_resonator_id: int) -> List[EchoDetail]:
+    user_resonator = user_resonator_repository.find_by_id_with_echoes(db, user_resonator_id)
+    if user_resonator is None:
+        raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
+
+    storage = get_object_storage_service()
+    return [
+        EchoDetail.from_user_echo(echo, storage.create_url(echo.image) if echo.image else None)
+        for echo in user_resonator.user_echoes
+    ]
 
 
 def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResonatorResponse:

@@ -114,6 +114,25 @@ class WeaponSetting(BaseModel):
         )
 
 
+# 에코 상세 (등록된 에코 조회 응답).
+class EchoDetail(BaseModel):
+    name: Optional[str] = None
+    imageUrl: Optional[str] = None
+    main: Stat
+    secondary: Stat
+    subs: List[Stat] = Field(default_factory=list)
+
+    @classmethod
+    def from_user_echo(cls, echo, image_url: Optional[str]) -> "EchoDetail":
+        return cls(
+            name=echo.name,
+            imageUrl=image_url,
+            main=Stat(type=echo.main_type, value=echo.main_value),
+            secondary=Stat(type=echo.secondary_type, value=echo.secondary_value),
+            subs=[Stat(type=sub.type, value=sub.value) for sub in echo.user_echo_subs],
+        )
+
+
 # OCR 추출 결과 스키마.
 class ExtractedStat(BaseModel):
     type: str

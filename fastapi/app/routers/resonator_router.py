@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.api_response import ApiResponse
+from app.schemas.common import EchoDetail
 from app.schemas.request import DeleteResonatorRequest, UpdateResonatorRequest
 from app.schemas.response import (
     CreateResonatorResponse,
@@ -62,6 +63,18 @@ def get_resonator_setting(user_resonator_id: int, db: Session = Depends(get_db))
     data = resonator_service.get_resonator_setting(db, user_resonator_id)
 
     return ApiResponse(code="OK", message="설정 정보를 조회했습니다.", data=data)
+
+
+@router.get(
+    "/{user_resonator_id}/echo",
+    response_model=ApiResponse[List[EchoDetail]],
+    response_model_exclude_none=True,
+    status_code=200,
+)
+def get_resonator_echoes(user_resonator_id: int, db: Session = Depends(get_db)):
+    data = resonator_service.get_resonator_echoes(db, user_resonator_id)
+
+    return ApiResponse(code="OK", message="에코를 조회했습니다.", data=data)
 
 
 @router.patch(
