@@ -12,7 +12,7 @@ from app.exceptions.exception_handler import (
     global_exception_handler,
     sqlalchemy_exception_handler,
 )
-from app.routers import resonator_router
+from app.resonator.router import router as resonator_router
 
 logging.getLogger("uvicorn").disabled = True
 # logging.getLogger("uvicorn.error").disabled = True
@@ -58,7 +58,7 @@ async def execution_time_middleware(request: Request, call_next):
         )
 
 
-app.include_router(resonator_router.router, prefix="/api")
+app.include_router(resonator_router, prefix="/api")
 
 app.add_exception_handler(CustomException, custom_exception_handler)
 app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)

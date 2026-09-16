@@ -1,0 +1,97 @@
+import os
+from io import BytesIO
+
+import requests
+from PIL import Image
+
+from app.config.logger import logger
+from app.exceptions.custom_exception import CustomException
+from app.exceptions.error_code import ErrorCode
+from app.profile_extraction.constants import CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR, TMP_DIR
+from app.profile_extraction.echo.echo_matching_service import match_echo_icon
+from app.profile_extraction.echo.echo_text_parser import EchoMapper
+from app.profile_extraction.ocr.ocr_service import clean_text, extract_text, process_ocr_result
+from app.profile_extraction.preprocessing.preprocess_service import crop_and_stack, crop_circles, crop_echo_icons
+from app.profile_extraction.resonance_chain.resonance_chain_service import calculate_chain_level
+from app.profile_extraction.schemas import ExtractData
+
+
+def extract_info(image_path):
+
+    echoMapper = EchoMapper()
+
+    os.makedirs(TMP_DIR, exist_ok=True)
+
+    # ========================================
+    # 이미지 가져오기
+    # ========================================
+    response = requests.get(image_path, timeout=10)
+
+    if response.status_code == 404:
+        raise CustomException(ErrorCode.IMAGE_NOT_FOUND)
+
+    if response.status_code == 403:
+        raise CustomException(ErrorCode.IMAGE_ACCESS_DENIED)
+
+    if response.status_code >= 400:
+        raise CustomException(ErrorCode.IMAGE_LOAD_FAILED)
+
+    profile = Image.open(BytesIO(response.content)).convert("RGB")
+
+    # ========================================
+    # 전처리
+    # ========================================
+
+    # 돌파 상태 판별을 위한 전처리
+    crop_circles(profile)
+
+    # OCR용 텍스트 인식 정확도 향상을 위한 전처리
+    crop_and_stack(profile)
+
+    # 에코 아이콘 판별(ORB 매칭)을 위한 전처리
+    echo_icons = crop_echo_icons(profile)
+
+    # ========================================
+    # 에코 아이콘 판별 (ORB 매칭)
+    # ========================================
+    # 슬롯별로 (에코 이름, 이미지 경로) 튜플, 모호하면 None
+    echo_matches = [match_echo_icon(icon) for icon in echo_icons]
+    logger.debug(f"에코 아이콘 판별 결과: {echo_matches}")
+
+    # ========================================
+    # 공명 체인 레벨 계산
+    # ========================================
+    chain_level = calculate_chain_level(CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR)
+    logger.debug(f"공명 체인 돌파 횟수는 {chain_level}입니다.")
+
+    # ========================================
+    # OCR
+    # ========================================
+
+    # OCR로 텍스트 추출
+    full_text = extract_text(os.path.join(TMP_DIR, "merged.png"))
+    logger.debug("텍스트 추출을 완료했습니다.")
+
+    # 추출된 텍스트를 y좌표 기준으로 병합
+    merged_texts = process_ocr_result(full_text)
+    logger.debug("텍스트 병합을 완료했습니다.")
+
+    # 텍스트 정제 및 필터링
+    cleaned_texts = clean_text(merged_texts)
+    logger.debug("텍스트 정제를 완료했습니다.")
+
+    # ========================================
+    # 에코 스탯 매핑
+    # ========================================
+    echo_list = echoMapper.run(cleaned_texts)
+
+    for echo, match in zip(echo_list, echo_matches):
+        if match is not None:
+            echo.name, echo.imagePath = match
+
+    return ExtractData(
+        resonatorName=cleaned_texts[0],
+        resonanceChainLevel=chain_level,
+        weaponName=cleaned_texts[1],
+        echoes=echo_list,
+    )
