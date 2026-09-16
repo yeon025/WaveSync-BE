@@ -43,7 +43,18 @@ from app.storage.object_storage_factory import get_object_storage_service
 
 
 def get_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:
-    resonators = resonator_master_repository.find_resonator_summary(db)
+    rows = resonator_master_repository.find_resonator_summary(db)
+
+    resonators = [
+        ResonatorSummaryResponse(
+            userResonatorId=row.id,
+            resonatorName=row.name,
+            rarity=row.rarity,
+            releaseVersion=row.release_version,
+            thumbnailImageUrl=row.thumbnail_image,
+        )
+        for row in rows
+    ]
 
     # 한글 정렬은 파이썬 기본 문자열 비교를 쓴다 (현대 한글은 코드포인트 순서 ≈ 사전순).
     # 숫자/영문이 섞인 이름이 마스터 데이터에 추가되면 재검토 필요.

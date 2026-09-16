@@ -1,11 +1,11 @@
 from typing import List, Optional
 
 from sqlalchemy import exists, select
+from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session
 
 from app.resonator.models.resonator_master import ResonatorMaster
 from app.resonator.models.user_resonator import UserResonator
-from app.resonator.schemas import ResonatorSummaryResponse
 
 
 def find_by_name(db: Session, name: str) -> Optional[ResonatorMaster]:
@@ -16,8 +16,10 @@ def exists_by_name(db: Session, name: str) -> bool:
     return db.scalar(select(exists().where(ResonatorMaster.name == name)))
 
 
-def find_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:
+def find_resonator_summary(db: Session) -> List[Row]:
     # relationship 대신 명시적 LEFT JOIN
+    # 반환값은 (id, name, rarity, release_version, thumbnail_image) 컬럼을 가진 원시 Row 목록이다.
+    # API 응답(ResonatorSummaryResponse) 조립은 서비스 계층 책임이다.
     stmt = (
         select(
             UserResonator.id,
@@ -33,15 +35,4 @@ def find_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:
             isouter=True,
         )
     )
-    rows = db.execute(stmt).all()
-
-    return [
-        ResonatorSummaryResponse(
-            userResonatorId=row.id,
-            resonatorName=row.name,
-            rarity=row.rarity,
-            releaseVersion=row.release_version,
-            thumbnailImageUrl=row.thumbnail_image,
-        )
-        for row in rows
-    ]
+    return db.execute(stmt).all()
