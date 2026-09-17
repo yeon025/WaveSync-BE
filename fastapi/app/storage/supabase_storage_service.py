@@ -48,7 +48,8 @@ class SupabaseStorageService(ObjectStorageService):
             logger.debug("프로필 이미지를 업로드했습니다.")
 
         except requests.RequestException as e:
-            logger.error(f"Image upload failed: {e}")
+            body = e.response.text if e.response is not None else None
+            logger.error(f"Image upload failed: {e} (body={body})")
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
         return self.create_url(f"{bucket}/{object_name}")
@@ -74,7 +75,8 @@ class SupabaseStorageService(ObjectStorageService):
                 raise_if_bucket_not_found(response, bucket)
                 response.raise_for_status()
             except requests.RequestException as e:
-                logger.error(f"{bucket} 목록 조회 실패: {e}")
+                body = e.response.text if e.response is not None else None
+                logger.error(f"{bucket} 목록 조회 실패: {e} (body={body})")
                 raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
             page = response.json()
@@ -98,7 +100,8 @@ class SupabaseStorageService(ObjectStorageService):
             raise_if_bucket_not_found(response, bucket)
             response.raise_for_status()
         except requests.RequestException as e:
-            logger.error(f"{bucket} 다운로드 실패: {e} (key={key})")
+            body = e.response.text if e.response is not None else None
+            logger.error(f"{bucket} 다운로드 실패: {e} (key={key}, body={body})")
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
         return response.content
