@@ -63,7 +63,12 @@ class SupabaseStorageService(ObjectStorageService):
                 response = requests.post(
                     f"{self.public_url}/storage/v1/object/list/{bucket}",
                     headers=self._auth_headers(),
-                    json={"limit": limit, "offset": offset, "sortBy": {"column": "name", "order": "asc"}},
+                    json={
+                        "prefix": "",
+                        "limit": limit,
+                        "offset": offset,
+                        "sortBy": {"column": "name", "order": "asc"},
+                    },
                     timeout=10,
                 )
                 raise_if_bucket_not_found(response, bucket)
