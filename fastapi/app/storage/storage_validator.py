@@ -1,5 +1,6 @@
 import io
 
+import requests
 from fastapi import UploadFile
 from PIL import Image
 
@@ -49,3 +50,19 @@ def get_extension(file: UploadFile) -> str:
         return ""
 
     return filename[filename.rfind(".") :]
+
+
+def raise_if_bucket_not_found(response: requests.Response, bucket: str) -> None:
+    if response.status_code == 404:
+        logger.error(f"{bucket} 버킷을 찾을 수 없습니다 (404).")
+        raise CustomException(ErrorCode.STORAGE_BUCKET_NOT_FOUND)
+
+    if response.status_code == 400:
+        try:
+            body = response.json()
+        except ValueError:
+            return
+        error_message = str(body.get("error", "")) + str(body.get("message", ""))
+        if "bucket not found" in error_message.lower() or str(body.get("statusCode")) == "404":
+            logger.error(f"{bucket} 버킷을 찾을 수 없습니다 (400: {body}).")
+            raise CustomException(ErrorCode.STORAGE_BUCKET_NOT_FOUND)
