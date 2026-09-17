@@ -28,7 +28,7 @@ class SupabaseStorageService(ObjectStorageService):
     def create_url(self, path: str) -> str:
         return f"{self.public_url}/storage/v1/object/public/{path}"
 
-    def upload(self, file: UploadFile) -> str:
+    def upload(self, bucket: str, file: UploadFile) -> str:
         logger.info("SupaBase 스토리지에 접근합니다.")
 
         content = validate_image(file)
@@ -38,12 +38,12 @@ class SupabaseStorageService(ObjectStorageService):
 
         try:
             response = requests.post(
-                f"{self.public_url}/storage/v1/object/{self.profile_bucket}/{object_name}",
+                f"{self.public_url}/storage/v1/object/{bucket}/{object_name}",
                 headers={**self._auth_headers(), "Content-Type": file.content_type, "x-upsert": "true"},
                 data=content,
                 timeout=10,
             )
-            raise_if_bucket_not_found(response, self.profile_bucket)
+            raise_if_bucket_not_found(response, bucket)
             response.raise_for_status()
             logger.debug("프로필 이미지를 업로드했습니다.")
 
@@ -51,7 +51,7 @@ class SupabaseStorageService(ObjectStorageService):
             logger.error(f"Image upload failed: {e}")
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
-        return self.create_url(f"{self.profile_bucket}/{object_name}")
+        return self.create_url(f"{bucket}/{object_name}")
 
     def list_objects(self, bucket: str) -> List[StorageObject]:
         objects: List[StorageObject] = []

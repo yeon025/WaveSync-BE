@@ -33,7 +33,7 @@ class MinioObjectStorageService(ObjectStorageService):
     def create_url(self, path: str) -> str:
         return f"{self.public_url}/{path}"
 
-    def upload(self, file: UploadFile) -> str:
+    def upload(self, bucket: str, file: UploadFile) -> str:
         logger.info("MinIO 스토리지에 접근합니다.")
 
         content = validate_image(file)
@@ -43,7 +43,7 @@ class MinioObjectStorageService(ObjectStorageService):
 
         try:
             self.client.put_object(
-                self.profile_bucket,
+                bucket,
                 object_name,
                 io.BytesIO(content),
                 length=len(content),
@@ -53,11 +53,11 @@ class MinioObjectStorageService(ObjectStorageService):
 
         except Exception as e:
             if isinstance(e, S3Error):
-                raise_if_minio_bucket_not_found(e, self.profile_bucket)
+                raise_if_minio_bucket_not_found(e, bucket)
             logger.error(f"Image upload failed: {e}")
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
-        return f"{self.endpoint}/{self.profile_bucket}/{object_name}"
+        return f"{self.endpoint}/{bucket}/{object_name}"
 
     def list_objects(self, bucket: str) -> List[StorageObject]:
         try:

@@ -137,7 +137,7 @@ def get_resonator_echoes(db: Session, user_resonator_id: int) -> List[EchoDetail
 def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResonatorResponse:
     # 공명자 프로필 이미지 저장
     storage = get_object_storage_service()
-    profile_url = storage.upload(resonator_profile)
+    profile_url = storage.upload(storage.profile_bucket, resonator_profile)
     logger.debug(f"{profile_url} 저장을 완료했습니다.")
 
     # 인프로세스 OCR 호출 (네트워크 왕복 없음)
