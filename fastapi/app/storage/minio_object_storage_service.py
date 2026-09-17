@@ -6,12 +6,13 @@ from urllib.parse import urlparse
 
 from fastapi import UploadFile
 from minio import Minio
+from minio.error import S3Error
 
 from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.storage.object_storage_service import ObjectStorageService, StorageObject
-from app.storage.storage_validator import get_extension, validate_image
+from app.storage.storage_validator import get_extension, raise_if_minio_bucket_not_found, validate_image
 
 
 class MinioObjectStorageService(ObjectStorageService):
@@ -51,6 +52,8 @@ class MinioObjectStorageService(ObjectStorageService):
             logger.debug("프로필 이미지를 업로드했습니다.")
 
         except Exception as e:
+            if isinstance(e, S3Error):
+                raise_if_minio_bucket_not_found(e, self.profile_bucket)
             logger.error(f"Image upload failed: {e}")
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
@@ -62,6 +65,8 @@ class MinioObjectStorageService(ObjectStorageService):
             return [StorageObject(key=obj.object_name, etag=obj.etag) for obj in objects]
 
         except Exception as e:
+            if isinstance(e, S3Error):
+                raise_if_minio_bucket_not_found(e, bucket)
             logger.error(f"{bucket} 목록 조회 실패: {e}")
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
@@ -75,5 +80,7 @@ class MinioObjectStorageService(ObjectStorageService):
                 response.release_conn()
 
         except Exception as e:
+            if isinstance(e, S3Error):
+                raise_if_minio_bucket_not_found(e, bucket)
             logger.error(f"{bucket} 다운로드 실패: {e} (key={key})")
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)

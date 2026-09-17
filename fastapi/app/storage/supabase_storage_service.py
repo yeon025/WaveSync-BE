@@ -43,6 +43,7 @@ class SupabaseStorageService(ObjectStorageService):
                 data=content,
                 timeout=10,
             )
+            raise_if_bucket_not_found(response, self.profile_bucket)
             response.raise_for_status()
             logger.debug("프로필 이미지를 업로드했습니다.")
 

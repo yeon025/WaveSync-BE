@@ -2,6 +2,7 @@ import io
 
 import requests
 from fastapi import UploadFile
+from minio.error import S3Error
 from PIL import Image
 
 from app.config.logger import logger
@@ -66,3 +67,9 @@ def raise_if_bucket_not_found(response: requests.Response, bucket: str) -> None:
         if "bucket not found" in error_message.lower() or str(body.get("statusCode")) == "404":
             logger.error(f"{bucket} 버킷을 찾을 수 없습니다 (400: {body}).")
             raise CustomException(ErrorCode.STORAGE_BUCKET_NOT_FOUND)
+
+
+def raise_if_minio_bucket_not_found(error: S3Error, bucket: str) -> None:
+    if error.code == "NoSuchBucket":
+        logger.error(f"{bucket} 버킷을 찾을 수 없습니다 ({error.code}).")
+        raise CustomException(ErrorCode.STORAGE_BUCKET_NOT_FOUND)
