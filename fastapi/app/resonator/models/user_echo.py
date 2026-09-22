@@ -1,8 +1,9 @@
-from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, Numeric, String
+from sqlalchemy import JSON, BigInteger, Boolean, Column, Float, ForeignKey, Integer, Numeric, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base, enum_values
+from app.resonator.models.echo_grade import EchoGrade
 from app.resonator.models.stat_type import StatType
 
 
@@ -23,6 +24,12 @@ class UserEcho(Base):
 
     secondary_type = Column(SAEnum(StatType, native_enum=False, length=50, values_callable=enum_values), nullable=False)
     secondary_value = Column(Integer, nullable=False)
+
+    # 서브속성 점수. 점수 계산 대상이 아닌 공명자의 에코이거나 재계산 전인 기존 행은 셋 다 NULL이다.
+    # 계산은 공명자 등록 시점에 echo_score_service가 하며, 조회 API는 저장된 값을 그대로 반환한다.
+    score_percent = Column(Float, nullable=True)
+    grade = Column(SAEnum(EchoGrade, native_enum=False, length=2, values_callable=enum_values), nullable=True)
+    per_stat = Column(JSON, nullable=True)
 
     is_deleted = Column(Boolean, nullable=False, default=False)
 
