@@ -57,6 +57,31 @@ CREATE TABLE IF NOT EXISTS resonance_node_master (
 
 
 -- =========================
+-- resonator_damage_master
+-- =========================
+-- 에코 점수 계산 설정. 서포터처럼 점수 계산 대상이 아닌 공명자는 행을 두지 않는다.
+-- relevant_damage_types: basic_attack / heavy_attack / resonance_skill / resonance_liberation 중 1~2개의 JSON 배열
+-- (배열 원소 값 검증은 CHECK로 표현할 수 없어 애플리케이션(echo_score_service)에서 한다)
+CREATE TABLE IF NOT EXISTS resonator_damage_master (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+
+    relevant_damage_types JSON NOT NULL CHECK (
+        CASE WHEN json_typeof(relevant_damage_types) = 'array'
+             THEN json_array_length(relevant_damage_types) BETWEEN 1 AND 2
+             ELSE FALSE
+        END
+    ),
+    scaling_stat VARCHAR(20) NOT NULL CHECK (scaling_stat IN ('attack', 'defense', 'hp')),
+
+    resonator_master_id BIGINT NOT NULL UNIQUE,
+
+    CONSTRAINT fk_damage_master_resonator
+        FOREIGN KEY (resonator_master_id)
+        REFERENCES resonator_master(id)
+);
+
+
+-- =========================
 -- user_resonators
 -- =========================
 CREATE TABLE IF NOT EXISTS user_resonators (
@@ -95,6 +120,11 @@ CREATE TABLE IF NOT EXISTS user_echoes (
 
     secondary_type VARCHAR(50) NOT NULL,
     secondary_value INT NOT NULL,
+
+    -- 서브속성 점수 (공명자 등록 시 계산해 저장). 점수 계산 대상이 아닌 공명자의 에코와 기존 행은 NULL.
+    score_percent DOUBLE PRECISION,
+    grade VARCHAR(2) CHECK (grade IN ('SS', 'S', 'A', 'B', 'C', 'D')),
+    per_stat JSON,
 
     user_resonator_id BIGINT NOT NULL,
 
