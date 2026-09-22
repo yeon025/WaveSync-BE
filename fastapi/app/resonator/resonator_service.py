@@ -9,7 +9,7 @@ from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.profile_extraction.profile_extraction_service import extract_info
 from app.profile_extraction.validation import extract_profile_validation_service
-from app.resonator import spec_calculation_service
+from app.resonator import echo_score_service, spec_calculation_service
 from app.resonator.models.branch_position import BranchPosition
 from app.resonator.models.node_position import NodePosition
 from app.resonator.models.stat_type import StatType
@@ -230,6 +230,12 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
     # 최종 스펙을 DB에 저장
     final_stat_repository.save(db, final_stat)
     logger.debug("최종 스펙을 데이터베이스에 저장했습니다.")
+
+    # 에코 서브속성 점수 계산. autoflush=False라 flush로 에코/서브를 먼저 반영해야 재조회에 잡힌다.
+    # 커밋 전이라 에코와 점수가 같은 트랜잭션에서 함께 저장/롤백된다.
+    db.flush()
+    echo_score_service.compute_and_persist_echo_scores(db, user_resonator.id)
+    logger.debug("에코 점수를 계산했습니다.")
 
     # 응답 생성에 필요한 값은 commit 전에 확보한다 (commit이 인스턴스를 expire시키므로).
     resonator_name = rm.name

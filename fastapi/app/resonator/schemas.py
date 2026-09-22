@@ -4,6 +4,7 @@ from typing import Annotated, List, Optional
 from pydantic import BaseModel, Field
 
 from app.resonator.models.branch_position import BranchPosition
+from app.resonator.models.echo_grade import EchoGrade
 from app.resonator.models.node_position import NodePosition
 from app.resonator.models.stat_type import StatType
 
@@ -117,12 +118,17 @@ class WeaponSetting(BaseModel):
 
 
 # 에코 상세 (등록된 에코 조회 응답).
+# 점수 2필드는 등록 시 저장된 값을 그대로 내려준다.
+# 점수 계산 대상이 아닌 공명자의 에코는 둘 다 None이라 응답에서 빠진다.
+# per_stat(점수 계산 내부 산출 내역)은 디버깅/계산용 데이터라 API 응답에는 내려주지 않는다.
 class EchoDetail(BaseModel):
     name: Optional[str] = None
     imageUrl: Optional[str] = None
     main: Stat
     secondary: Stat
     subs: List[Stat] = Field(default_factory=list)
+    scorePercent: Optional[float] = None
+    grade: Optional[EchoGrade] = None
 
     @classmethod
     def from_user_echo(cls, echo, image_url: Optional[str]) -> "EchoDetail":
@@ -132,6 +138,8 @@ class EchoDetail(BaseModel):
             main=Stat(type=echo.main_type, value=echo.main_value),
             secondary=Stat(type=echo.secondary_type, value=echo.secondary_value),
             subs=[Stat(type=sub.type, value=sub.value) for sub in echo.user_echo_subs],
+            scorePercent=echo.score_percent,
+            grade=echo.grade,
         )
 
 
