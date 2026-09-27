@@ -20,9 +20,6 @@ def _decimals(*values: str) -> Set[Decimal]:
 
 _DAMAGE_BONUS_VALUES = _decimals("6.4", "7.1", "7.9", "8.6", "9.4", "10.1", "10.9", "11.6")
 
-# 서브 옵션 타입별 유효 수치 집합 (13개 키).
-# 서브 옵션 1개가 가질 수 있는 최종 수치(8단계 티어)다.
-# 에코 점수 계산(echo_score_service)이 최댓값을 정규화 기준으로 재사용한다.
 VALID_SUB_VALUES = {
     StatType.CRITICAL_RATE: _decimals("6.3", "6.9", "7.5", "8.1", "8.7", "9.3", "9.9", "10.5"),
     StatType.CRITICAL_DAMAGE: _decimals("12.6", "13.8", "15.0", "16.2", "17.4", "18.6", "19.8", "21.0"),
