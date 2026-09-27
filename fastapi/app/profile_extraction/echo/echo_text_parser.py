@@ -87,14 +87,24 @@ class EchoMapper:
             )
 
         elif self.state == ParseState.COLLECTING_SUBS:
-            if is_percent == True:
+            if is_percent:
                 label = SUB_STAT_PERCENT_MAP.get(raw_label, raw_label)
             else:
                 label = SUB_STAT_FLAT_MAP.get(raw_label, raw_label)
 
             value = float(value) if "." in value else int(value)
+
+            value = change_defense_percent(label, value)
+
             new_sub = ExtractedStat(type=label, value=value)
             self.current_subs.append(new_sub)
             logger.debug(
                 f"{len(self.final_list) + 1}번 에코의 {len(self.current_subs)}번 sub는 {label}, {value}입니다."
             )
+
+
+def change_defense_percent(label, value):
+    if label == "defense_percent" and value == 11.9:
+        value = 11.8
+
+    return value
