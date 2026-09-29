@@ -5,7 +5,10 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from app.config.echo_score_weights import (
+from app.config.logger import logger
+from app.exceptions.custom_exception import CustomException
+from app.exceptions.error_code import ErrorCode
+from app.resonator.echo_score_weights import (
     CRIT_DMG_WEIGHT,
     CRIT_RATE_WEIGHT,
     DMG_TYPE_WEIGHT,
@@ -13,10 +16,7 @@ from app.config.echo_score_weights import (
     GRADE_THRESHOLDS,
     SCALING_STAT_WEIGHT,
 )
-from app.config.logger import logger
-from app.exceptions.custom_exception import CustomException
-from app.exceptions.error_code import ErrorCode
-from app.profile_extraction.validation.extract_profile_validation_service import VALID_SUB_VALUES
+from app.resonator.echo_sub_stat_values import VALID_SUB_VALUES
 from app.resonator.models.damage_type import DamageType
 from app.resonator.models.echo_grade import EchoGrade
 from app.resonator.models.scaling_stat import ScalingStat
