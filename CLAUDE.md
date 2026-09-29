@@ -142,7 +142,7 @@ resonator/
 └── repositories/                # DB 접근 로직 (마스터 테이블별 + UserResonator 단위)
 ```
 
-- **`resonator/models/`**: SQLAlchemy ORM 모델을 관리한다 (`resonator_master.py`/`user_resonator.py`/`final_stat.py`/`user_echo.py`/`user_echo_sub.py`/`resonance_node_master.py`/`user_resonance_node.py`/`weapon_master.py` 8개 엔티티 + `element.py`/`stat_type.py`/`branch_position.py`/`node_position.py` 4개 Enum).
+- **`resonator/models/`**: SQLAlchemy ORM 모델을 관리한다 (`resonator_master.py`/`user_resonator.py`/`final_stat.py`/`user_echo.py`/`user_echo_sub.py`/`resonance_node_master.py`/`user_resonance_node.py`/`weapon_master.py`/`resonator_damage_master.py` 9개 엔티티 + `element.py`/`stat_type.py`/`branch_position.py`/`node_position.py`/`echo_grade.py`/`scaling_stat.py`/`damage_type.py` 7개 Enum).
 - **`resonator/repositories/`**: DB 접근 로직을 관리한다. 마스터 테이블(`resonator_master`/`weapon_master`/`resonator_damage_master`)은 테이블별로, 사용자 데이터는 `user_resonator_repository.py` 하나가 `UserResonator`와 하위 테이블(공명 노드/에코/에코 서브/최종 스탯) 전체를 담당한다 — 하위 테이블은 `UserResonator` 없이 단독으로 조회·저장·삭제되는 경로가 없기 때문이다. **Generic Repository나 BaseRepository로 통합하지 않는다.** Repository는 API Response Schema를 생성하지 않고 ORM 객체 또는 DB 조회 결과만 반환한다 (상세 규칙은 아래 "ORM → Schema 변환 규칙" 참고).
 - **`resonator/schemas.py`**: Resonator 도메인의 Request/Response Schema를 관리한다. 단순한 ORM → Schema 변환은 Schema의 `from_*` classmethod로 처리한다.
 - **`resonator/resonator_service.py`**: Resonator 관련 비즈니스 로직과 여러 Repository의 조합, 트랜잭션 경계를 담당한다. 필요한 경우 Repository 조회 결과를 API Schema로 조립한다.
