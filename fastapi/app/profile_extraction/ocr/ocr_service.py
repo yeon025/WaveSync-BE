@@ -65,8 +65,4 @@ def clean_text(raw_texts):
         if cleaned:
             final_texts.append(cleaned)
 
-    # 0번은 공명자 이름, 1번은 무기 이름이다.
-    final_texts[0] = final_texts[0].replace(" ", "")
-    final_texts[1] = final_texts[1].replace(" ", "")
-
     return final_texts

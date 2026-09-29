@@ -56,15 +56,19 @@ def extract_info(image_path):
     cleaned_texts = clean_text(merged_texts)
     logger.debug("텍스트 정제를 완료했습니다.")
 
-    echo_list = echoMapper.run(cleaned_texts)
+    # 줄 순서는 constants.RECTANGLES 순서다: 공명자 이름, 무기 이름, 이후 에코 옵션.
+    resonator_name = cleaned_texts[0].replace(" ", "")
+    weapon_name = cleaned_texts[1].replace(" ", "")
+
+    echo_list = echoMapper.run(cleaned_texts[2:])
 
     for echo, match in zip(echo_list, echo_matches):
         if match is not None:
             echo.name, echo.imagePath = match
 
     return ExtractData(
-        resonatorName=cleaned_texts[0],
+        resonatorName=resonator_name,
         resonanceChainLevel=chain_level,
-        weaponName=cleaned_texts[1],
+        weaponName=weapon_name,
         echoes=echo_list,
     )

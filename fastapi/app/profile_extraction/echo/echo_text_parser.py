@@ -39,9 +39,8 @@ class EchoMapper:
         )
         self.current_subs = []
 
-    def run(self, merged_texts):
-        # 0, 1번은 공명자/무기 이름이다.
-        for text in merged_texts[2:]:
+    def run(self, echo_texts):
+        for text in echo_texts:
             match = re.match(r"(.*?)\s*([\d.]+)\s*(%)?$", text)
 
             # 수치가 없는 텍스트는 다음 에코의 메인 옵션 이름이다.
