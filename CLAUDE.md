@@ -139,11 +139,11 @@ resonator/
 ├── resonance_node_mapper.py     # 공명 노드 위치→스탯 값 매핑
 ├── schemas.py                   # Resonator 도메인 request/response 스키마
 ├── models/                      # SQLAlchemy ORM 모델
-└── repositories/                # 테이블별 DB 접근 로직
+└── repositories/                # DB 접근 로직 (마스터 테이블별 + UserResonator 단위)
 ```
 
 - **`resonator/models/`**: SQLAlchemy ORM 모델을 관리한다 (`resonator_master.py`/`user_resonator.py`/`final_stat.py`/`user_echo.py`/`user_echo_sub.py`/`resonance_node_master.py`/`user_resonance_node.py`/`weapon_master.py` 8개 엔티티 + `element.py`/`stat_type.py`/`branch_position.py`/`node_position.py` 4개 Enum).
-- **`resonator/repositories/`**: DB 접근 로직을 관리한다. 테이블/책임별로 파일을 분리하며(`final_stat_repository.py` 등 7개), **Generic Repository나 BaseRepository로 통합하지 않는다.** Repository는 API Response Schema를 생성하지 않고 ORM 객체 또는 DB 조회 결과만 반환한다 (상세 규칙은 아래 "ORM → Schema 변환 규칙" 참고).
+- **`resonator/repositories/`**: DB 접근 로직을 관리한다. 마스터 테이블(`resonator_master`/`weapon_master`/`resonator_damage_master`)은 테이블별로, 사용자 데이터는 `user_resonator_repository.py` 하나가 `UserResonator`와 하위 테이블(공명 노드/에코/에코 서브/최종 스탯) 전체를 담당한다 — 하위 테이블은 `UserResonator` 없이 단독으로 조회·저장·삭제되는 경로가 없기 때문이다. **Generic Repository나 BaseRepository로 통합하지 않는다.** Repository는 API Response Schema를 생성하지 않고 ORM 객체 또는 DB 조회 결과만 반환한다 (상세 규칙은 아래 "ORM → Schema 변환 규칙" 참고).
 - **`resonator/schemas.py`**: Resonator 도메인의 Request/Response Schema를 관리한다. 단순한 ORM → Schema 변환은 Schema의 `from_*` classmethod로 처리한다.
 - **`resonator/resonator_service.py`**: Resonator 관련 비즈니스 로직과 여러 Repository의 조합, 트랜잭션 경계를 담당한다. 필요한 경우 Repository 조회 결과를 API Schema로 조립한다.
 - **`resonator/spec_calculation_service.py`**: 명조 캐릭터의 스탯 계산과 관련된 핵심 도메인 로직을 담당한다.
@@ -169,7 +169,7 @@ cd fastapi && uvicorn app.main:app --reload --port 8000
 - 예외는 `CustomException(ErrorCode.XXX)` 형태로 발생시키고, `ErrorCode`는 `exceptions/error_code.py`의 Enum에 추가. 전역 처리는 `exception_handler.py`가 담당하므로 라우터에서 try/except로 감싸지 않는다
 - 라우터는 얇게 유지 — 실제 로직은 도메인 서비스로 위임한다 (`resonator/router.py` → `resonator/resonator_service.py` 패턴 참고)
 - 도메인/기능 단위로 파일을 묶는다 (`profile_extraction/`, `resonator/`처럼 하나의 책임 영역을 하나의 폴더에 모으고, 그 안에서 파일 수가 많아지는 경우에만 `models/`/`repositories/`처럼 타입별로 더 세분화한다)
-- **트랜잭션 커밋은 서비스 계층에서 명시적으로.** `get_db()`는 자동 commit하지 않고 미처리 예외에 rollback만 한다. `get_db()`의 `yield` 이후 코드는 FastAPI가 응답을 이미 전송한 뒤 실행돼서, 거기서 commit하면 실패해도 클라이언트는 200을 받은 상태가 된다. 쓰기(insert/update/delete)를 하는 서비스 함수는 **응답 객체를 만들기 전에** `db.commit()`을 직접 호출한다 (응답에 쓸 값은 commit이 인스턴스를 expire시키므로 commit 전에 확보). commit 실패 시 `SQLAlchemyError`가 라우터를 거쳐 `sqlalchemy_exception_handler`로 잡혀 500(`DATABASE_ERROR`)이 나간다. 여러 서비스 함수가 공유하는 내부 헬퍼(`_delete` 등)는 commit하지 않고 호출자가 트랜잭션 경계를 잡는다. repository 함수도 commit하지 않는다 (`# 커밋은 호출부 책임` 주석 유지)
+- **트랜잭션 커밋은 서비스 계층에서 명시적으로.** `get_db()`는 자동 commit하지 않고 미처리 예외에 rollback만 한다. `get_db()`의 `yield` 이후 코드는 FastAPI가 응답을 이미 전송한 뒤 실행돼서, 거기서 commit하면 실패해도 클라이언트는 200을 받은 상태가 된다. 쓰기(insert/update/delete)를 하는 서비스 함수는 **응답 객체를 만들기 전에** `db.commit()`을 직접 호출한다 (응답에 쓸 값은 commit이 인스턴스를 expire시키므로 commit 전에 확보). commit 실패 시 `SQLAlchemyError`가 라우터를 거쳐 `sqlalchemy_exception_handler`로 잡혀 500(`DATABASE_ERROR`)이 나간다. 여러 서비스 함수가 공유하는 내부 헬퍼는 commit하지 않고 호출자가 트랜잭션 경계를 잡는다. repository 함수도 commit하지 않는다 (`# 커밋은 호출부 책임` 주석 유지)
 
 ### ORM → Schema 변환 규칙
 

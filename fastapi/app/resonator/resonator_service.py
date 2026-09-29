@@ -18,11 +18,7 @@ from app.resonator.models.user_echo_sub import UserEchoSub
 from app.resonator.models.user_resonance_node import UserResonanceNode
 from app.resonator.models.user_resonator import UserResonator
 from app.resonator.repositories import (
-    final_stat_repository,
     resonator_master_repository,
-    user_echo_repository,
-    user_echo_sub_repository,
-    user_resonance_node_repository,
     user_resonator_repository,
     weapon_master_repository,
 )
@@ -56,8 +52,7 @@ def get_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:
         for row in rows
     ]
 
-    # 한글 정렬은 파이썬 기본 문자열 비교를 쓴다 (현대 한글은 코드포인트 순서 ≈ 사전순).
-    # 숫자/영문이 섞인 이름이 마스터 데이터에 추가되면 재검토 필요.
+    # 현대 한글은 코드포인트 순서가 사전순과 같다 (숫자/영문이 섞인 이름이 추가되면 재검토).
     resonators.sort(key=lambda r: (-r.releaseVersion, r.resonatorName))
 
     storage = get_object_storage_service()
@@ -96,8 +91,7 @@ def get_resonator_setting(db: Session, user_resonator_id: int) -> ResonatorSetti
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
     logger.debug("공명자 조회를 완료했습니다.")
 
-    # find_by_id는 resonator_master/weapon_master/final_stat만 eager load —
-    # resonance_node_master / user_resonance_nodes 조회로 쿼리 2번 추가 발생 (N+1 아님).
+    # find_by_id가 노드 관계는 eager load하지 않아 쿼리가 2번 추가된다 (N+1 아님).
     node_master = user_resonator.resonator_master.resonance_node_master
     logger.debug("공명 노드 조회를 완료했습니다.")
 
@@ -135,44 +129,37 @@ def get_resonator_echoes(db: Session, user_resonator_id: int) -> List[EchoDetail
 
 
 def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResonatorResponse:
-    # 공명자 프로필 이미지 저장
     storage = get_object_storage_service()
     profile_url = storage.upload(storage.profile_bucket, resonator_profile)
     logger.debug(f"{profile_url} 저장을 완료했습니다.")
 
-    # 인프로세스 OCR 호출 (네트워크 왕복 없음)
     logger.info("이미지 추출을 시작합니다.")
     extracted = extract_info(profile_url)
     logger.info("이미지 추출이 완료되었습니다.")
 
-    # 검증
     validated_weapon_name = extract_profile_validation_service.validate(db, extracted)
 
-    # 이름으로 DB 조회 (validate()가 존재를 이미 보장하므로 null 체크 없음)
+    # validate()가 존재를 보장하므로 None 체크를 하지 않는다.
     rm = resonator_master_repository.find_by_name(db, extracted.resonatorName)
     wm = weapon_master_repository.find_by_name(db, validated_weapon_name)
     rnm = rm.resonance_node_master
     logger.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.")
 
-    # 저장 전에 동일한 공명자는 삭제
+    # 같은 공명자를 다시 등록하면 기존 데이터를 대체한다.
     target_ids = user_resonator_repository.find_ids_by_resonator_name(db, extracted.resonatorName)
     if target_ids:
         logger.debug(f"조회한 id: {target_ids}")
-        _delete(db, target_ids)
+        user_resonator_repository.soft_delete_by_ids(db, target_ids)
         logger.debug("동일한 공명자 정보를 삭제했습니다.")
 
-    # UserResonator 객체 생성 후 저장
     user_resonator = UserResonator(
         resonance_chain_level=extracted.resonanceChainLevel,
         refine_level=1,
         resonator_master=rm,
         weapon_master=wm,
     )
-    user_resonator_repository.save(db, user_resonator)
 
-    # 공명 노드 10개 생성 (BranchPosition x NodePosition).
-    # is_active=True 명시 — Column(default=True)는 flush 시점에만 적용되는데
-    # 아래에서 flush 전 메모리 상태로 dto를 만들기 때문.
+    # Column default는 flush 때 적용되는데 flush 전에 dto를 만들므로 is_active를 명시한다.
     user_resonance_nodes = [
         UserResonanceNode(
             branch_position=branch_position,
@@ -183,9 +170,7 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
         for branch_position in BranchPosition
         for node_position in NodePosition
     ]
-    user_resonance_node_repository.save_all(db, user_resonance_nodes)
 
-    # 노드를 dto로 변환
     nodes = [
         ResonanceNode(
             branchPosition=node.branch_position,
@@ -196,10 +181,6 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
         for node in user_resonance_nodes
     ]
 
-    # Echo 객체 생성
-    user_echoes: List[UserEcho] = []
-    user_echo_subs: List[UserEchoSub] = []
-
     for echo_dto in extracted.echoes:
         echo = UserEcho(
             name=echo_dto.name,
@@ -208,40 +189,31 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
             main_value=Decimal(str(echo_dto.main.value)),
             secondary_type=StatType.from_code(echo_dto.secondary.type),
             secondary_value=int(echo_dto.secondary.value),
-            user_resonator=user_resonator,  # back_populates로 자동 반영
+            user_resonator=user_resonator,
         )
-        user_echoes.append(echo)
 
         for sub_dto in echo_dto.subs:
-            sub = UserEchoSub(
+            UserEchoSub(
                 type=StatType.from_code(sub_dto.type),
                 value=Decimal(str(sub_dto.value)),
                 user_echo=echo,  # back_populates로 자동 반영
             )
-            user_echo_subs.append(sub)
 
-    # UserEcho, UserEchoSub 저장
-    user_echo_repository.save_all(db, user_echoes)
-    user_echo_sub_repository.save_all(db, user_echo_subs)
+    user_resonator.final_stat = spec_calculation_service.calculate_final_stat(user_resonator, nodes)
 
-    # 최종 스펙 계산 (user_resonator.user_echoes는 back_populates로 이미 채워짐)
-    final_stat = spec_calculation_service.calculate_final_stat(user_resonator, nodes)
+    # 자식을 모두 연결한 뒤 저장해야 cascade로 함께 INSERT된다.
+    user_resonator_repository.save(db, user_resonator)
+    logger.debug("공명자 정보를 데이터베이스에 저장했습니다.")
 
-    # 최종 스펙을 DB에 저장
-    final_stat_repository.save(db, final_stat)
-    logger.debug("최종 스펙을 데이터베이스에 저장했습니다.")
-
-    # 에코 서브속성 점수 계산. autoflush=False라 flush로 에코/서브를 먼저 반영해야 재조회에 잡힌다.
-    # 커밋 전이라 에코와 점수가 같은 트랜잭션에서 함께 저장/롤백된다.
+    # autoflush=False라 flush해야 점수 계산의 재조회에 에코가 잡힌다.
     db.flush()
     echo_score_service.compute_and_persist_echo_scores(db, user_resonator.id)
     logger.debug("에코 점수를 계산했습니다.")
 
-    # 응답 생성에 필요한 값은 commit 전에 확보한다 (commit이 인스턴스를 expire시키므로).
+    # commit이 인스턴스를 expire시키므로 응답에 쓸 값은 미리 확보한다.
     resonator_name = rm.name
 
-    # 응답을 만들기 전에 명시적으로 커밋한다 — 여기서 실패하면 라우터를 거쳐
-    # SQLAlchemyError 핸들러가 500(DATABASE_ERROR)을 내려주고 클라이언트는 성공 응답을 받지 않는다.
+    # 응답 전에 커밋해야 실패 시 클라이언트가 성공 응답을 받지 않는다.
     db.commit()
     logger.debug("공명자 등록 트랜잭션을 커밋했습니다.")
 
@@ -255,7 +227,6 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
 
     node_map = {f"{node.branchPosition.value}_{node.nodePosition.value}": node for node in data.nodes}
 
-    # 10개 위치가 요청에 전부 없으면 여기서 거부한다 (누락 위치는 로그).
     required_keys = {
         f"{branch_position.value}_{node_position.value}"
         for branch_position in BranchPosition
@@ -266,7 +237,6 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
         logger.warning(f"업데이트 요청에 누락된 공명 노드 위치가 있습니다. missing={sorted(missing_keys)}")
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
-    # 노드 + 무기 재련 옵션에서 재계산 대상 StatType 수집
     required_type = {node.stat.type for node in data.nodes if node.stat is not None and node.stat.type is not None}
 
     refine_type = user_resonator.weapon_master.refine_type
@@ -277,24 +247,14 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
 
     user_resonator.refine_level = data.weaponRefineLevel
 
-    # 공명 노드 활성화 상태 변경 (완전성 검증을 이미 통과했으므로 직접 인덱싱)
+    # 위에서 10개 위치를 모두 검증했으므로 바로 인덱싱한다.
     for node in user_resonator.user_resonance_nodes:
         key = f"{node.branch_position.value}_{node.node_position.value}"
         node.is_active = node_map[key].active
 
-    # 변경된 엔티티(final_stat, refine_level, 노드 활성화)를 명시적으로 커밋한다.
     db.commit()
 
 
-def _delete(db: Session, user_resonator_ids: List[int]) -> None:
-    """commit/rollback 없음 — 호출자의 트랜잭션 경계에 속한다 (delete_resonator, create_resonator가 공유)."""
-    user_resonator_repository.soft_delete_by_ids(db, user_resonator_ids)
-    user_resonance_node_repository.soft_delete_by_user_resonator_ids(db, user_resonator_ids)
-    user_echo_repository.soft_delete_by_user_resonator_ids(db, user_resonator_ids)
-    user_echo_sub_repository.soft_delete_by_user_resonator_ids(db, user_resonator_ids)
-    final_stat_repository.delete_by_user_resonator_ids(db, user_resonator_ids)
-
-
 def delete_resonator(db: Session, user_resonator_ids: List[int]) -> None:
-    _delete(db, user_resonator_ids)
+    user_resonator_repository.soft_delete_by_ids(db, user_resonator_ids)
     db.commit()
