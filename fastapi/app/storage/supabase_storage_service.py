@@ -82,6 +82,7 @@ class SupabaseStorageService(ObjectStorageService):
             page = response.json()
             objects.extend(
                 StorageObject(key=item["name"], etag=(item.get("metadata") or {}).get("eTag", "")) for item in page
+                if item["name"] != ".emptyFolderPlaceholder"
             )
 
             if len(page) < limit:
