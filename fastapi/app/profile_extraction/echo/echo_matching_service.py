@@ -2,7 +2,8 @@ import base64
 import binascii
 import os
 import pickle
-from functools import lru_cache
+import threading
+import time
 from typing import Dict, List, Optional, Tuple
 
 import cv2
@@ -10,7 +11,9 @@ import numpy as np
 from PIL import Image
 
 from app.config.logger import logger
+from app.exceptions.custom_exception import CustomException
 from app.profile_extraction.constants import (
+    ECHO_FEATURES_TTL_SECONDS,
     ECHO_LOWE_RATIO,
     ECHO_MATCHER_MODE,
     ECHO_MIN_KEYPOINTS,
@@ -24,6 +27,7 @@ from app.profile_extraction.constants import (
 )
 from app.profile_extraction.preprocessing.preprocess_service import load_rgb
 from app.storage.object_storage_factory import get_object_storage_service
+from app.storage.object_storage_service import ObjectStorageService, StorageObject
 
 OrbFeature = Tuple[List[cv2.KeyPoint], Optional[np.ndarray]]
 EchoAsset = Tuple[OrbFeature, str]  # (ORB 특징, 스토리지 객체 키)
@@ -92,12 +96,11 @@ def _save_disk_cache(cache: Dict[str, dict]) -> None:
         logger.warning(f"에코 ORB 캐시 저장 실패: {exc}")
 
 
-def _build_echo_features() -> Dict[str, EchoAsset]:
-    """echo-images 버킷의 모든 이미지에 대해 ORB 특징을 { 에코 이름: ((keypoints, descriptors), 객체 키) }로 계산한다.
-    로컬 디스크 캐시 키는 `{원본 base64 키}:{etag}` — 스토리지에서 실제로 바뀐 이미지만 재계산한다."""
-
-    storage = get_object_storage_service()
-    objects = storage.list_objects(storage.echo_bucket)
+def _build_echo_features(storage: ObjectStorageService, objects: List[StorageObject]) -> Dict[str, EchoAsset]:
+    """이미 조회된 echo-images 객체 목록(objects)에 대해 ORB 특징을
+    { 에코 이름: ((keypoints, descriptors), 객체 키) }로 계산한다.
+    로컬 디스크 캐시 키는 `{원본 base64 키}:{etag}` — 스토리지에서 실제로 바뀐 이미지만 재계산한다.
+    변경 여부 확인(목록 조회)은 호출자(_refresh_echo_features)가 이미 끝낸 상태로 넘어온다."""
 
     disk_cache = _load_disk_cache()
     new_disk_cache: Dict[str, dict] = {}
@@ -117,7 +120,7 @@ def _build_echo_features() -> Dict[str, EchoAsset]:
             try:
                 content = storage.download_object(storage.echo_bucket, obj.key)
                 kps, des = _compute_orb(load_rgb(content))
-            except (OSError, ValueError, cv2.error) as exc:
+            except (OSError, ValueError, cv2.error, CustomException) as exc:
                 logger.warning(f"에코 이미지 ORB 계산 실패, 건너뜁니다: {obj.key} ({exc})")
                 continue
             recomputed += 1
@@ -141,12 +144,87 @@ def _build_echo_features() -> Dict[str, EchoAsset]:
     return assets
 
 
-@lru_cache
-def _get_echo_features() -> Dict[str, EchoAsset]:
-    """echo-images 특징을 프로세스 생애주기 동안 재사용한다 (object_storage_factory와 동일한 캐싱 패턴).
-    스토리지에 에코 이미지가 추가/변경돼도 프로세스를 재시작하기 전까지는 반영되지 않는다."""
+# echo-images 메모리 캐시 상태 (모듈 전역). Cloud Run 인스턴스마다 독립적으로 유지되며
+# 인스턴스 간 공유되지 않는다 — 인스턴스별로 각자 TTL마다 변경 여부를 확인한다.
+_echo_assets: Optional[Dict[str, EchoAsset]] = None
+_echo_snapshot: Dict[str, str] = {}  # 마지막으로 반영한 { 객체 키: etag }
+_echo_last_checked = 0.0
+_echo_cache_lock = threading.Lock()
 
-    return _build_echo_features()
+
+def _diff_echo_snapshot(old: Dict[str, str], new: Dict[str, str]) -> Tuple[int, int, int]:
+    added = len(new.keys() - old.keys())
+    removed = len(old.keys() - new.keys())
+    modified = sum(1 for key in new.keys() & old.keys() if new[key] != old[key])
+    return added, modified, removed
+
+
+def _refresh_echo_features() -> Dict[str, EchoAsset]:
+    """echo-images 변경 여부를 확인하고, 변경이 있을 때만 ORB 캐시를 재빌드한다.
+    호출자(_get_echo_features)가 _echo_cache_lock을 잡은 상태에서만 호출해야 한다."""
+
+    global _echo_assets, _echo_snapshot, _echo_last_checked
+
+    storage = get_object_storage_service()
+
+    try:
+        objects = storage.list_objects(storage.echo_bucket)
+    except CustomException as exc:
+        if _echo_assets is not None:
+            logger.warning(f"echo-images 변경 확인 실패, 기존 캐시 유지: {exc}")
+            _echo_last_checked = time.monotonic()
+            return _echo_assets
+        # 최초 로딩인데 목록 조회 자체가 실패하면 반환할 캐시가 없으므로 그대로 전파한다
+        # (기존 동작과 동일 — 첫 호출 실패 시 에러 응답).
+        raise
+
+    new_snapshot = {obj.key: obj.etag for obj in objects}
+
+    if _echo_assets is not None and new_snapshot == _echo_snapshot:
+        logger.debug("echo-images 변경 없음, 기존 캐시 사용")
+        _echo_last_checked = time.monotonic()
+        return _echo_assets
+
+    if _echo_assets is not None:
+        added, modified, removed = _diff_echo_snapshot(_echo_snapshot, new_snapshot)
+        logger.info(f"echo-images 변경 감지: 추가 {added}개, 수정 {modified}개, 삭제 {removed}개")
+
+    try:
+        new_assets = _build_echo_features(storage, objects)
+    except Exception as exc:  # noqa: BLE001 - 재빌드 실패로 기존 정상 캐시를 잃지 않기 위한 안전망
+        if _echo_assets is not None:
+            logger.warning(f"echo-images ORB 캐시 재빌드 실패, 기존 캐시 유지: {exc}")
+            _echo_last_checked = time.monotonic()
+            return _echo_assets
+        raise
+
+    _echo_assets = new_assets
+    _echo_snapshot = new_snapshot
+    _echo_last_checked = time.monotonic()
+    logger.debug("echo-images ORB 캐시 재빌드 완료")
+    return new_assets
+
+
+def _get_echo_features() -> Dict[str, EchoAsset]:
+    """echo-images 특징을 메모리에 캐시하고, TTL(ECHO_FEATURES_TTL_SECONDS)이 지나면
+    변경 여부를 확인해 필요할 때만 재빌드한다.
+
+    Cloud Run은 요청 처리 중에만 CPU를 할당하고(idle 시 스로틀), 트래픽에 따라
+    여러 인스턴스로 스케일되며 언제든 종료될 수 있어 별도 백그라운드 polling 루프는
+    신뢰할 수 없다. 대신 실제 요청이 들어올 때(=CPU가 할당된 시점) TTL을 확인하는
+    방식을 쓴다. 동시에 여러 요청 스레드가 TTL 만료를 감지해도 재빌드는 한 번만
+    일어나도록 lock으로 감싼다."""
+
+    assets = _echo_assets
+    if assets is not None and (time.monotonic() - _echo_last_checked) < ECHO_FEATURES_TTL_SECONDS:
+        return assets
+
+    with _echo_cache_lock:
+        # 락을 기다리는 동안 다른 스레드가 이미 갱신을 마쳤을 수 있으므로 다시 확인한다.
+        assets = _echo_assets
+        if assets is not None and (time.monotonic() - _echo_last_checked) < ECHO_FEATURES_TTL_SECONDS:
+            return assets
+        return _refresh_echo_features()
 
 
 def _good_matches(des_a: np.ndarray, des_b: np.ndarray) -> int:

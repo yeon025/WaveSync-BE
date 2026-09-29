@@ -98,6 +98,10 @@ IMAGE_BG_COLOR = (0, 0, 0)
 # 에코 ORB 특징 로컬 캐시 (echo-images 버킷 객체를 매번 다운로드/재계산하지 않기 위함)
 ECHO_ORB_CACHE_PATH = os.path.join(TMP_DIR, "echo_orb_cache.pkl")
 
+# 메모리 캐시가 echo-images 버킷 변경 여부를 다시 확인하기까지의 최소 간격(초).
+# 이 시간 안에는 요청이 아무리 많아도 Supabase 목록 조회 없이 기존 메모리 캐시를 그대로 쓴다.
+ECHO_FEATURES_TTL_SECONDS = 300
+
 # cv2.ORB_create 파라미터
 ECHO_ORB_PROC_SIZE = 256  # 비교 전 통일할 이미지 크기 (정사각형, px)
 ECHO_ORB_NFEATURES = 800
