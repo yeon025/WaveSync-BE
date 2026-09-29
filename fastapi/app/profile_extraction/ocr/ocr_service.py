@@ -1,19 +1,21 @@
 import re
+from io import BytesIO
 
 from google.cloud import vision
+from PIL import Image
 
 from app.profile_extraction.ocr.vision_client import create_vision_client
 
 
-def extract_text(image_path):
-    with open(image_path, "rb") as image_file:
-        content = image_file.read()
+def extract_text(image: Image.Image):
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
 
-    image = vision.Image(content=content)
+    vision_image = vision.Image(content=buffer.getvalue())
 
     client = create_vision_client()
 
-    return client.document_text_detection(image=image)
+    return client.document_text_detection(image=vision_image)
 
 
 def process_ocr_result(response):

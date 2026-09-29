@@ -6,14 +6,6 @@ TMP_DIR = os.path.join(BASE_DIR, "images/tmp")
 TEMPLATE_DIR = os.path.join(BASE_DIR, "images/template")
 
 
-CHAIN_IMG_DIRS = [
-    os.path.join(TMP_DIR, "resonance_chain_1.png"),
-    os.path.join(TMP_DIR, "resonance_chain_2.png"),
-    os.path.join(TMP_DIR, "resonance_chain_3.png"),
-    os.path.join(TMP_DIR, "resonance_chain_4.png"),
-    os.path.join(TMP_DIR, "resonance_chain_5.png"),
-    os.path.join(TMP_DIR, "resonance_chain_6.png"),
-]
 TEMPLATE_IMG_DIR = os.path.join(TEMPLATE_DIR, "locked_resonance_chain.png")
 
 
@@ -86,24 +78,7 @@ ECHO_ICON_RECTANGLES = [
 ]
 
 
-# 이미지 투명 배경을 합성할 배경색 (게임 내 슬롯이 어두우므로 검은색)
-IMAGE_BG_COLOR = (0, 0, 0)
-
 ECHO_ORB_CACHE_PATH = os.path.join(TMP_DIR, "echo_orb_cache.pkl")
-
-ECHO_FEATURES_TTL_SECONDS = 300
-
-ECHO_ORB_PROC_SIZE = 256  # 비교 전 통일할 이미지 크기 (정사각형, px)
-ECHO_ORB_NFEATURES = 800
-ECHO_ORB_SCALE_FACTOR = 1.2
-ECHO_ORB_NLEVELS = 8
-ECHO_ORB_FAST_THRESHOLD = 20
-
-# 매칭 방식: "ratio" (knnMatch + Lowe ratio test) | "crosscheck" (BFMatcher crossCheck=True)
-ECHO_MATCHER_MODE = "ratio"
-ECHO_LOWE_RATIO = 0.75
-ECHO_MIN_KEYPOINTS = 8
-ECHO_MIN_MARGIN_RATIO = 0.12  # 1등이 2등보다 (1등점수 * 이 비율) 이상 높아야 채택, 아니면 모호 → None
 
 
 MAIN_STAT_MAP = {

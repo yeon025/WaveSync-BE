@@ -7,7 +7,7 @@ from PIL import Image
 from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
-from app.profile_extraction.constants import CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR, TMP_DIR
+from app.profile_extraction.constants import TEMPLATE_IMG_DIR, TMP_DIR
 from app.profile_extraction.echo.echo_matching_service import match_echo_icon
 from app.profile_extraction.echo.echo_text_parser import EchoMapper
 from app.profile_extraction.ocr.ocr_service import clean_text, extract_text, process_ocr_result
@@ -35,18 +35,18 @@ def extract_info(image_path):
 
     profile = Image.open(BytesIO(response.content)).convert("RGB")
 
-    crop_circles(profile)
-    crop_and_stack(profile)
+    chain_images = crop_circles(profile)
+    merged_image = crop_and_stack(profile)
     echo_icons = crop_echo_icons(profile)
 
     # 슬롯별로 (에코 이름, 이미지 경로) 튜플, 모호하면 None
     echo_matches = [match_echo_icon(icon) for icon in echo_icons]
     logger.debug(f"에코 아이콘 판별 결과: {echo_matches}")
 
-    chain_level = calculate_chain_level(CHAIN_IMG_DIRS, TEMPLATE_IMG_DIR)
+    chain_level = calculate_chain_level(chain_images, TEMPLATE_IMG_DIR)
     logger.debug(f"공명 체인 돌파 횟수는 {chain_level}입니다.")
 
-    full_text = extract_text(os.path.join(TMP_DIR, "merged.png"))
+    full_text = extract_text(merged_image)
     logger.debug("텍스트 추출을 완료했습니다.")
 
     # 추출된 텍스트를 y좌표 기준으로 병합

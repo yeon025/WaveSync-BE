@@ -1,16 +1,13 @@
 import os
-from io import BytesIO
-from typing import List, Union
+from typing import List, Optional
 
 from PIL import Image, ImageDraw
 
 from app.config.logger import logger
-from app.profile_extraction.constants import CIRCLES, ECHO_ICON_RECTANGLES, IMAGE_BG_COLOR, RECTANGLES, TMP_DIR
-
-os.makedirs(TMP_DIR, exist_ok=True)
+from app.profile_extraction.constants import CIRCLES, ECHO_ICON_RECTANGLES, RECTANGLES, TMP_DIR
 
 
-def crop_circles(image):
+def crop_circles(image: Image.Image) -> List[Image.Image]:
 
     crops = []
 
@@ -36,8 +33,10 @@ def crop_circles(image):
         crop.save(save_path)
         logger.debug(f"{save_path}가 저장되었습니다.")
 
+    return crops
 
-def crop_and_stack(image):
+
+def crop_and_stack(image: Image.Image) -> Optional[Image.Image]:
 
     crops = [image.crop((x1, y1, x2, y2)) for (x1, y1, x2, y2) in RECTANGLES]
 
@@ -70,20 +69,7 @@ def crop_and_stack(image):
     merged.save(save_path)
     logger.debug(f"{save_path}가 저장되었습니다.")
 
-
-def load_rgb(image_source: Union[str, bytes, os.PathLike]) -> Image.Image:
-    """투명 배경은 IMAGE_BG_COLOR로 합성해 RGB로 정규화한다."""
-
-    source = BytesIO(image_source) if isinstance(image_source, (bytes, bytearray)) else image_source
-    im = Image.open(source)
-
-    has_alpha = im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
-    if has_alpha:
-        im = im.convert("RGBA")
-        bg = Image.new("RGBA", im.size, IMAGE_BG_COLOR + (255,))
-        im = Image.alpha_composite(bg, im)
-
-    return im.convert("RGB")
+    return merged
 
 
 def crop_echo_icons(image: Image.Image) -> List[Image.Image]:

@@ -4,7 +4,8 @@ import os
 import pickle
 import threading
 import time
-from typing import Dict, List, Optional, Tuple
+from io import BytesIO
+from typing import Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -12,22 +13,26 @@ from PIL import Image
 
 from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
-from app.profile_extraction.constants import (
-    ECHO_FEATURES_TTL_SECONDS,
-    ECHO_LOWE_RATIO,
-    ECHO_MATCHER_MODE,
-    ECHO_MIN_KEYPOINTS,
-    ECHO_MIN_MARGIN_RATIO,
-    ECHO_ORB_CACHE_PATH,
-    ECHO_ORB_FAST_THRESHOLD,
-    ECHO_ORB_NFEATURES,
-    ECHO_ORB_NLEVELS,
-    ECHO_ORB_PROC_SIZE,
-    ECHO_ORB_SCALE_FACTOR,
-)
-from app.profile_extraction.preprocessing.preprocess_service import load_rgb
+from app.profile_extraction.constants import ECHO_ORB_CACHE_PATH
 from app.storage.object_storage_factory import get_object_storage_service
 from app.storage.object_storage_service import ObjectStorageService, StorageObject
+
+# 이미지 투명 배경을 합성할 배경색 (게임 내 슬롯이 어두우므로 검은색)
+IMAGE_BG_COLOR = (0, 0, 0)
+
+ECHO_FEATURES_TTL_SECONDS = 300
+
+ECHO_ORB_PROC_SIZE = 256  # 비교 전 통일할 이미지 크기 (정사각형, px)
+ECHO_ORB_NFEATURES = 800
+ECHO_ORB_SCALE_FACTOR = 1.2
+ECHO_ORB_NLEVELS = 8
+ECHO_ORB_FAST_THRESHOLD = 20
+
+# 매칭 방식: "ratio" (knnMatch + Lowe ratio test) | "crosscheck" (BFMatcher crossCheck=True)
+ECHO_MATCHER_MODE = "ratio"
+ECHO_LOWE_RATIO = 0.75
+ECHO_MIN_KEYPOINTS = 8
+ECHO_MIN_MARGIN_RATIO = 0.12  # 1등이 2등보다 (1등점수 * 이 비율) 이상 높아야 채택, 아니면 모호 → None
 
 OrbFeature = Tuple[List[cv2.KeyPoint], Optional[np.ndarray]]
 EchoAsset = Tuple[OrbFeature, str]  # (ORB 특징, 스토리지 객체 키)
@@ -51,6 +56,21 @@ def decode_echo_name(key: str) -> str:
         return base64.urlsafe_b64decode(padded).decode("utf-8")
     except (binascii.Error, ValueError, UnicodeDecodeError):
         return stem
+
+
+def load_rgb(image_source: Union[str, bytes, os.PathLike]) -> Image.Image:
+    """투명 배경은 IMAGE_BG_COLOR로 합성해 RGB로 정규화한다."""
+
+    source = BytesIO(image_source) if isinstance(image_source, (bytes, bytearray)) else image_source
+    im = Image.open(source)
+
+    has_alpha = im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
+    if has_alpha:
+        im = im.convert("RGBA")
+        bg = Image.new("RGBA", im.size, IMAGE_BG_COLOR + (255,))
+        im = Image.alpha_composite(bg, im)
+
+    return im.convert("RGB")
 
 
 def _to_gray_array(image: Image.Image) -> np.ndarray:

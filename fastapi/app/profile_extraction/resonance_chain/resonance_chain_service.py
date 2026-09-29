@@ -1,14 +1,15 @@
+from typing import List
+
 import imagehash
 from PIL import Image
 
 from app.config.logger import logger
 
 
-def _check_chain_level(chain_path, template_path):
+def _check_chain_level(chain_image: Image.Image, template: Image.Image) -> bool:
     threshold = 11
 
-    chain = Image.open(chain_path).convert("RGB")
-    template = Image.open(template_path).convert("RGB")
+    chain = chain_image.convert("RGB")
 
     chain_hash = imagehash.average_hash(chain)
     template_hash = imagehash.average_hash(template)
@@ -24,12 +25,13 @@ def _check_chain_level(chain_path, template_path):
     return True
 
 
-def calculate_chain_level(chain_img_paths, template_path):
+def calculate_chain_level(chain_images: List[Image.Image], template_path: str) -> int:
+    template = Image.open(template_path).convert("RGB")
 
     chain_level = 0
 
-    for chain_path in chain_img_paths:
-        is_awakened = _check_chain_level(chain_path, template_path)
+    for chain_image in chain_images:
+        is_awakened = _check_chain_level(chain_image, template)
 
         if is_awakened:
             chain_level += 1
