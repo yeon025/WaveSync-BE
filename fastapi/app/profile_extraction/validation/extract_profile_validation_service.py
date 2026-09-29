@@ -11,9 +11,6 @@ from app.resonator.echo_sub_stat_values import VALID_SUB_VALUES
 from app.resonator.models.stat_type import StatType
 from app.resonator.repositories import resonator_master_repository, weapon_master_repository
 
-# OCR 결과(type: 소문자 문자열, value: float)를 검증한다.
-# StatType.from_code 실패는 잘못된 타입으로 간주해 VALIDATION_FAILED로 처리한다.
-
 
 def validate(db: Session, dto: ExtractData) -> str:
     _validate_resonator(db, dto.resonatorName)

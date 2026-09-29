@@ -72,8 +72,7 @@ def crop_and_stack(image):
 
 
 def load_rgb(image_source: Union[str, bytes, os.PathLike]) -> Image.Image:
-    """경로 또는 바이트(스토리지에서 다운로드한 이미지 등)를 불러와 RGB로 정규화한다.
-    투명 배경(RGBA 등)은 IMAGE_BG_COLOR로 합성한다 (webp/png 등 포맷 차이 무관)."""
+    """투명 배경은 IMAGE_BG_COLOR로 합성해 RGB로 정규화한다."""
 
     source = BytesIO(image_source) if isinstance(image_source, (bytes, bytearray)) else image_source
     im = Image.open(source)
@@ -88,7 +87,6 @@ def load_rgb(image_source: Union[str, bytes, os.PathLike]) -> Image.Image:
 
 
 def crop_echo_icons(image: Image.Image) -> List[Image.Image]:
-    """공명자 프로필 스크린샷에서 에코 슬롯 1~5의 아이콘 영역만 크롭한다 (ORB 매칭 입력용)."""
 
     crops = [image.crop(rect) for rect in ECHO_ICON_RECTANGLES]
 

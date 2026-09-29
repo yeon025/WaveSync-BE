@@ -8,12 +8,6 @@ from app.resonator.models.node_position import NodePosition
 
 
 class UserResonanceNode(Base):
-    """공명자의 공명 노드.
-
-    id는 user_node_seq(INCREMENT BY 10) 기반. 매 행마다 nextval()을 호출하며
-    batch insert 이득은 db/session.py의 insertmanyvalues_page_size가 담당한다.
-    """
-
     __tablename__ = "user_resonance_nodes"
 
     id = Column(BigInteger, Sequence("user_node_seq", start=1, increment=10), primary_key=True)

@@ -45,21 +45,17 @@ def _is_basic_or_heavy_damage_type(stat_type: StatType) -> bool:
     return stat_type in _BASIC_OR_HEAVY_DAMAGE_TYPES
 
 
-# 에코에서 획득한 백분율 스탯과 고정 스탯을 합산 (메인/보조/서브 전부)
 def _get_echo_stat(echoes: List[UserEcho], percent_type: StatType, flat_type: StatType) -> Tuple[Decimal, Decimal]:
     percent = Decimal(0)
     flat = Decimal(0)
 
     for echo in echoes:
-        # 메인 옵션의 백분율 스탯 합산
         if echo.main_type == percent_type:
             percent += echo.main_value
 
-        # 보조 옵션의 고정 스탯 합산
         if echo.secondary_type == flat_type:
             flat += Decimal(echo.secondary_value)
 
-        # 서브 옵션의 백분율 스탯 및 고정 스탯 합산
         for sub in echo.user_echo_subs:
             if sub.type == percent_type:
                 percent += sub.value
@@ -69,7 +65,6 @@ def _get_echo_stat(echoes: List[UserEcho], percent_type: StatType, flat_type: St
     return percent, flat
 
 
-# 무기에서 획득한 백분율 스탯 합산
 def _get_weapon_stat_percent(weapon_master: WeaponMaster, stat_type: StatType, weapon_refine_level: int) -> Decimal:
     percent = Decimal(0)
 
@@ -78,19 +73,15 @@ def _get_weapon_stat_percent(weapon_master: WeaponMaster, stat_type: StatType, w
         raise ValueError("잘못된 무기 레벨입니다.")
     refine_value = getattr(weapon_master, attr)
 
-    # 무기 주 옵션
     if weapon_master.main_type == stat_type:
         percent += weapon_master.main_value
 
-    # 무기 재련 옵션
     if weapon_master.refine_type == stat_type:
         percent += refine_value
 
-    # 전체 속성 피해 보너스
     if _is_element_damage_type(stat_type) and weapon_master.refine_type == StatType.ALL_ATTRIBUTE_DAMAGE_BONUS:
         percent += refine_value
 
-    # 일반 공격 + 강공격 피해 보너스
     if (
         _is_basic_or_heavy_damage_type(stat_type)
         and weapon_master.refine_type == StatType.BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS
@@ -100,7 +91,6 @@ def _get_weapon_stat_percent(weapon_master: WeaponMaster, stat_type: StatType, w
     return percent
 
 
-# 공명 노드에서 획득한 백분율 스탯 합산
 def _get_node_stat_percent(nodes: List[ResonanceNode], stat_type: StatType) -> Decimal:
     percent = Decimal(0)
 
@@ -122,32 +112,25 @@ def _calculate_stat(
 ) -> int:
     logger.debug(f"{echo_flat_type} baseStat: {base_stat}")
 
-    # 무기에서 획득한 백분율 스탯
     weapon_stat_percent = _get_weapon_stat_percent(weapon_master, percent_stat_type, weapon_refine_level)
 
-    # 공명 노드에서 획득한 백분율 스탯
     node_stat_percent = _get_node_stat_percent(nodes, percent_stat_type)
 
-    # 무기와 공명 노드의 백분율 스탯 합산
     stat_percent = weapon_stat_percent + node_stat_percent
     logger.debug(f"{echo_flat_type} weapon + node: {stat_percent}%")
 
-    # 백분율 스탯을 소수로 변환 (30 -> 0.30)
     stat_rate = stat_percent / _HUNDRED
 
-    # 에코에서 획득한 백분율 스탯과 고정 스탯
     echo_percent, echo_flat = _get_echo_stat(echoes, percent_stat_type, echo_flat_type)
 
-    # 에코 백분율을 소수로 변환 (22 -> 0.22)
     echo_percent_rate = echo_percent / _HUNDRED
 
-    # 에코 스탯 = 기초 스탯 x 에코 백분율 + 에코 고정 스탯. int()는 0 방향으로 절사한다.
+    # 에코 스탯은 최종 합산 전에 따로 int()로 절사(0 방향)한다.
     total_echo_stat = int(Decimal(base_stat) * echo_percent_rate + echo_flat)
     logger.debug(f"{echo_flat_type} echoFlat: {echo_flat}")
     logger.debug(f"{echo_flat_type} echoPercentRate: {echo_percent}%")
     logger.debug(f"{echo_flat_type} totalEchoStat: {total_echo_stat}")
 
-    # 최종 스탯 = 기초 스탯 x (1 + 백분율 스탯) + 에코 스탯
     return int(Decimal(base_stat) * (Decimal(1) + stat_rate) + Decimal(total_echo_stat))
 
 
@@ -159,16 +142,12 @@ def _calculate_percent_stat(
     stat_type: StatType,
     refine_level: int,
 ) -> Decimal:
-    # 무기에서 획득한 백분율 스탯
     weapon_stat_percent = _get_weapon_stat_percent(weapon_master, stat_type, refine_level)
 
-    # 공명 노드에서 획득한 백분율 스탯
     node_stat_percent = _get_node_stat_percent(nodes, stat_type)
 
-    # 기본 수치 + 무기 + 공명 노드
     result = base_value + weapon_stat_percent + node_stat_percent
 
-    # 에코 메인 옵션, 서브 옵션에서 획득한 스탯 합산
     for echo in echoes:
         if echo.main_type == stat_type:
             result += echo.main_value
@@ -183,7 +162,7 @@ def _calculate_percent_stat(
 
 
 def calculate_final_stat(user_resonator: UserResonator, nodes: List[ResonanceNode]) -> FinalStat:
-    """공명자 최초 등록 시 스펙 전체 계산 (재련레벨 1 고정)."""
+    """최초 등록용이라 재련 레벨을 1로 고정해 계산한다."""
     user_echoes = user_resonator.user_echoes
     resonator_master = user_resonator.resonator_master
     weapon_master = user_resonator.weapon_master
@@ -248,14 +227,7 @@ def re_calculate_final_stat(
     nodes: List[ResonanceNode],
     weapon_refine_level: int,
 ) -> None:
-    """required_type에 담긴 스탯만 부분 재계산해 final_stat을 in-place 수정한다.
-
-    calculate_final_stat이 계산하는 17개 스탯 전부에 분기가 있다. 계산식은
-    calculate_final_stat과 동일하고, 재련 레벨만 인자로 받은 weapon_refine_level을 쓴다.
-
-    무기 재련이 복합 타입(ALL_ATTRIBUTE_DAMAGE_BONUS / BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS)이면
-    _get_weapon_stat_percent가 개별 스탯에 파급시키므로, 그 파급 대상도 재계산 대상에 넣는다.
-    """
+    """required_type의 스탯만 재계산해 final_stat을 in-place로 수정한다 (복합 재련 타입의 파급 대상 포함)."""
     final_stat = user_resonator.final_stat
     user_echoes = user_resonator.user_echoes
     resonator_master = user_resonator.resonator_master

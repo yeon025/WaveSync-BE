@@ -11,13 +11,11 @@ from app.resonator.models.stat_type import StatType
 PositiveId = Annotated[int, Field(gt=0)]
 
 
-# 스탯 (type + value). Pydantic이 StatType 문자열 <-> 멤버 변환을 네이티브 처리한다.
 class Stat(BaseModel):
     type: StatType
     value: Decimal
 
 
-# 공명 노드 (위치 + 활성 여부 + 스탯).
 class ResonanceNode(BaseModel):
     branchPosition: BranchPosition
     nodePosition: NodePosition
@@ -25,7 +23,6 @@ class ResonanceNode(BaseModel):
     stat: Optional[Stat] = None
 
 
-# 공명자 최종 스탯.
 class ResonatorStat(BaseModel):
     hp: int
     attack: int
@@ -71,7 +68,6 @@ class ResonatorStat(BaseModel):
         )
 
 
-# 무기 상세.
 class WeaponDetail(BaseModel):
     name: str
     attackValue: int
@@ -91,7 +87,6 @@ class WeaponDetail(BaseModel):
         )
 
 
-# 무기 설정 (재련). refineType은 code 문자열로 담는다.
 class WeaponSetting(BaseModel):
     refineLevel: int
     refineType: Optional[str] = None
@@ -117,10 +112,7 @@ class WeaponSetting(BaseModel):
         )
 
 
-# 에코 상세 (등록된 에코 조회 응답).
-# 점수 2필드는 등록 시 저장된 값을 그대로 내려준다.
-# 점수 계산 대상이 아닌 공명자의 에코는 둘 다 None이라 응답에서 빠진다.
-# per_stat(점수 계산 내부 산출 내역)은 디버깅/계산용 데이터라 API 응답에는 내려주지 않는다.
+# per_stat(점수 산출 내역)은 내부 계산용이라 응답에 포함하지 않는다.
 class EchoDetail(BaseModel):
     name: Optional[str] = None
     imageUrl: Optional[str] = None
@@ -163,7 +155,7 @@ class ResonatorSummaryResponse(BaseModel):
 class ResonatorDetailResponse(BaseModel):
     userResonatorId: int
     resonatorName: str
-    element: str  # code 문자열
+    element: str
     standingImageUrl: str
     resonanceChainLevel: int
     weapon: WeaponDetail

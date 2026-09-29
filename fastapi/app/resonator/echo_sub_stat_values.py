@@ -3,9 +3,7 @@ from typing import Set
 
 from app.resonator.models.stat_type import StatType
 
-# 에코 서브옵션이 가질 수 있는 유효 수치 집합 (명조 게임 밸런스 데이터).
-# OCR 검증(profile_extraction/validation)의 오독 판별 기준이자,
-# echo_score_service의 정규화 분모(_SUB_V_MAX)로도 쓰인다 — 소유는 resonator/echo 도메인.
+# 게임 내 에코 서브옵션의 유효 수치. OCR 오독 검증과 점수 정규화 기준으로 함께 쓰인다.
 
 
 def _decimals(*values: str) -> Set[Decimal]:

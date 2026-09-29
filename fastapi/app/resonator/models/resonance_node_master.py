@@ -7,11 +7,6 @@ from app.resonator.models.stat_type import StatType
 
 
 class ResonanceNodeMaster(Base):
-    """공명 노드 마스터 데이터 (읽기 전용).
-
-    노드 스탯 선택 로직은 mapper/resonance_node_mapper.py의 get_stat()에 있다.
-    """
-
     __tablename__ = "resonance_node_master"
 
     id = Column(BigInteger, primary_key=True)

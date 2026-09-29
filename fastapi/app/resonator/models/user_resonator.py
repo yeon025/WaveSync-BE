@@ -5,8 +5,6 @@ from app.db.base import Base
 
 
 class UserResonator(Base):
-    """사용자가 등록한 공명자."""
-
     __tablename__ = "user_resonators"
 
     id = Column(BigInteger, primary_key=True)

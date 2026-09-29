@@ -6,8 +6,6 @@ from app.resonator.models.stat_type import StatType
 
 
 class WeaponMaster(Base):
-    """무기 마스터 데이터 (읽기 전용)."""
-
     __tablename__ = "weapon_master"
 
     id = Column(BigInteger, primary_key=True)
@@ -26,5 +24,3 @@ class WeaponMaster(Base):
     refine_5_value = Column(Numeric(5, 1), nullable=True)
 
     image = Column(String(255), nullable=False)
-
-    # 역참조(user_resonators)는 미사용이라 추가하지 않는다 (UserResonator 쪽에서 단방향 연결).

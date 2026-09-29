@@ -38,7 +38,6 @@ def _extract_words(annotation):
 
 def _group_into_lines(words_data):
     lines = []
-    # Y좌표 기준 정렬
     sorted_words = sorted(words_data, key=lambda w: w["y"])
 
     for word in sorted_words:
@@ -51,7 +50,6 @@ def _group_into_lines(words_data):
         if not placed:
             lines.append([word])
 
-    # 각 줄 내부에서 X좌표 정렬 후 텍스트 합치기
     result = []
     for line in lines:
         line.sort(key=lambda w: w["x"])
@@ -62,16 +60,13 @@ def _group_into_lines(words_data):
 def clean_text(raw_texts):
     final_texts = []
 
-    # LV 제거
     for text in raw_texts:
         cleaned = re.sub(r"LV[.\s]?\d+", "", text).strip()
         if cleaned:
             final_texts.append(cleaned)
 
-    # 공명자 이름에서 공백 제거
+    # 0번은 공명자 이름, 1번은 무기 이름이다.
     final_texts[0] = final_texts[0].replace(" ", "")
-
-    # 무기 이름에서 공백 제거
     final_texts[1] = final_texts[1].replace(" ", "")
 
     return final_texts

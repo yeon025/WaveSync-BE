@@ -6,11 +6,7 @@ from app.resonator.models.scaling_stat import ScalingStat
 
 
 class ResonatorDamageMaster(Base):
-    """공명자별 에코 점수 계산 설정 (읽기 전용).
-
-    서포터처럼 점수 계산 대상이 아닌 공명자는 행이 없다.
-    relevant_damage_types는 DamageType 값의 JSON 배열(1~2개)이며, 원소 검증은 echo_score_service가 한다.
-    """
+    """점수 계산 대상이 아닌 공명자(서포터 등)는 행이 없다."""
 
     __tablename__ = "resonator_damage_master"
 
@@ -24,5 +20,3 @@ class ResonatorDamageMaster(Base):
     )
 
     resonator_master_id = Column(BigInteger, ForeignKey("resonator_master.id"), nullable=False, unique=True)
-
-    # 역참조는 미사용이라 relationship을 두지 않는다 (repository가 resonator_master_id로 직접 조회).

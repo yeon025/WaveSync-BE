@@ -32,7 +32,6 @@ from app.storage.object_storage_service import ObjectStorageService, StorageObje
 OrbFeature = Tuple[List[cv2.KeyPoint], Optional[np.ndarray]]
 EchoAsset = Tuple[OrbFeature, str]  # (ORB 특징, 스토리지 객체 키)
 
-# ORB 디텍터 / 매처 (모듈 전역 — 매 호출마다 새로 만들 필요 없음)
 _ORB = cv2.ORB_create(
     nfeatures=ECHO_ORB_NFEATURES,
     scaleFactor=ECHO_ORB_SCALE_FACTOR,
@@ -44,8 +43,7 @@ _BF_CROSS = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 
 def decode_echo_name(key: str) -> str:
-    """echo-images 버킷의 객체 키(base64 urlsafe 인코딩된 파일명)를 사람이 읽는 에코 이름으로 변환한다.
-    디코딩할 수 없는 키는 원본 stem을 그대로 반환한다."""
+    """객체 키는 base64 urlsafe로 인코딩된 에코 이름이다. 디코딩할 수 없으면 stem을 그대로 반환한다."""
 
     stem = os.path.splitext(key)[0]
     padded = stem + "=" * (-len(stem) % 4)
@@ -97,10 +95,7 @@ def _save_disk_cache(cache: Dict[str, dict]) -> None:
 
 
 def _build_echo_features(storage: ObjectStorageService, objects: List[StorageObject]) -> Dict[str, EchoAsset]:
-    """이미 조회된 echo-images 객체 목록(objects)에 대해 ORB 특징을
-    { 에코 이름: ((keypoints, descriptors), 객체 키) }로 계산한다.
-    로컬 디스크 캐시 키는 `{원본 base64 키}:{etag}` — 스토리지에서 실제로 바뀐 이미지만 재계산한다.
-    변경 여부 확인(목록 조회)은 호출자(_refresh_echo_features)가 이미 끝낸 상태로 넘어온다."""
+    """디스크 캐시 키가 `{객체 키}:{etag}`라 스토리지에서 실제로 바뀐 이미지만 다시 계산한다."""
 
     disk_cache = _load_disk_cache()
     new_disk_cache: Dict[str, dict] = {}
@@ -144,8 +139,7 @@ def _build_echo_features(storage: ObjectStorageService, objects: List[StorageObj
     return assets
 
 
-# echo-images 메모리 캐시 상태 (모듈 전역). Cloud Run 인스턴스마다 독립적으로 유지되며
-# 인스턴스 간 공유되지 않는다 — 인스턴스별로 각자 TTL마다 변경 여부를 확인한다.
+# 메모리 캐시는 Cloud Run 인스턴스 간에 공유되지 않아 인스턴스마다 각자 TTL로 갱신한다.
 _echo_assets: Optional[Dict[str, EchoAsset]] = None
 _echo_snapshot: Dict[str, str] = {}  # 마지막으로 반영한 { 객체 키: etag }
 _echo_last_checked = 0.0
@@ -160,8 +154,7 @@ def _diff_echo_snapshot(old: Dict[str, str], new: Dict[str, str]) -> Tuple[int, 
 
 
 def _refresh_echo_features() -> Dict[str, EchoAsset]:
-    """echo-images 변경 여부를 확인하고, 변경이 있을 때만 ORB 캐시를 재빌드한다.
-    호출자(_get_echo_features)가 _echo_cache_lock을 잡은 상태에서만 호출해야 한다."""
+    """_echo_cache_lock을 잡은 상태에서만 호출해야 한다."""
 
     global _echo_assets, _echo_snapshot, _echo_last_checked
 
@@ -174,8 +167,7 @@ def _refresh_echo_features() -> Dict[str, EchoAsset]:
             logger.warning(f"echo-images 변경 확인 실패, 기존 캐시 유지: {exc}")
             _echo_last_checked = time.monotonic()
             return _echo_assets
-        # 최초 로딩인데 목록 조회 자체가 실패하면 반환할 캐시가 없으므로 그대로 전파한다
-        # (기존 동작과 동일 — 첫 호출 실패 시 에러 응답).
+        # 최초 로딩이면 돌려줄 캐시가 없으므로 그대로 전파한다.
         raise
 
     new_snapshot = {obj.key: obj.etag for obj in objects}
@@ -206,14 +198,7 @@ def _refresh_echo_features() -> Dict[str, EchoAsset]:
 
 
 def _get_echo_features() -> Dict[str, EchoAsset]:
-    """echo-images 특징을 메모리에 캐시하고, TTL(ECHO_FEATURES_TTL_SECONDS)이 지나면
-    변경 여부를 확인해 필요할 때만 재빌드한다.
-
-    Cloud Run은 요청 처리 중에만 CPU를 할당하고(idle 시 스로틀), 트래픽에 따라
-    여러 인스턴스로 스케일되며 언제든 종료될 수 있어 별도 백그라운드 polling 루프는
-    신뢰할 수 없다. 대신 실제 요청이 들어올 때(=CPU가 할당된 시점) TTL을 확인하는
-    방식을 쓴다. 동시에 여러 요청 스레드가 TTL 만료를 감지해도 재빌드는 한 번만
-    일어나도록 lock으로 감싼다."""
+    """Cloud Run은 idle 시 CPU를 스로틀하므로 백그라운드 polling 대신 요청 시점에 TTL을 확인한다."""
 
     assets = _echo_assets
     if assets is not None and (time.monotonic() - _echo_last_checked) < ECHO_FEATURES_TTL_SECONDS:
@@ -228,8 +213,6 @@ def _get_echo_features() -> Dict[str, EchoAsset]:
 
 
 def _good_matches(des_a: np.ndarray, des_b: np.ndarray) -> int:
-    """ECHO_MATCHER_MODE에 따라 좋은 매칭 개수를 센다."""
-
     if ECHO_MATCHER_MODE == "crosscheck":
         return len(_BF_CROSS.match(des_a, des_b))
 
@@ -241,8 +224,6 @@ def _good_matches(des_a: np.ndarray, des_b: np.ndarray) -> int:
 
 
 def _orb_similarity(feat_a: OrbFeature, feat_b: OrbFeature) -> float:
-    """두 ORB 특징 간 유사도(0.0~1.0) = 좋은 매칭 수 / min(특징점 수 a, 특징점 수 b)."""
-
     kps_a, des_a = feat_a
     kps_b, des_b = feat_b
     if des_a is None or des_b is None:
@@ -255,9 +236,7 @@ def _orb_similarity(feat_a: OrbFeature, feat_b: OrbFeature) -> float:
 
 
 def match_echo_icon(icon_image: Image.Image) -> Optional[Tuple[str, str]]:
-    """에코 슬롯 아이콘 크롭 이미지와 가장 유사한 echo-images 이미지의 (이름, 이미지 경로)를 반환한다.
-    이미지 경로는 '버킷명/객체 키' 형태의 상대 경로다 (예: echo-images/mumangja.png).
-    1등과 2등의 유사도 차이가 충분치 않으면(모호하면) None을 반환한다."""
+    """(에코 이름, '버킷명/객체 키' 경로)를 반환한다. 1·2등 유사도 차이가 작아 모호하면 None이다."""
 
     try:
         slot_feat = _compute_orb(icon_image)

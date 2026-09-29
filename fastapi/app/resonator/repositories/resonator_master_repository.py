@@ -17,9 +17,6 @@ def exists_by_name(db: Session, name: str) -> bool:
 
 
 def find_resonator_summary(db: Session) -> List[Row]:
-    # relationship 대신 명시적 LEFT JOIN
-    # 반환값은 (id, name, rarity, release_version, thumbnail_image) 컬럼을 가진 원시 Row 목록이다.
-    # API 응답(ResonatorSummaryResponse) 조립은 서비스 계층 책임이다.
     stmt = (
         select(
             UserResonator.id,

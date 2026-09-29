@@ -4,7 +4,6 @@ from app.resonator.models.resonance_node_master import ResonanceNodeMaster
 from app.resonator.schemas import Stat
 
 
-# 이미 로드된 ResonanceNodeMaster에서 위치에 맞는 필드를 골라 Stat으로 포장하는 순수 selector.
 def get_stat(
     node_master: ResonanceNodeMaster, branch_position: BranchPosition, node_position: NodePosition
 ) -> Stat | None:

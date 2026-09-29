@@ -15,13 +15,11 @@ from app.exceptions.exception_handler import (
 from app.resonator.router import router as resonator_router
 
 logging.getLogger("uvicorn").disabled = True
-# logging.getLogger("uvicorn.error").disabled = True
 logging.getLogger("uvicorn.access").disabled = True
 
 
 app = FastAPI()
 
-# CORS 허용 origin/method/header
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "https://resocollector.com"],
@@ -36,7 +34,6 @@ def health_check():
     return {"status": "ok"}
 
 
-# 요청 시작/응답 완료 시각을 로그로 남긴다.
 @app.middleware("http")
 async def execution_time_middleware(request: Request, call_next):
     # 헬스체크는 주기적으로 들어오므로 실행시간 로그에서 제외한다.

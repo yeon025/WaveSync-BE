@@ -17,11 +17,10 @@ def _check_chain_level(chain_path, template_path):
 
     logger.debug(f"hash distance: {distance}")
 
-    # 템플릿과 유사하면 미돌파
+    # 템플릿은 미돌파 상태 이미지다.
     if distance <= threshold:
         return False
 
-    # 유사하지 않으면 돌파
     return True
 
 

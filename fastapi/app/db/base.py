@@ -1,7 +1,6 @@
 from sqlalchemy.orm import declarative_base
 
-# 모든 SQLAlchemy 모델의 베이스. 스키마는 infra/postgres/*.sql이 관리하므로
-# create_all()은 호출하지 않고 기존 테이블에 매핑만 한다.
+# 스키마는 infra/postgres/*.sql이 관리하므로 create_all()은 호출하지 않는다.
 Base = declarative_base()
 
 

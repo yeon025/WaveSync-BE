@@ -11,7 +11,6 @@ from app.profile_extraction.constants import (
 from app.profile_extraction.schemas import Echo, ExtractedStat
 
 
-# 파싱 단계
 class ParseState(Enum):
     START = auto()
     MAIN_VALUE_PENDING = auto()
@@ -30,7 +29,6 @@ class EchoMapper:
         self.state = ParseState.START
 
     def _finalize_echo(self):
-        # 현재까지 작업하던 Echo를 결과 리스트에 담고 정리
         if self.current_echo.main.type:
             self.current_echo.subs = self.current_subs
             self.final_list.append(self.current_echo)
@@ -42,12 +40,11 @@ class EchoMapper:
         self.current_subs = []
 
     def run(self, merged_texts):
-        # 인덱스 2번부터 순회
+        # 0, 1번은 공명자/무기 이름이다.
         for text in merged_texts[2:]:
-            # 데이터 추출 (Type, Value, Percent 여부)
             match = re.match(r"(.*?)\s*([\d.]+)\s*(%)?$", text)
 
-            # 매칭 안 되는 텍스트 = 새 Echo 세션 시작
+            # 수치가 없는 텍스트는 다음 에코의 메인 옵션 이름이다.
             if not match:
                 self._finalize_echo()
 
@@ -58,15 +55,12 @@ class EchoMapper:
                 self.state = ParseState.MAIN_VALUE_PENDING
                 continue
 
-            # 상태에 따라 데이터 처리
             self._process_by_state(match)
 
-        # 마지막으로 작업 중이던 객체 저장
         self._finalize_echo()
         return self.final_list
 
     def _process_by_state(self, match):
-        # 현재 상태에 따라 매칭된 데이터를 적절한 필드에 할당
         raw_label = match.group(1).strip()
         value = match.group(2)
         is_percent = match.group(3) is not None

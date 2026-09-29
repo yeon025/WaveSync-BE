@@ -7,8 +7,6 @@ from app.resonator.models.element import Element
 
 
 class ResonatorMaster(Base):
-    """공명자 마스터 데이터 (읽기 전용)."""
-
     __tablename__ = "resonator_master"
 
     id = Column(BigInteger, primary_key=True)
@@ -27,5 +25,3 @@ class ResonatorMaster(Base):
     standing_image = Column(String(255), nullable=True)
 
     resonance_node_master = relationship("ResonanceNodeMaster", back_populates="resonator_master", uselist=False)
-
-    # 역참조(user_resonators)는 미사용이라 추가하지 않는다 (UserResonator 쪽에서 단방향 연결).

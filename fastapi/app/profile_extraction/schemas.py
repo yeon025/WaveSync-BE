@@ -3,7 +3,6 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
-# OCR 추출 결과 스키마.
 class ExtractedStat(BaseModel):
     type: str
     value: float
@@ -17,7 +16,6 @@ class Echo(BaseModel):
     subs: List[ExtractedStat] = Field(default_factory=list)
 
 
-# 공명자 정보
 class ExtractData(BaseModel):
     resonatorName: str
     resonanceChainLevel: int
