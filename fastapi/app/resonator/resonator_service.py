@@ -8,8 +8,7 @@ from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.profile_extraction.profile_extraction_service import extract_info
-from app.profile_extraction.validation import extract_profile_validation_service
-from app.resonator import echo_score_service, spec_calculation_service
+from app.resonator import echo_score_service, extract_profile_validation_service, spec_calculation_service
 from app.resonator.models.branch_position import BranchPosition
 from app.resonator.models.node_position import NodePosition
 from app.resonator.models.stat_type import StatType
@@ -17,11 +16,7 @@ from app.resonator.models.user_echo import UserEcho
 from app.resonator.models.user_echo_sub import UserEchoSub
 from app.resonator.models.user_resonance_node import UserResonanceNode
 from app.resonator.models.user_resonator import UserResonator
-from app.resonator.repositories import (
-    resonator_master_repository,
-    user_resonator_repository,
-    weapon_master_repository,
-)
+from app.resonator.repositories import resonator_master_repository, user_resonator_repository
 from app.resonator.resonance_node_mapper import get_stat
 from app.resonator.schemas import (
     CreateResonatorResponse,
@@ -137,11 +132,7 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
     extracted = extract_info(profile_url)
     logger.info("이미지 추출이 완료되었습니다.")
 
-    validated_weapon_name = extract_profile_validation_service.validate(db, extracted)
-
-    # validate()가 존재를 보장하므로 None 체크를 하지 않는다.
-    rm = resonator_master_repository.find_by_name(db, extracted.resonatorName)
-    wm = weapon_master_repository.find_by_name(db, validated_weapon_name)
+    rm, wm = extract_profile_validation_service.validate(db, extracted)
     rnm = rm.resonance_node_master
     logger.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.")
 

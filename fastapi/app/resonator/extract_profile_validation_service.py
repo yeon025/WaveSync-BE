@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List
+from typing import List, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -8,34 +8,41 @@ from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.profile_extraction.schemas import Echo, ExtractData, ExtractedStat
 from app.resonator.echo_sub_stat_values import VALID_SUB_VALUES
+from app.resonator.models.resonator_master import ResonatorMaster
 from app.resonator.models.stat_type import StatType
+from app.resonator.models.weapon_master import WeaponMaster
 from app.resonator.repositories import resonator_master_repository, weapon_master_repository
 
 
-def validate(db: Session, dto: ExtractData) -> str:
-    _validate_resonator(db, dto.resonatorName)
+def validate(db: Session, dto: ExtractData) -> Tuple[ResonatorMaster, WeaponMaster]:
+    """검증하면서 조회한 마스터를 그대로 반환해 호출부가 다시 조회하지 않게 한다."""
+    resonator_master = _validate_resonator(db, dto.resonatorName)
 
-    weapon_name = _validate_weapon(db, dto.weaponName)
+    weapon_master = _validate_weapon(db, dto.weaponName)
 
     _validate_subs(dto.echoes)
 
-    return weapon_name
+    return resonator_master, weapon_master
 
 
-def _validate_resonator(db: Session, resonator_name: str) -> None:
-    if not resonator_master_repository.exists_by_name(db, resonator_name):
+def _validate_resonator(db: Session, resonator_name: str) -> ResonatorMaster:
+    resonator_master = resonator_master_repository.find_by_name(db, resonator_name)
+
+    if resonator_master is None:
         logger.warning(f"공명자 이름이 마스터 데이터에 존재하지 않습니다. resonatorName={resonator_name}")
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
+    return resonator_master
 
-def _validate_weapon(db: Session, extracted_name: str) -> str:
+
+def _validate_weapon(db: Session, extracted_name: str) -> WeaponMaster:
     weapon = weapon_master_repository.find_by_name_without_spaces(db, extracted_name)
 
     if weapon is None:
         logger.warning(f"무기 이름이 마스터 데이터에 존재하지 않습니다. weaponName={extracted_name}")
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
-    return weapon.name
+    return weapon
 
 
 def _validate_subs(echoes: List[Echo]) -> None:

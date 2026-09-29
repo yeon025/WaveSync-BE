@@ -113,7 +113,7 @@ SQLAlchemy 기반 DB 설정과 세션 관리를 담당한다 (`base.py`의 선�
 
 ### app/profile_extraction/
 
-게임 내 공명자 프로필 화면 스크린샷 이미지에서 데이터를 추출하는 기능을 담당한다. 이미지 전처리, OCR(Google Vision API 호출 포함), Echo 이미지 매칭, Echo 텍스트 파싱, Resonance Chain(돌파 여부) 판별, 추출 데이터 검증까지 포함한다.
+게임 내 공명자 프로필 화면 스크린샷 이미지에서 데이터를 추출하는 기능을 담당한다. 이미지 전처리, OCR(Google Vision API 호출 포함), Echo 이미지 매칭, Echo 텍스트 파싱, Resonance Chain(돌파 여부) 판별까지 포함한다. 추출 결과를 마스터 데이터로 검증하는 일은 resonator 도메인(`resonator/extract_profile_validation_service.py`)이 맡으므로, profile_extraction은 DB와 resonator에 의존하지 않는다.
 
 ```
 profile_extraction/
@@ -123,8 +123,7 @@ profile_extraction/
 ├── preprocessing/                   # 이미지 크롭/스택/정규화
 ├── ocr/                             # OCR 텍스트 추출 + Vision API 클라이언트
 ├── echo/                            # 에코 아이콘 이미지 매칭 + OCR 텍스트 파싱
-├── resonance_chain/                 # 이미지 해시 기반 돌파 여부 판별
-└── validation/                      # 추출 결과 검증
+└── resonance_chain/                 # 이미지 해시 기반 돌파 여부 판별
 ```
 
 ### app/resonator/
@@ -135,6 +134,7 @@ profile_extraction/
 resonator/
 ├── router.py                    # API 엔드포인트 (얇게 유지, 실제 로직은 resonator_service로 위임)
 ├── resonator_service.py         # CRUD + 여러 Repository 조합/트랜잭션
+├── extract_profile_validation_service.py  # 프로필 추출 결과를 마스터 데이터/게임 수치로 검증
 ├── spec_calculation_service.py  # 최종 스탯 계산 도메인 로직
 ├── resonance_node_mapper.py     # 공명 노드 위치→스탯 값 매핑
 ├── schemas.py                   # Resonator 도메인 request/response 스키마
