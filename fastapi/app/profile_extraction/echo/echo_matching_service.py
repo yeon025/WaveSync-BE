@@ -13,9 +13,19 @@ from PIL import Image
 
 from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
-from app.profile_extraction.constants import ECHO_ORB_CACHE_PATH
+from app.profile_extraction.paths import TMP_DIR
 from app.storage.object_storage_factory import get_object_storage_service
 from app.storage.object_storage_service import ObjectStorageService, StorageObject
+
+ECHO_ORB_CACHE_PATH = os.path.join(TMP_DIR, "echo_orb_cache.pkl")
+
+ECHO_ICON_RECTANGLES = [
+    (20, 648, 214, 831),
+    (398, 648, 587, 831),
+    (768, 648, 963, 831),
+    (1142, 648, 1335, 831),
+    (1518, 648, 1708, 831),
+]
 
 # 이미지 투명 배경을 합성할 배경색 (게임 내 슬롯이 어두우므로 검은색)
 IMAGE_BG_COLOR = (0, 0, 0)
@@ -253,6 +263,18 @@ def _orb_similarity(feat_a: OrbFeature, feat_b: OrbFeature) -> float:
 
     denom = min(len(kps_a), len(kps_b))
     return _good_matches(des_a, des_b) / denom if denom else 0.0
+
+
+def crop_echo_icons(image: Image.Image) -> List[Image.Image]:
+
+    crops = [image.crop(rect) for rect in ECHO_ICON_RECTANGLES]
+
+    for i, crop in enumerate(crops, start=1):
+        save_path = os.path.join(TMP_DIR, f"echo_{i}.png")
+        crop.save(save_path)
+        logger.debug(f"{save_path}가 저장되었습니다.")
+
+    return crops
 
 
 def match_echo_icon(icon_image: Image.Image) -> Optional[Tuple[str, str]]:

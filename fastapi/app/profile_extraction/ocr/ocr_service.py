@@ -1,5 +1,6 @@
 import re
 from io import BytesIO
+from typing import List, NamedTuple
 
 from google.cloud import vision
 from PIL import Image
@@ -68,3 +69,19 @@ def clean_text(raw_texts):
             final_texts.append(cleaned)
 
     return final_texts
+
+
+class ProfileTextLines(NamedTuple):
+    resonator_name: str
+    weapon_name: str
+    echo_lines: List[str]
+
+
+def split_profile_text_lines(cleaned_texts: List[str]) -> ProfileTextLines:
+    """줄 순서는 text_region_builder.RECTANGLES 순서다: 공명자 이름, 무기 이름, 이후 에코 옵션."""
+
+    resonator_name = cleaned_texts[0].replace(" ", "")
+    weapon_name = cleaned_texts[1].replace(" ", "")
+    echo_lines = cleaned_texts[2:]
+
+    return ProfileTextLines(resonator_name=resonator_name, weapon_name=weapon_name, echo_lines=echo_lines)
