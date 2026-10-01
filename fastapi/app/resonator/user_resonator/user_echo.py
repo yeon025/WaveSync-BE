@@ -3,8 +3,8 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base, enum_values
-from app.resonator.models.echo_grade import EchoGrade
-from app.resonator.models.stat_type import StatType
+from app.resonator.echo_score.echo_grade import EchoGrade
+from app.resonator.stat_type import StatType
 
 
 class UserEcho(Base):

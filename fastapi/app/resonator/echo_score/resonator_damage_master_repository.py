@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.resonator.models.resonator_damage_master import ResonatorDamageMaster
+from app.resonator.echo_score.resonator_damage_master import ResonatorDamageMaster
 
 
 def find_by_resonator_master_id(db: Session, resonator_master_id: int) -> Optional[ResonatorDamageMaster]:

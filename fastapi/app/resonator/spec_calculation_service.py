@@ -2,12 +2,12 @@ from decimal import Decimal
 from typing import List, Set, Tuple
 
 from app.config.logger import logger
-from app.resonator.models.final_stat import FinalStat
-from app.resonator.models.stat_type import StatType
-from app.resonator.models.user_echo import UserEcho
-from app.resonator.models.user_resonator import UserResonator
-from app.resonator.models.weapon_master import WeaponMaster
+from app.resonator.master.weapon_master import WeaponMaster
 from app.resonator.schemas import ResonanceNode
+from app.resonator.stat_type import StatType
+from app.resonator.user_resonator.final_stat import FinalStat
+from app.resonator.user_resonator.user_echo import UserEcho
+from app.resonator.user_resonator.user_resonator import UserResonator
 
 # 이미 로드된 UserResonator/ResonanceNode만으로 최종 스탯을 계산하는 순수 함수 모음 (DB I/O 없음).
 

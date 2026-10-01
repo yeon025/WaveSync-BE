@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Set
 
-from app.resonator.models.stat_type import StatType
+from app.resonator.stat_type import StatType
 
 # 게임 내 에코 서브옵션의 유효 수치. OCR 오독 검증과 점수 정규화 기준으로 함께 쓰인다.
 

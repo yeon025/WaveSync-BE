@@ -3,7 +3,7 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base, enum_values
-from app.resonator.models.element import Element
+from app.resonator.master.element import Element
 
 
 class ResonatorMaster(Base):

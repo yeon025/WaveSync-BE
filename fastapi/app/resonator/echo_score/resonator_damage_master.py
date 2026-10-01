@@ -2,7 +2,7 @@ from sqlalchemy import JSON, BigInteger, Column, ForeignKey
 from sqlalchemy import Enum as SAEnum
 
 from app.db.base import Base, enum_values
-from app.resonator.models.scaling_stat import ScalingStat
+from app.resonator.echo_score.scaling_stat import ScalingStat
 
 
 class ResonatorDamageMaster(Base):

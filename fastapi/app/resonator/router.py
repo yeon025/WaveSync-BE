@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.resonator import resonator_service
+from app.resonator import resonator_registration_service, resonator_service
 from app.resonator.schemas import (
     CreateResonatorResponse,
     DeleteResonatorRequest,
@@ -26,7 +26,7 @@ router = APIRouter(prefix="/resonators")
     status_code=200,
 )
 def create_resonator(resonatorProfile: UploadFile = File(...), db: Session = Depends(get_db)):
-    data = resonator_service.create_resonator(db, resonatorProfile)
+    data = resonator_registration_service.create_resonator(db, resonatorProfile)
 
     return ApiResponse(code="OK", message="공명자가 등록되었습니다.", data=data)
 

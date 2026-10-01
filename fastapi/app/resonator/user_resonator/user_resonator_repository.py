@@ -3,12 +3,12 @@ from typing import List, Optional
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from app.resonator.models.final_stat import FinalStat
-from app.resonator.models.resonator_master import ResonatorMaster
-from app.resonator.models.user_echo import UserEcho
-from app.resonator.models.user_echo_sub import UserEchoSub
-from app.resonator.models.user_resonance_node import UserResonanceNode
-from app.resonator.models.user_resonator import UserResonator
+from app.resonator.master.resonator_master import ResonatorMaster
+from app.resonator.resonance_node.user_resonance_node import UserResonanceNode
+from app.resonator.user_resonator.final_stat import FinalStat
+from app.resonator.user_resonator.user_echo import UserEcho
+from app.resonator.user_resonator.user_echo_sub import UserEchoSub
+from app.resonator.user_resonator.user_resonator import UserResonator
 
 # 하위 테이블은 UserResonator 없이 단독으로 다뤄지지 않으므로 저장/삭제도 이 파일에서 함께 처리한다.
 

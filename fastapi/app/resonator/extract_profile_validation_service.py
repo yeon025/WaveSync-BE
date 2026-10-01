@@ -8,10 +8,10 @@ from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.profile_extraction.schemas import Echo, ExtractData, ExtractedStat
 from app.resonator.echo_sub_stat_values import VALID_SUB_VALUES
-from app.resonator.models.resonator_master import ResonatorMaster
-from app.resonator.models.stat_type import StatType
-from app.resonator.models.weapon_master import WeaponMaster
-from app.resonator.repositories import resonator_master_repository, weapon_master_repository
+from app.resonator.master import resonator_master_repository, weapon_master_repository
+from app.resonator.master.resonator_master import ResonatorMaster
+from app.resonator.master.weapon_master import WeaponMaster
+from app.resonator.stat_type import StatType
 
 
 def validate(db: Session, dto: ExtractData) -> Tuple[ResonatorMaster, WeaponMaster]:

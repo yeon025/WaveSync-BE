@@ -2,7 +2,7 @@ from sqlalchemy import BigInteger, Column, Integer, Numeric, String
 from sqlalchemy import Enum as SAEnum
 
 from app.db.base import Base, enum_values
-from app.resonator.models.stat_type import StatType
+from app.resonator.stat_type import StatType
 
 
 class WeaponMaster(Base):

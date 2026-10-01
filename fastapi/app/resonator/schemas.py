@@ -3,10 +3,10 @@ from typing import Annotated, List, Optional
 
 from pydantic import BaseModel, Field
 
-from app.resonator.models.branch_position import BranchPosition
-from app.resonator.models.echo_grade import EchoGrade
-from app.resonator.models.node_position import NodePosition
-from app.resonator.models.stat_type import StatType
+from app.resonator.echo_score.echo_grade import EchoGrade
+from app.resonator.resonance_node.branch_position import BranchPosition
+from app.resonator.resonance_node.node_position import NodePosition
+from app.resonator.stat_type import StatType
 
 PositiveId = Annotated[int, Field(gt=0)]
 

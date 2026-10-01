@@ -4,8 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session
 
-from app.resonator.models.resonator_master import ResonatorMaster
-from app.resonator.models.user_resonator import UserResonator
+from app.resonator.master.resonator_master import ResonatorMaster
+from app.resonator.user_resonator.user_resonator import UserResonator
 
 
 def find_by_name(db: Session, name: str) -> Optional[ResonatorMaster]:
