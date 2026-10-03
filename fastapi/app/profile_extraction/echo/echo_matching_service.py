@@ -58,8 +58,7 @@ _BF_CROSS = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 
 def decode_echo_name(key: str) -> str:
-    """객체 키는 base64 urlsafe로 인코딩된 에코 이름이다. 디코딩할 수 없으면 stem을 그대로 반환한다."""
-
+    # 객체 키는 base64 urlsafe로 인코딩된 에코 이름이고, 디코딩할 수 없으면 stem을 그대로 쓴다.
     stem = os.path.splitext(key)[0]
     padded = stem + "=" * (-len(stem) % 4)
     try:
@@ -69,12 +68,15 @@ def decode_echo_name(key: str) -> str:
 
 
 def load_rgb(image_source: Union[str, bytes, os.PathLike]) -> Image.Image:
-    """투명 배경은 IMAGE_BG_COLOR로 합성해 RGB로 정규화한다."""
+    if isinstance(image_source, (bytes, bytearray)):
+        source = BytesIO(image_source)
+    else:
+        source = image_source
 
-    source = BytesIO(image_source) if isinstance(image_source, (bytes, bytearray)) else image_source
     im = Image.open(source)
 
-    has_alpha = im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info)
+    is_palette_with_transparency = im.mode == "P" and "transparency" in im.info
+    has_alpha = im.mode in ("RGBA", "LA") or is_palette_with_transparency
     if has_alpha:
         im = im.convert("RGBA")
         bg = Image.new("RGBA", im.size, IMAGE_BG_COLOR + (255,))
@@ -84,7 +86,8 @@ def load_rgb(image_source: Union[str, bytes, os.PathLike]) -> Image.Image:
 
 
 def _to_gray_array(image: Image.Image) -> np.ndarray:
-    arr = np.asarray(image.resize((ECHO_ORB_PROC_SIZE, ECHO_ORB_PROC_SIZE), Image.LANCZOS).convert("L"))
+    resized = image.resize((ECHO_ORB_PROC_SIZE, ECHO_ORB_PROC_SIZE), Image.LANCZOS)
+    arr = np.asarray(resized.convert("L"))
     return np.ascontiguousarray(arr, dtype=np.uint8)
 
 
@@ -95,14 +98,25 @@ def _compute_orb(image: Image.Image) -> OrbFeature:
 
 
 def _kps_to_tuples(keypoints: List[cv2.KeyPoint]) -> list:
-    return [(kp.pt[0], kp.pt[1], kp.size, kp.angle, kp.response, kp.octave, kp.class_id) for kp in keypoints]
+    tuples = []
+
+    for kp in keypoints:
+        x, y = kp.pt
+        tuples.append((x, y, kp.size, kp.angle, kp.response, kp.octave, kp.class_id))
+
+    return tuples
 
 
 def _tuples_to_kps(tuples: list) -> List[cv2.KeyPoint]:
-    return [
-        cv2.KeyPoint(x=t[0], y=t[1], size=t[2], angle=t[3], response=t[4], octave=int(t[5]), class_id=int(t[6]))
-        for t in tuples
-    ]
+    keypoints = []
+
+    for t in tuples:
+        keypoint = cv2.KeyPoint(
+            x=t[0], y=t[1], size=t[2], angle=t[3], response=t[4], octave=int(t[5]), class_id=int(t[6])
+        )
+        keypoints.append(keypoint)
+
+    return keypoints
 
 
 def _load_disk_cache() -> Dict[str, dict]:
@@ -125,8 +139,7 @@ def _save_disk_cache(cache: Dict[str, dict]) -> None:
 
 
 def _build_echo_features(storage: ObjectStorageService, objects: List[StorageObject]) -> Dict[str, EchoAsset]:
-    """디스크 캐시 키가 `{객체 키}:{etag}`라 스토리지에서 실제로 바뀐 이미지만 다시 계산한다."""
-
+    # 디스크 캐시 키가 `{객체 키}:{etag}`라 스토리지에서 실제로 바뀐 이미지만 다시 계산한다.
     disk_cache = _load_disk_cache()
     new_disk_cache: Dict[str, dict] = {}
     assets: Dict[str, EchoAsset] = {}
@@ -150,13 +163,13 @@ def _build_echo_features(storage: ObjectStorageService, objects: List[StorageObj
                 continue
             recomputed += 1
 
+        new_disk_cache[cache_key] = {"kps": _kps_to_tuples(kps), "des": des}
+
+        # 특징점을 거의 못 찾은 이미지는 매칭 대상에서 제외한다 (크래시 방지)
         if des is None or len(kps) < ECHO_MIN_KEYPOINTS:
-            # 특징점을 거의 못 찾은 이미지는 매칭 대상에서 제외 (크래시 방지)
             skipped += 1
-            new_disk_cache[cache_key] = {"kps": _kps_to_tuples(kps), "des": des}
             continue
 
-        new_disk_cache[cache_key] = {"kps": _kps_to_tuples(kps), "des": des}
         assets[name] = ((kps, des), obj.key)
 
     if recomputed or set(new_disk_cache) != set(disk_cache):
@@ -179,13 +192,17 @@ _echo_cache_lock = threading.Lock()
 def _diff_echo_snapshot(old: Dict[str, str], new: Dict[str, str]) -> Tuple[int, int, int]:
     added = len(new.keys() - old.keys())
     removed = len(old.keys() - new.keys())
-    modified = sum(1 for key in new.keys() & old.keys() if new[key] != old[key])
+    modified = 0
+
+    for key in new.keys() & old.keys():
+        if new[key] != old[key]:
+            modified += 1
+
     return added, modified, removed
 
 
 def _refresh_echo_features() -> Dict[str, EchoAsset]:
-    """_echo_cache_lock을 잡은 상태에서만 호출해야 한다."""
-
+    # _echo_cache_lock을 잡은 상태에서만 호출해야 한다.
     global _echo_assets, _echo_snapshot, _echo_last_checked
 
     storage = get_object_storage_service()
@@ -227,18 +244,19 @@ def _refresh_echo_features() -> Dict[str, EchoAsset]:
     return new_assets
 
 
-def _get_echo_features() -> Dict[str, EchoAsset]:
-    """Cloud Run은 idle 시 CPU를 스로틀하므로 백그라운드 polling 대신 요청 시점에 TTL을 확인한다."""
+def _is_echo_cache_fresh() -> bool:
+    return _echo_assets is not None and (time.monotonic() - _echo_last_checked) < ECHO_FEATURES_TTL_SECONDS
 
-    assets = _echo_assets
-    if assets is not None and (time.monotonic() - _echo_last_checked) < ECHO_FEATURES_TTL_SECONDS:
-        return assets
+
+def _get_echo_features() -> Dict[str, EchoAsset]:
+    # Cloud Run은 idle 시 CPU를 스로틀하므로 백그라운드 polling 대신 요청 시점에 TTL을 확인한다.
+    if _is_echo_cache_fresh():
+        return _echo_assets
 
     with _echo_cache_lock:
         # 락을 기다리는 동안 다른 스레드가 이미 갱신을 마쳤을 수 있으므로 다시 확인한다.
-        assets = _echo_assets
-        if assets is not None and (time.monotonic() - _echo_last_checked) < ECHO_FEATURES_TTL_SECONDS:
-            return assets
+        if _is_echo_cache_fresh():
+            return _echo_assets
         return _refresh_echo_features()
 
 
@@ -261,12 +279,13 @@ def _orb_similarity(feat_a: OrbFeature, feat_b: OrbFeature) -> float:
     if len(kps_a) < ECHO_MIN_KEYPOINTS or len(kps_b) < ECHO_MIN_KEYPOINTS:
         return 0.0
 
-    denom = min(len(kps_a), len(kps_b))
-    return _good_matches(des_a, des_b) / denom if denom else 0.0
+    good_matches = _good_matches(des_a, des_b)
+    min_keypoints = min(len(kps_a), len(kps_b))
+
+    return good_matches / min_keypoints
 
 
 def crop_echo_icons(image: Image.Image) -> List[Image.Image]:
-
     crops = [image.crop(rect) for rect in ECHO_ICON_RECTANGLES]
 
     for i, crop in enumerate(crops, start=1):
@@ -278,28 +297,38 @@ def crop_echo_icons(image: Image.Image) -> List[Image.Image]:
 
 
 def match_echo_icon(icon_image: Image.Image) -> Optional[Tuple[str, str]]:
-    """(에코 이름, '버킷명/객체 키' 경로)를 반환한다. 1·2등 유사도 차이가 작아 모호하면 None이다."""
-
+    # (에코 이름, '버킷명/객체 키' 경로)를 반환하고, 1·2등 유사도 차이가 작아 모호하면 None이다.
     try:
         slot_feat = _compute_orb(icon_image)
     except cv2.error as exc:
         logger.warning(f"에코 아이콘 ORB 계산 실패: {exc}")
         return None
 
-    if slot_feat[1] is None or len(slot_feat[0]) < ECHO_MIN_KEYPOINTS:
-        logger.debug(f"에코 아이콘 특징점 부족 (검출 {len(slot_feat[0])}개) → 매칭 없음")
+    slot_keypoints, slot_descriptors = slot_feat
+
+    if slot_descriptors is None or len(slot_keypoints) < ECHO_MIN_KEYPOINTS:
+        logger.debug(f"에코 아이콘 특징점 부족 (검출 {len(slot_keypoints)}개) → 매칭 없음")
         return None
 
     echo_assets = _get_echo_features()
-    ranked = sorted(
-        ((_orb_similarity(slot_feat, feat), name, key) for name, (feat, key) in echo_assets.items()),
-        reverse=True,
-    )
+
+    ranked = []
+
+    for name, (feat, key) in echo_assets.items():
+        similarity = _orb_similarity(slot_feat, feat)
+        ranked.append((similarity, name, key))
+
+    ranked.sort(reverse=True)
+
     if not ranked:
         return None
 
     best_score, best_name, best_key = ranked[0]
-    second_score, second_name, _ = ranked[1] if len(ranked) > 1 else (0.0, None, None)
+
+    second_score, second_name = 0.0, None
+
+    if len(ranked) > 1:
+        second_score, second_name, _ = ranked[1]
 
     if (best_score - second_score) < best_score * ECHO_MIN_MARGIN_RATIO:
         logger.debug(f"에코 매칭 모호 (1등 {best_score:.3f} {best_name!r}, 2등 {second_score:.3f} {second_name!r})")
