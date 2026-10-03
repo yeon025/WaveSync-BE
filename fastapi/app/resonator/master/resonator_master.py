@@ -1,9 +1,19 @@
+from enum import Enum
+
 from sqlalchemy import BigInteger, Column, Integer, String
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base, enum_values
-from app.resonator.master.element import Element
+
+
+class Element(str, Enum):
+    GLACIO = "glacio"
+    FUSION = "fusion"
+    AERO = "aero"
+    CONDUCTO = "conducto"
+    SPECTRA = "spectra"
+    HAVOC = "havoc"
 
 
 class ResonatorMaster(Base):

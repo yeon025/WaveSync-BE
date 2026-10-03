@@ -5,8 +5,7 @@ from app.db.base import Base
 
 
 class FinalStat(Base):
-    """final_stats.user_resonator_id엔 DB상 UNIQUE 제약이 없어 unique=True를 넣지 않는다."""
-
+    # final_stats.user_resonator_id엔 DB상 UNIQUE 제약이 없어 unique=True를 넣지 않는다.
     __tablename__ = "final_stats"
 
     id = Column(BigInteger, primary_key=True)

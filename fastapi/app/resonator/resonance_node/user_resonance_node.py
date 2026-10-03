@@ -3,8 +3,7 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base, enum_values
-from app.resonator.resonance_node.branch_position import BranchPosition
-from app.resonator.resonance_node.node_position import NodePosition
+from app.resonator.resonance_node.node_positions import BranchPosition, NodePosition
 
 
 class UserResonanceNode(Base):

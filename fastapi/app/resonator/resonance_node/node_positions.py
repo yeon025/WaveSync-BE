@@ -8,10 +8,7 @@ class BranchPosition(str, Enum):
     RIGHT_OUTER = "right_outer"
     RIGHT_INNER = "right_inner"
 
-    @property
-    def code(self) -> str:
-        return self.value
 
-    @classmethod
-    def from_code(cls, code: str) -> "BranchPosition":
-        return cls(code)
+class NodePosition(str, Enum):
+    TOP = "top"
+    MIDDLE = "middle"

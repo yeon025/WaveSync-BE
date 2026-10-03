@@ -16,7 +16,6 @@ class UserEcho(Base):
 
     image = Column(String(255), nullable=True)
 
-    # native_enum=False 필수 — DB 컬럼은 VARCHAR (CLAUDE.md "Enum 처리")
     main_type = Column(SAEnum(StatType, native_enum=False, length=50, values_callable=enum_values), nullable=False)
     main_value = Column(Numeric(5, 1), nullable=False)
 

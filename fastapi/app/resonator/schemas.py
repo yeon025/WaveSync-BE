@@ -4,8 +4,7 @@ from typing import Annotated, List, Optional
 from pydantic import BaseModel, Field
 
 from app.resonator.echo_score.echo_grade import EchoGrade
-from app.resonator.resonance_node.branch_position import BranchPosition
-from app.resonator.resonance_node.node_position import NodePosition
+from app.resonator.resonance_node.node_positions import BranchPosition, NodePosition
 from app.resonator.stat_type import StatType
 
 PositiveId = Annotated[int, Field(gt=0)]
@@ -100,9 +99,15 @@ class WeaponSetting(BaseModel):
     @classmethod
     def from_user_resonator(cls, user_resonator, weapon_image_url: str) -> "WeaponSetting":
         weapon = user_resonator.weapon_master
+
+        refine_type = None
+
+        if weapon.refine_type:
+            refine_type = weapon.refine_type.value
+
         return cls(
             refineLevel=user_resonator.refine_level,
-            refineType=weapon.refine_type.value if weapon.refine_type else None,
+            refineType=refine_type,
             refine1Value=weapon.refine_1_value,
             refine2Value=weapon.refine_2_value,
             refine3Value=weapon.refine_3_value,
@@ -124,12 +129,17 @@ class EchoDetail(BaseModel):
 
     @classmethod
     def from_user_echo(cls, echo, image_url: Optional[str]) -> "EchoDetail":
+        subs = []
+
+        for sub in echo.user_echo_subs:
+            subs.append(Stat(type=sub.type, value=sub.value))
+
         return cls(
             name=echo.name,
             imageUrl=image_url,
             main=Stat(type=echo.main_type, value=echo.main_value),
             secondary=Stat(type=echo.secondary_type, value=echo.secondary_value),
-            subs=[Stat(type=sub.type, value=sub.value) for sub in echo.user_echo_subs],
+            subs=subs,
             scorePercent=echo.score_percent,
             grade=echo.grade,
         )
@@ -155,7 +165,7 @@ class ResonatorSummaryResponse(BaseModel):
     resonatorName: str
     rarity: int
     releaseVersion: int
-    thumbnailImageUrl: str  # URL이 아니라 raw path (변환 전)
+    thumbnailImageUrl: str
 
 
 class ResonatorDetailResponse(BaseModel):

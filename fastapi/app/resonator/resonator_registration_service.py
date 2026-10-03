@@ -24,7 +24,6 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
     resonator_master, weapon_master = extract_profile_validation_service.validate(db, extracted)
     logger.debug("추출된 데이터로 데이터베이스 조회를 완료했습니다.")
 
-    # 같은 공명자를 다시 등록하면 기존 데이터를 대체한다.
     target_ids = user_resonator_repository.find_ids_by_resonator_name(db, extracted.resonatorName)
     if target_ids:
         logger.debug(f"조회한 id: {target_ids}")
@@ -35,26 +34,27 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
 
     user_resonator.final_stat = spec_calculation_service.calculate_final_stat(user_resonator, nodes)
 
-    # 자식을 모두 연결한 뒤 저장해야 cascade로 함께 INSERT된다.
     user_resonator_repository.save(db, user_resonator)
     logger.debug("공명자 정보를 데이터베이스에 저장했습니다.")
 
-    # autoflush=False라 flush해야 점수 계산의 재조회에 에코가 잡힌다.
+    # autoflush=False라 flush해야 점수 계산의 재조회에 에코가 잡힌다. commit은 인스턴스를 expire시키므로
+    # 응답과 설명에 쓸 값은 commit 전에 확보하고, LLM은 commit 뒤에 호출해 실패/지연이 등록에 영향을 주지 않게 한다.
     db.flush()
     scored_echoes = echo_score_service.compute_and_persist_echo_scores(db, user_resonator.id)
     logger.debug("에코 점수를 계산했습니다.")
 
-    # commit이 인스턴스를 expire시키므로 응답과 설명에 쓸 값은 미리 확보한다.
     resonator_name = resonator_master.name
     user_resonator_id = user_resonator.id
     explanation_payload = echo_explanation_service.build_payload(db, resonator_master, scored_echoes)
 
-    # 응답 전에 커밋해야 실패 시 클라이언트가 성공 응답을 받지 않는다.
     db.commit()
     logger.debug("공명자 등록 트랜잭션을 커밋했습니다.")
 
-    # 등록이 확정된 뒤에 호출하므로 LLM 실패/지연이 등록에 영향을 주지 않는다. 요청당 최대 1회 호출한다.
-    echo_analysis = echo_explanation_service.explain(explanation_payload) if explanation_payload else None
+    echo_analysis = None
+
+    if explanation_payload:
+        echo_analysis = echo_explanation_service.explain(explanation_payload)
+
     if echo_analysis:
         _save_echo_analysis(db, user_resonator_id, echo_analysis)
 
@@ -62,7 +62,7 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
 
 
 def _save_echo_analysis(db: Session, user_resonator_id: int, echo_analysis: str) -> None:
-    """등록은 이미 commit됐으므로 저장에 실패해도 예외를 올리지 않는다 (조회 시 설명만 비게 된다)."""
+    # 등록은 이미 commit됐으므로 저장에 실패해도 예외를 올리지 않는다 (조회 시 설명만 비게 된다).
     try:
         user_resonator_repository.update_echo_analysis(db, user_resonator_id, echo_analysis)
         db.commit()

@@ -1,5 +1,4 @@
-from decimal import Decimal
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -30,10 +29,7 @@ def _find_weight_table(db: Session, resonator_master_id: int) -> Optional[Dict[S
 
 
 def compute_and_persist_echo_scores(db: Session, user_resonator_id: int) -> List[UserEcho]:
-    """commit/flush하지 않는다. autoflush=False라 방금 만든 에코가 대상이면 호출 전에 flush가 필요하다.
-
-    점수를 채운 에코를 반환한다 (점수 계산 대상이 아닌 공명자의 에코는 점수가 None).
-    """
+    # commit/flush하지 않는다. autoflush=False라 방금 만든 에코가 대상이면 호출 전에 flush가 필요하다.
     user_resonator = user_resonator_repository.find_by_id_with_echoes(db, user_resonator_id)
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
@@ -44,7 +40,7 @@ def compute_and_persist_echo_scores(db: Session, user_resonator_id: int) -> List
         if weight_table is None:
             result = EchoScore()
         else:
-            sub_stats: List[Tuple[StatType, Decimal]] = [(sub.type, sub.value) for sub in echo.user_echo_subs]
+            sub_stats = [(sub.type, sub.value) for sub in echo.user_echo_subs]
             result = evaluate_echo(sub_stats, weight_table)
 
         echo.score_percent = result.score_percent

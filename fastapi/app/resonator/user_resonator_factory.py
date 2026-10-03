@@ -4,8 +4,7 @@ from typing import List, Tuple
 from app.profile_extraction.schemas import ExtractData
 from app.resonator.master.resonator_master import ResonatorMaster
 from app.resonator.master.weapon_master import WeaponMaster
-from app.resonator.resonance_node.branch_position import BranchPosition
-from app.resonator.resonance_node.node_position import NodePosition
+from app.resonator.resonance_node.node_positions import BranchPosition, NodePosition
 from app.resonator.resonance_node.resonance_node_mapper import get_stat
 from app.resonator.resonance_node.user_resonance_node import UserResonanceNode
 from app.resonator.schemas import ResonanceNode
@@ -22,7 +21,6 @@ def build_user_resonator(
     weapon_master: WeaponMaster,
     extracted: ExtractData,
 ) -> Tuple[UserResonator, List[ResonanceNode]]:
-
     user_resonator = UserResonator(
         resonance_chain_level=extracted.resonanceChainLevel,
         refine_level=1,
@@ -30,29 +28,24 @@ def build_user_resonator(
         weapon_master=weapon_master,
     )
 
-    resonance_node_master = resonator_master.resonance_node_master
-
     # Column default는 flush 때 적용되는데 flush 전에 dto를 만들므로 is_active를 명시한다.
-    user_resonance_nodes = [
-        UserResonanceNode(
-            branch_position=branch_position,
-            node_position=node_position,
-            is_active=True,
-            user_resonator=user_resonator,
-        )
-        for branch_position in BranchPosition
-        for node_position in NodePosition
-    ]
-
-    nodes = [
-        ResonanceNode(
-            branchPosition=node.branch_position,
-            nodePosition=node.node_position,
-            active=node.is_active,
-            stat=get_stat(resonance_node_master, node.branch_position, node.node_position),
-        )
-        for node in user_resonance_nodes
-    ]
+    nodes = []
+    for branch_position in BranchPosition:
+        for node_position in NodePosition:
+            UserResonanceNode(
+                branch_position=branch_position,
+                node_position=node_position,
+                is_active=True,
+                user_resonator=user_resonator,
+            )
+            nodes.append(
+                ResonanceNode(
+                    branchPosition=branch_position,
+                    nodePosition=node_position,
+                    active=True,
+                    stat=get_stat(resonator_master.resonance_node_master, branch_position, node_position),
+                )
+            )
 
     for echo_dto in extracted.echoes:
         echo = UserEcho(
@@ -69,7 +62,7 @@ def build_user_resonator(
             UserEchoSub(
                 type=StatType.from_code(sub_dto.type),
                 value=Decimal(str(sub_dto.value)),
-                user_echo=echo,  # back_populates로 자동 반영
+                user_echo=echo,
             )
 
     return user_resonator, nodes
