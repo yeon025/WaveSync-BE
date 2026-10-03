@@ -93,6 +93,12 @@ services:
     ports:
       - "8000:8000"
 
+    # Gemini(GEMINI_API_KEY, GEMINI_MODEL) 등 비밀값은 fastapi/.env에서 읽는다 (경로는 이 파일 기준이라 실행 위치와 무관).
+    # 파일이 없거나 GEMINI_API_KEY가 비어 있으면 에코 설명 생성만 건너뛴다.
+    env_file:
+      - path: ../fastapi/.env
+        required: false
+
     # 개발용 자동 리로드
     command: >
       uvicorn app.main:app
