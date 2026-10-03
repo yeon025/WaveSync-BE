@@ -135,6 +135,12 @@ class EchoDetail(BaseModel):
         )
 
 
+class EchoListResponse(BaseModel):
+    echoes: List[EchoDetail] = Field(default_factory=list)
+    # 공명자 단위 에코 종합 분석(DB에 저장된 값). 없으면 None이라 응답에서 빠진다.
+    echoAnalysis: Optional[str] = None
+
+
 class DeleteResonatorRequest(BaseModel):
     userResonatorIds: List[PositiveId] = Field(min_length=1)
 

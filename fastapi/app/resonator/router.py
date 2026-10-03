@@ -8,7 +8,7 @@ from app.resonator import resonator_registration_service, resonator_service
 from app.resonator.schemas import (
     CreateResonatorResponse,
     DeleteResonatorRequest,
-    EchoDetail,
+    EchoListResponse,
     ResonatorDetailResponse,
     ResonatorSettingResponse,
     ResonatorSummaryResponse,
@@ -68,7 +68,7 @@ def get_resonator_setting(user_resonator_id: int, db: Session = Depends(get_db))
 
 @router.get(
     "/{user_resonator_id}/echo",
-    response_model=ApiResponse[List[EchoDetail]],
+    response_model=ApiResponse[EchoListResponse],
     response_model_exclude_none=True,
     status_code=200,
 )

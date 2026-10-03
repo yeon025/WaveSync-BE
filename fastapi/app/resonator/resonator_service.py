@@ -12,6 +12,7 @@ from app.resonator.resonance_node.node_position import NodePosition
 from app.resonator.resonance_node.resonance_node_mapper import get_stat
 from app.resonator.schemas import (
     EchoDetail,
+    EchoListResponse,
     ResonanceNode,
     ResonatorDetailResponse,
     ResonatorSettingResponse,
@@ -103,16 +104,17 @@ def get_resonator_setting(db: Session, user_resonator_id: int) -> ResonatorSetti
     return ResonatorSettingResponse(nodes=nodes, weapon=weapon)
 
 
-def get_resonator_echoes(db: Session, user_resonator_id: int) -> List[EchoDetail]:
+def get_resonator_echoes(db: Session, user_resonator_id: int) -> EchoListResponse:
     user_resonator = user_resonator_repository.find_by_id_with_echoes(db, user_resonator_id)
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
     storage = get_object_storage_service()
-    return [
+    echoes = [
         EchoDetail.from_user_echo(echo, storage.create_url(echo.image) if echo.image else None)
         for echo in user_resonator.user_echoes
     ]
+    return EchoListResponse(echoes=echoes, echoAnalysis=user_resonator.echo_analysis)
 
 
 def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorRequest) -> None:
