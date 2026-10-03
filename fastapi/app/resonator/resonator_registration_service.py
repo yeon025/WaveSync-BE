@@ -1,10 +1,11 @@
 from fastapi import UploadFile
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.config.logger import logger
 from app.profile_extraction.profile_extraction_service import extract_info
 from app.resonator import extract_profile_validation_service, spec_calculation_service
-from app.resonator.echo_score import echo_score_service
+from app.resonator.echo_score import echo_explanation_service, echo_score_service
 from app.resonator.schemas import CreateResonatorResponse
 from app.resonator.user_resonator import user_resonator_repository
 from app.resonator.user_resonator_factory import build_user_resonator
@@ -40,14 +41,31 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
 
     # autoflush=False라 flush해야 점수 계산의 재조회에 에코가 잡힌다.
     db.flush()
-    echo_score_service.compute_and_persist_echo_scores(db, user_resonator.id)
+    scored_echoes = echo_score_service.compute_and_persist_echo_scores(db, user_resonator.id)
     logger.debug("에코 점수를 계산했습니다.")
 
-    # commit이 인스턴스를 expire시키므로 응답에 쓸 값은 미리 확보한다.
+    # commit이 인스턴스를 expire시키므로 응답과 설명에 쓸 값은 미리 확보한다.
     resonator_name = resonator_master.name
+    user_resonator_id = user_resonator.id
+    explanation_payload = echo_explanation_service.build_payload(db, resonator_master, scored_echoes)
 
     # 응답 전에 커밋해야 실패 시 클라이언트가 성공 응답을 받지 않는다.
     db.commit()
     logger.debug("공명자 등록 트랜잭션을 커밋했습니다.")
 
-    return CreateResonatorResponse(resonatorName=resonator_name)
+    # 등록이 확정된 뒤에 호출하므로 LLM 실패/지연이 등록에 영향을 주지 않는다. 요청당 최대 1회 호출한다.
+    echo_analysis = echo_explanation_service.explain(explanation_payload) if explanation_payload else None
+    if echo_analysis:
+        _save_echo_analysis(db, user_resonator_id, echo_analysis)
+
+    return CreateResonatorResponse(resonatorName=resonator_name, echoAnalysis=echo_analysis)
+
+
+def _save_echo_analysis(db: Session, user_resonator_id: int, echo_analysis: str) -> None:
+    """등록은 이미 commit됐으므로 저장에 실패해도 예외를 올리지 않는다 (조회 시 설명만 비게 된다)."""
+    try:
+        user_resonator_repository.update_echo_analysis(db, user_resonator_id, echo_analysis)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.warning(f"에코 분석 저장에 실패했습니다. userResonatorId={user_resonator_id}, {e}")

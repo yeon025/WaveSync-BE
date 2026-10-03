@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer
+from sqlalchemy import BigInteger, Boolean, Column, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -11,6 +11,7 @@ class UserResonator(Base):
 
     resonance_chain_level = Column(Integer, nullable=False)
     refine_level = Column(Integer, nullable=False)
+    echo_analysis = Column(Text, nullable=True)
     is_deleted = Column(Boolean, nullable=False, default=False)
 
     resonator_master_id = Column(BigInteger, ForeignKey("resonator_master.id"), nullable=False)

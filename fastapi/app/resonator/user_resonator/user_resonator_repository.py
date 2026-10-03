@@ -19,6 +19,11 @@ def save(db: Session, user_resonator: UserResonator) -> UserResonator:
     return user_resonator
 
 
+def update_echo_analysis(db: Session, user_resonator_id: int, echo_analysis: str) -> None:
+    """커밋은 호출부 책임."""
+    db.execute(update(UserResonator).where(UserResonator.id == user_resonator_id).values(echo_analysis=echo_analysis))
+
+
 def find_ids_by_resonator_name(db: Session, name: str) -> List[int]:
     stmt = (
         select(UserResonator.id)

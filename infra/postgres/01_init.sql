@@ -90,6 +90,9 @@ CREATE TABLE IF NOT EXISTS user_resonators (
     resonance_chain_level INT NOT NULL CHECK (resonance_chain_level BETWEEN 0 AND 6),
     refine_level INT NOT NULL CHECK (refine_level BETWEEN 1 AND 5),
 
+    -- Gemini가 생성한 에코 종합 분석. 생성하지 않았거나 실패하면 NULL (이 컬럼 도입 전 행도 NULL)
+    echo_analysis TEXT,
+
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
     resonator_master_id BIGINT NOT NULL,

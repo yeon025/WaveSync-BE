@@ -10,6 +10,7 @@ from app.resonator.echo_score import resonator_damage_master_repository
 from app.resonator.echo_score.echo_score_calculator import EchoScore, build_weight_table, evaluate_echo
 from app.resonator.stat_type import StatType
 from app.resonator.user_resonator import user_resonator_repository
+from app.resonator.user_resonator.user_echo import UserEcho
 
 
 def _find_weight_table(db: Session, resonator_master_id: int) -> Optional[Dict[StatType, float]]:
@@ -28,8 +29,11 @@ def _find_weight_table(db: Session, resonator_master_id: int) -> Optional[Dict[S
         return None
 
 
-def compute_and_persist_echo_scores(db: Session, user_resonator_id: int) -> None:
-    """commit/flush하지 않는다. autoflush=False라 방금 만든 에코가 대상이면 호출 전에 flush가 필요하다."""
+def compute_and_persist_echo_scores(db: Session, user_resonator_id: int) -> List[UserEcho]:
+    """commit/flush하지 않는다. autoflush=False라 방금 만든 에코가 대상이면 호출 전에 flush가 필요하다.
+
+    점수를 채운 에코를 반환한다 (점수 계산 대상이 아닌 공명자의 에코는 점수가 None).
+    """
     user_resonator = user_resonator_repository.find_by_id_with_echoes(db, user_resonator_id)
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
@@ -46,3 +50,5 @@ def compute_and_persist_echo_scores(db: Session, user_resonator_id: int) -> None
         echo.score_percent = result.score_percent
         echo.grade = result.grade
         echo.per_stat = result.per_stat
+
+    return list(user_resonator.user_echoes)
