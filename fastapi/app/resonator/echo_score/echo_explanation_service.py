@@ -23,14 +23,31 @@ _SYSTEM_INSTRUCTION = """\
 
 
 def build_payload(db: Session, resonator_master, echoes: List[Any]) -> Optional[Dict[str, Any]]:
-    """점수가 계산된 에코가 없으면(서포터 등) None을 반환한다. commit 전에 호출해 평범한 값으로 확보한다."""
-    scored = [echo for echo in echoes if echo.score_percent is not None and echo.per_stat]
+    # 점수가 계산된 에코가 없으면(서포터 등) None이다. commit 전에 호출해 expire 전의 값으로 확보한다.
+    scored = []
+
+    for echo in echoes:
+        if echo.score_percent is not None and echo.per_stat:
+            scored.append(echo)
+
     if not scored:
         return None
 
     damage_master = resonator_damage_master_repository.find_by_resonator_master_id(db, resonator_master.id)
     if damage_master is None:
         return None
+
+    echo_payloads = []
+
+    for echo in scored:
+        echo_payloads.append(
+            {
+                "name": echo.name,
+                "scorePercent": echo.score_percent,
+                "grade": echo.grade.value,
+                "subStats": echo.per_stat,
+            }
+        )
 
     return {
         "resonator": {
@@ -39,20 +56,12 @@ def build_payload(db: Session, resonator_master, echoes: List[Any]) -> Optional[
             "relevantDamageTypes": list(damage_master.relevant_damage_types),
             "scalingStat": damage_master.scaling_stat.value,
         },
-        "echoes": [
-            {
-                "name": echo.name,
-                "scorePercent": echo.score_percent,
-                "grade": echo.grade.value,
-                "subStats": echo.per_stat,
-            }
-            for echo in scored
-        ],
+        "echoes": echo_payloads,
     }
 
 
 def explain(payload: Dict[str, Any]) -> Optional[str]:
-    """실패는 부가 기능의 실패일 뿐이라 예외를 올리지 않고 None을 반환한다."""
+    # 실패는 부가 기능의 실패일 뿐이라 예외를 올리지 않고 None을 반환한다.
     try:
         text = gemini_client.generate_text(_SYSTEM_INSTRUCTION, json.dumps(payload, ensure_ascii=False))
     except Exception as e:

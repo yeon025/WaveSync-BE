@@ -1,10 +1,11 @@
 import os
-from typing import Optional
 
 from PIL import Image
 
 from app.config.logger import logger
 from app.profile_extraction.paths import TMP_DIR
+
+CROP_GAP = 10
 
 RECTANGLES = [
     # 공명자 이름
@@ -55,41 +56,21 @@ RECTANGLES = [
 ]
 
 
-def crop_and_stack(image: Image.Image) -> Optional[Image.Image]:
-    """RECTANGLES 영역들을 세로로 이어붙여 Vision API를 1회만 호출할 수 있게 한다.
-
-    이어붙인 순서(공명자 이름 → 무기 이름 → 에코 옵션)는
-    ocr_service.split_profile_text_lines가 결과 라인을 나눌 때 그대로 전제한다.
-    """
-
-    crops = [image.crop((x1, y1, x2, y2)) for (x1, y1, x2, y2) in RECTANGLES]
-
-    if not crops:
-        return None
+def crop_and_stack(image: Image.Image) -> Image.Image:
+    # Vision API를 1회만 호출하려고 세로로 이어붙인다. 순서는 ocr_service.split_profile_text_lines가 전제한다.
+    crops = [image.crop(rect) for rect in RECTANGLES]
 
     max_width = max(crop.width for crop in crops)
+    total_height = sum(crop.height + CROP_GAP for crop in crops)
 
-    aligned = []
-
-    for crop in crops:
-        padded = Image.new("RGB", (max_width, crop.height + 10), (0, 0, 0))
-
-        padded.paste(crop, (0, 0))
-
-        aligned.append(padded)
-
-    total_height = sum(img.height for img in aligned)
-
-    merged = Image.new("RGB", (max_width, total_height))
+    merged = Image.new("RGB", (max_width, total_height), (0, 0, 0))
 
     y = 0
-
-    for img in aligned:
-        merged.paste(img, (0, y))
-        y += img.height
+    for crop in crops:
+        merged.paste(crop, (0, y))
+        y += crop.height + CROP_GAP
 
     save_path = os.path.join(TMP_DIR, "merged.png")
-
     merged.save(save_path)
     logger.debug(f"{save_path}가 저장되었습니다.")
 

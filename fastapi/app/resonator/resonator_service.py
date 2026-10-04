@@ -7,8 +7,7 @@ from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.resonator import spec_calculation_service
 from app.resonator.master import resonator_master_repository
-from app.resonator.resonance_node.branch_position import BranchPosition
-from app.resonator.resonance_node.node_position import NodePosition
+from app.resonator.resonance_node.node_positions import BranchPosition, NodePosition
 from app.resonator.resonance_node.resonance_node_mapper import get_stat
 from app.resonator.schemas import (
     EchoDetail,
@@ -83,15 +82,18 @@ def get_resonator_setting(db: Session, user_resonator_id: int) -> ResonatorSetti
     node_master = user_resonator.resonator_master.resonance_node_master
     logger.debug("공명 노드 조회를 완료했습니다.")
 
-    nodes = [
-        ResonanceNode(
+    nodes = []
+
+    for node in user_resonator.user_resonance_nodes:
+        stat = get_stat(node_master, node.branch_position, node.node_position)
+
+        resonance_node = ResonanceNode(
             branchPosition=node.branch_position,
             nodePosition=node.node_position,
             active=node.is_active,
-            stat=get_stat(node_master, node.branch_position, node.node_position),
+            stat=stat,
         )
-        for node in user_resonator.user_resonance_nodes
-    ]
+        nodes.append(resonance_node)
     logger.debug("조회한 공명 노드를 dto로 변환했습니다.")
 
     storage = get_object_storage_service()
@@ -110,10 +112,17 @@ def get_resonator_echoes(db: Session, user_resonator_id: int) -> EchoListRespons
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
     storage = get_object_storage_service()
-    echoes = [
-        EchoDetail.from_user_echo(echo, storage.create_url(echo.image) if echo.image else None)
-        for echo in user_resonator.user_echoes
-    ]
+    echoes = []
+
+    for echo in user_resonator.user_echoes:
+        image_url = None
+
+        if echo.image:
+            image_url = storage.create_url(echo.image)
+
+        echo_detail = EchoDetail.from_user_echo(echo, image_url)
+        echoes.append(echo_detail)
+
     return EchoListResponse(echoes=echoes, echoAnalysis=user_resonator.echo_analysis)
 
 
@@ -134,7 +143,11 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
         logger.warning(f"업데이트 요청에 누락된 공명 노드 위치가 있습니다. missing={sorted(missing_keys)}")
         raise CustomException(ErrorCode.VALIDATION_FAILED)
 
-    required_type = {node.stat.type for node in data.nodes if node.stat is not None and node.stat.type is not None}
+    required_type = set()
+
+    for node in data.nodes:
+        if node.stat is not None and node.stat.type is not None:
+            required_type.add(node.stat.type)
 
     refine_type = user_resonator.weapon_master.refine_type
     if refine_type is not None:

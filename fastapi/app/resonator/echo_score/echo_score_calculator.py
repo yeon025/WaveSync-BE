@@ -4,9 +4,8 @@ from decimal import Decimal
 from typing import Any, Dict, Iterable, Optional, Tuple
 
 from app.config.logger import logger
-from app.resonator.echo_score.damage_type import DamageType
-from app.resonator.echo_score.scaling_stat import ScalingStat
 from app.resonator.echo_score.echo_grade import EchoGrade
+from app.resonator.echo_score.resonator_damage_master import DamageType, ScalingStat
 from app.resonator.echo_sub_stat_values import VALID_SUB_VALUES
 from app.resonator.stat_type import StatType
 
@@ -53,15 +52,13 @@ _SUB_V_MAX = {stat_type: float(max(values)) for stat_type, values in VALID_SUB_V
 
 @dataclass(frozen=True)
 class EchoScore:
-    """점수 계산 대상이 아니거나 설정이 유효하지 않으면 세 필드 모두 None이다."""
-
+    # 점수 계산 대상이 아니거나 설정이 유효하지 않으면 세 필드 모두 None이다.
     score_percent: Optional[float] = None
     grade: Optional[EchoGrade] = None
     per_stat: Optional[Dict[str, Dict[str, float]]] = None
 
 
 def build_weight_table(relevant_damage_types: Iterable[Any], scaling_stat: Any) -> Dict[StatType, float]:
-    """JSON 배열 원본(문자열)과 enum 멤버를 모두 받으며, 설정이 유효하지 않으면 ValueError를 낸다."""
     if not isinstance(relevant_damage_types, (list, tuple)):
         raise ValueError(f"relevant_damage_types는 배열이어야 합니다. value={relevant_damage_types!r}")
 
@@ -89,14 +86,16 @@ def build_weight_table(relevant_damage_types: Iterable[Any], scaling_stat: Any) 
 
 
 def _grade_of(score_percent: float) -> EchoGrade:
-    for grade_name, threshold in sorted(GRADE_THRESHOLDS.items(), key=lambda item: item[1], reverse=True):
+    thresholds_high_to_low = sorted(GRADE_THRESHOLDS.items(), key=lambda item: item[1], reverse=True)
+
+    for grade_name, threshold in thresholds_high_to_low:
         if score_percent + _GRADE_EPSILON >= threshold:
             return EchoGrade(grade_name)
     return EchoGrade.D
 
 
 def evaluate_echo(sub_stats: Iterable[Tuple[StatType, Decimal]], weight_table: Dict[StatType, float]) -> EchoScore:
-    """가중치 테이블이나 정규화 기준에 없는 타입이 섞이면 계산하지 않고 빈 결과를 반환한다."""
+    # 가중치 테이블이나 정규화 기준에 없는 타입이 섞이면 계산하지 않고 빈 결과를 반환한다.
     max_score = sum(weight_table.values())
     if max_score <= 0:
         return EchoScore()
@@ -111,7 +110,8 @@ def evaluate_echo(sub_stats: Iterable[Tuple[StatType, Decimal]], weight_table: D
             logger.warning(f"점수 계산 대상이 아닌 서브속성 타입입니다. type={stat_type}")
             return EchoScore()
 
-        normalized = min(max(float(value) / v_max, 0.0), 1.0)
+        ratio = float(value) / v_max
+        normalized = min(max(ratio, 0.0), 1.0)
         contribution = normalized * weight
         total += contribution
 

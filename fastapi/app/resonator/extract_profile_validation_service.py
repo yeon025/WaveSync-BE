@@ -15,11 +15,9 @@ from app.resonator.stat_type import StatType
 
 
 def validate(db: Session, dto: ExtractData) -> Tuple[ResonatorMaster, WeaponMaster]:
-    """검증하면서 조회한 마스터를 그대로 반환해 호출부가 다시 조회하지 않게 한다."""
+    # 검증하면서 조회한 마스터를 그대로 반환해 호출부가 다시 조회하지 않게 한다.
     resonator_master = _validate_resonator(db, dto.resonatorName)
-
     weapon_master = _validate_weapon(db, dto.weaponName)
-
     _validate_subs(dto.echoes)
 
     return resonator_master, weapon_master

@@ -1,5 +1,4 @@
-from app.resonator.resonance_node.branch_position import BranchPosition
-from app.resonator.resonance_node.node_position import NodePosition
+from app.resonator.resonance_node.node_positions import BranchPosition, NodePosition
 from app.resonator.resonance_node.resonance_node_master import ResonanceNodeMaster
 from app.resonator.schemas import Stat
 

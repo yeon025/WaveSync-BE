@@ -32,10 +32,6 @@ class StatType(str, Enum):
     ALL_ATTRIBUTE_DAMAGE_BONUS = "all_attribute_damage_bonus"
     BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS = "basic_and_heavy_attack_damage_bonus"
 
-    @property
-    def code(self) -> str:
-        return self.value
-
     @classmethod
     def from_code(cls, code: str) -> "StatType":
         return cls(code)

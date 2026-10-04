@@ -14,13 +14,13 @@ from app.resonator.user_resonator.user_resonator import UserResonator
 
 
 def save(db: Session, user_resonator: UserResonator) -> UserResonator:
-    """자식을 모두 relationship에 연결한 뒤 호출한다 (add() 이후 연결한 자식은 INSERT되지 않음). 커밋은 호출부 책임."""
+    # 자식을 모두 relationship에 연결한 뒤 호출한다 (add() 이후 연결한 자식은 INSERT되지 않음). 커밋은 호출부 책임.
     db.add(user_resonator)
     return user_resonator
 
 
 def update_echo_analysis(db: Session, user_resonator_id: int, echo_analysis: str) -> None:
-    """커밋은 호출부 책임."""
+    # 커밋은 호출부 책임
     db.execute(update(UserResonator).where(UserResonator.id == user_resonator_id).values(echo_analysis=echo_analysis))
 
 
@@ -34,7 +34,7 @@ def find_ids_by_resonator_name(db: Session, name: str) -> List[int]:
 
 
 def soft_delete_by_ids(db: Session, ids: List[int]) -> None:
-    """하위 테이블까지 함께 삭제한다. 커밋은 호출부 책임."""
+    # 하위 테이블까지 함께 삭제하며 FinalStat엔 is_deleted 컬럼이 없어 하드 DELETE한다. 커밋은 호출부 책임.
     db.execute(
         update(UserResonator)
         .where(UserResonator.id.in_(ids), UserResonator.is_deleted.is_(False))
@@ -50,7 +50,6 @@ def soft_delete_by_ids(db: Session, ids: List[int]) -> None:
         .where(UserEcho.user_resonator_id.in_(ids), UserEcho.is_deleted.is_(False))
         .values(is_deleted=True)
     )
-    # UPDATE ... FROM으로 user_echo를 경유한 2단계 JOIN
     db.execute(
         update(UserEchoSub)
         .where(
@@ -60,7 +59,6 @@ def soft_delete_by_ids(db: Session, ids: List[int]) -> None:
         )
         .values(is_deleted=True)
     )
-    # FinalStat엔 is_deleted 컬럼이 없어 하드 DELETE
     db.execute(delete(FinalStat).where(FinalStat.user_resonator_id.in_(ids)))
 
 
@@ -97,7 +95,7 @@ def find_by_id_with_echoes(db: Session, user_resonator_id: int) -> Optional[User
 
 
 def find_by_id_for_update(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
-    """이름과 달리 SELECT ... FOR UPDATE 행 잠금은 걸지 않는다 (재계산에 필요한 관계를 모두 로드하는 조회)."""
+    # 이름과 달리 SELECT ... FOR UPDATE 행 잠금은 걸지 않는다 (재계산에 필요한 관계를 모두 로드하는 조회).
     stmt = (
         select(UserResonator)
         .options(*_base_relation_options(), *_echo_relation_options())

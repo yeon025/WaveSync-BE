@@ -9,11 +9,11 @@ from app.config.logger import logger
 # Vision 호출 뒤에 붙는 부가 기능이라 오래 기다리지 않는다.
 # SDK의 timeout 단위는 밀리초다. Gemini API 서버가 deadline을 10초 미만으로 받지 않으므로 그 이상으로 둔다.
 _TIMEOUT_MS = 15000
-_DEFAULT_MODEL = "gemini-2.5-flash"
+_DEFAULT_MODEL = "gemini-3.8-flash"
 
 
 def generate_text(system_instruction: str, prompt: str) -> Optional[str]:
-    """Gemini를 정확히 1회 호출한다 (SDK 자동 재시도 끔). API 키가 없으면 호출하지 않고 None을 반환한다."""
+    # Gemini를 정확히 1회 호출한다 (SDK 자동 재시도 끔). API 키가 없으면 호출하지 않고 None을 반환한다.
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         logger.warning("GEMINI_API_KEY가 설정되지 않아 에코 설명을 생성하지 않습니다.")
