@@ -113,41 +113,55 @@ SQLAlchemy 기반 DB 설정과 세션 관리를 담당한다 (`base.py`의 선�
 
 ### app/profile_extraction/
 
-게임 내 공명자 프로필 화면 스크린샷 이미지에서 데이터를 추출하는 기능을 담당한다. 이미지 전처리, OCR(Google Vision API 호출 포함), Echo 이미지 매칭, Echo 텍스트 파싱, Resonance Chain(돌파 여부) 판별까지 포함한다. 추출 결과를 마스터 데이터로 검증하는 일은 resonator 도메인(`resonator/extract_profile_validation_service.py`)이 맡으므로, profile_extraction은 DB와 resonator에 의존하지 않는다.
+게임 내 공명자 프로필 화면 스크린샷 이미지에서 데이터를 추출하는 기능을 담당한다. 이미지 크롭/병합, OCR(Google Vision API 호출 포함), Echo 이미지 매칭, Echo 텍스트 파싱, Resonance Chain(돌파 여부) 판별까지 포함한다. 처리 단계(OCR, 에코) 기준으로 하위 폴더를 나눈다. 추출 결과를 마스터 데이터로 검증하는 일은 resonator 도메인(`resonator/extract_profile_validation_service.py`)이 맡으므로, profile_extraction은 DB와 resonator에 의존하지 않는다 (Echo 아이콘 매칭용 이미지를 읽기 위해 `app/storage`만 사용한다).
 
 ```
 profile_extraction/
-├── profile_extraction_service.py   # 위 단계 전체를 조합하는 오케스트레이터
-├── constants.py                     # 파이프라인 전역에서 쓰는 좌표/threshold/매핑 상수
-├── schemas.py                       # 추출 결과 DTO (ExtractedStat/Echo/ExtractData)
-├── preprocessing/                   # 이미지 크롭/스택/정규화
-├── ocr/                             # OCR 텍스트 추출 + Vision API 클라이언트
-├── echo/                            # 에코 아이콘 이미지 매칭 + OCR 텍스트 파싱
-└── resonance_chain/                 # 이미지 해시 기반 돌파 여부 판별
+├── profile_extraction_service.py   # extract_info: 이미지 다운로드 후 아래 단계 전체를 조합하는 오케스트레이터
+├── resonance_chain_service.py      # 돌파 원 영역 크롭 + 템플릿 이미지 해시 비교로 돌파 횟수 판별
+├── paths.py                        # 여러 모듈이 공유하는 경로 (BASE_DIR, 런타임 임시 파일용 TMP_DIR)
+├── schemas.py                      # 추출 결과 DTO (ExtractedStat/Echo/ExtractData)
+├── ocr/
+│   ├── text_region_builder.py      # 텍스트 영역 크롭 후 세로로 이어붙여 Vision 호출을 1회로 만든다
+│   ├── ocr_service.py              # Vision 호출, 응답 단어를 줄로 병합, 텍스트 정제, 공명자/무기/에코 줄 분리
+│   └── vision_client.py            # Google Vision 클라이언트 생성 (dev는 서비스 계정 키 파일 사용)
+└── echo/
+    ├── echo_matching_service.py    # 에코 아이콘 크롭, ORB 특징점 매칭, echo-images 특징점 캐시(메모리 + 디스크)
+    └── echo_text_parser.py         # OCR 줄을 Echo(메인/보조/서브 옵션)로 파싱
 ```
 
 ### app/resonator/
 
-명조 캐릭터(공명자)와 관련된 핵심 도메인을 담당한다. Resonator, Weapon, Echo, Resonance Node, Final Stat 엔티티와 스탯 계산, DB 접근, API Router까지 이 폴더 하나에 모여 있다 (Echo/Resonance Node/Weapon은 독립된 라우터·서비스가 없는 Resonator의 하위 개념이라 별도 최상위 도메인으로 분리하지 않았다).
+명조 캐릭터(공명자)와 관련된 핵심 도메인을 담당한다. Resonator, Weapon, Echo, Resonance Node, Final Stat 엔티티와 스탯 계산, 에코 점수, DB 접근, API Router까지 이 폴더 하나에 모여 있다 (Echo/Resonance Node/Weapon은 독립된 라우터·서비스가 없는 Resonator의 하위 개념이라 별도 최상위 도메인으로 분리하지 않았다).
+
+**`resonator/`는 `models/`, `repositories/`, `services/`처럼 계층별로 분리하지 않는다.** 하나의 도메인이나 기능을 구성하는 관련 코드(모델, repository, enum, 매핑 등)를 함께 배치해, 해당 영역의 코드를 찾고 수정하기 쉽게 유지한다. 그래서 하위 폴더마다 들어 있는 파일의 종류가 다르며(`master/`에는 service가 없고 `echo_score/`에는 계산·서비스가 있다), 이는 의도한 구조다. 여러 영역을 가로지르는 업무 흐름(CRUD, 등록, 스펙 계산)은 특정 하위 폴더에 넣지 않고 루트에 둔다.
 
 ```
 resonator/
-├── router.py                    # API 엔드포인트 (얇게 유지, 실제 로직은 resonator_service로 위임)
-├── resonator_service.py         # CRUD + 여러 Repository 조합/트랜잭션
+├── router.py                              # API 엔드포인트 (얇게 유지, 실제 로직은 service로 위임)
+├── resonator_service.py                   # 조회/수정/삭제 CRUD, 여러 Repository 조합과 트랜잭션, 응답 조립
+├── resonator_registration_service.py      # create_resonator: 업로드 → 추출 → 검증 → 조립 → 스펙/점수 계산 → 커밋 → LLM 설명 저장
 ├── extract_profile_validation_service.py  # 프로필 추출 결과를 마스터 데이터/게임 수치로 검증
-├── spec_calculation_service.py  # 최종 스탯 계산 도메인 로직
-├── resonance_node_mapper.py     # 공명 노드 위치→스탯 값 매핑
-├── schemas.py                   # Resonator 도메인 request/response 스키마
-├── models/                      # SQLAlchemy ORM 모델
-└── repositories/                # DB 접근 로직 (마스터 테이블별 + UserResonator 단위)
+├── user_resonator_factory.py              # 추출 결과 + 마스터 데이터로 저장 전 UserResonator 애그리게잇 조립 (DB 접근 없음)
+├── spec_calculation_service.py            # 최종 스탯 계산 (등록과 수정에서 공유하는 순수 계산 로직)
+├── schemas.py                             # Resonator 도메인 request/response 스키마
+├── stat_type.py                           # 여러 영역이 공유하는 StatType enum
+├── echo_sub_stat_values.py                # 에코 서브옵션 유효 수치 (검증과 점수 계산이 공유)
+├── master/                                # 게임 마스터 데이터
+├── resonance_node/                        # 공명 노드
+├── user_resonator/                        # 사용자 공명자 애그리게잇
+└── echo_score/                            # 에코 점수 계산과 설명
 ```
 
-- **`resonator/models/`**: SQLAlchemy ORM 모델을 관리한다 (`resonator_master.py`/`user_resonator.py`/`final_stat.py`/`user_echo.py`/`user_echo_sub.py`/`resonance_node_master.py`/`user_resonance_node.py`/`weapon_master.py`/`resonator_damage_master.py` 9개 엔티티 + `element.py`/`stat_type.py`/`branch_position.py`/`node_position.py`/`echo_grade.py`/`scaling_stat.py`/`damage_type.py` 7개 Enum).
-- **`resonator/repositories/`**: DB 접근 로직을 관리한다. 마스터 테이블(`resonator_master`/`weapon_master`/`resonator_damage_master`)은 테이블별로, 사용자 데이터는 `user_resonator_repository.py` 하나가 `UserResonator`와 하위 테이블(공명 노드/에코/에코 서브/최종 스탯) 전체를 담당한다 — 하위 테이블은 `UserResonator` 없이 단독으로 조회·저장·삭제되는 경로가 없기 때문이다. **Generic Repository나 BaseRepository로 통합하지 않는다.** Repository는 API Response Schema를 생성하지 않고 ORM 객체 또는 DB 조회 결과만 반환한다 (상세 규칙은 아래 "ORM → Schema 변환 규칙" 참고).
+- **`master/`**: 공명자(`resonator_master.py`, `Element` enum 포함)와 무기(`weapon_master.py`) 마스터 모델, 그리고 테이블별 repository(`resonator_master_repository.py`, `weapon_master_repository.py`)를 둔다. 별도 service는 없고 `extract_profile_validation_service`, `resonator_service` 등이 repository를 직접 사용한다.
+- **`resonance_node/`**: 노드 마스터 모델(`resonance_node_master.py`), 사용자 노드 모델(`user_resonance_node.py`), 노드 위치 enum(`node_positions.py`의 `BranchPosition`/`NodePosition`), 노드 위치를 스탯 값으로 바꾸는 `resonance_node_mapper.py`(`get_stat`)를 둔다. 전용 repository는 없다. 마스터 노드는 `ResonatorMaster.resonance_node_master` 관계로, 사용자 노드는 `user_resonator_repository`가 함께 다룬다.
+- **`user_resonator/`**: 사용자가 등록한 공명자 애그리게잇(`UserResonator`/`FinalStat`/`UserEcho`/`UserEchoSub` 모델)과 `user_resonator_repository.py`를 둔다. 하위 테이블(노드/에코/에코 서브/최종 스탯)은 `UserResonator` 없이 단독으로 조회·저장·삭제되는 경로가 없어서, repository 하나가 애그리게잇 전체를 담당한다. 별도 service는 없고 루트의 service들이 repository를 조합한다.
+- **`echo_score/`**: 에코 서브속성 점수 계산과 LLM 설명을 하나의 기능 단위로 묶는다. `echo_score_calculator.py`(가중치/점수/등급 순수 계산), `echo_grade.py`(`EchoGrade` enum), `resonator_damage_master.py`(점수 계산 설정 마스터 모델, `DamageType`/`ScalingStat` enum 포함)와 `resonator_damage_master_repository.py`, `echo_score_service.py`(점수 계산 후 에코에 반영), `echo_explanation_service.py`(LLM 입력 payload 조립과 설명 생성), `gemini_client.py`(Gemini SDK 호출)로 구성된다.
+- **enum 위치**: 한 모델이나 한 기능에서만 쓰는 enum은 파일을 따로 만들지 않고 그 모델/모듈 파일에 함께 둔다 (`Element` → `master/resonator_master.py`, `BranchPosition`/`NodePosition` → `resonance_node/node_positions.py`, `DamageType`/`ScalingStat` → `echo_score/resonator_damage_master.py`). 여러 영역이 공유하는 `StatType`만 루트의 `stat_type.py`에 둔다.
+- **Repository 규칙**: 마스터 테이블(`resonator_master`/`weapon_master`/`resonator_damage_master`)은 테이블별로 repository를 두고, 사용자 데이터는 `user_resonator_repository.py` 하나가 담당한다. **Generic Repository나 BaseRepository로 통합하지 않는다.** Repository는 API Response Schema를 생성하지 않고 ORM 객체 또는 DB 조회 결과만 반환한다 (상세 규칙은 아래 "ORM → Schema 변환 규칙" 참고).
 - **`resonator/schemas.py`**: Resonator 도메인의 Request/Response Schema를 관리한다. 단순한 ORM → Schema 변환은 Schema의 `from_*` classmethod로 처리한다.
 - **`resonator/resonator_service.py`**: Resonator 관련 비즈니스 로직과 여러 Repository의 조합, 트랜잭션 경계를 담당한다. 필요한 경우 Repository 조회 결과를 API Schema로 조립한다.
-- **`resonator/spec_calculation_service.py`**: 명조 캐릭터의 스탯 계산과 관련된 핵심 도메인 로직을 담당한다.
-- **`resonator/resonance_node_mapper.py`**: Resonance Node 관련 데이터 변환 로직을 담당한다.
+- **`resonator/spec_calculation_service.py`**: 명조 캐릭터의 스탯 계산과 관련된 핵심 도메인 로직을 담당한다. 등록(`resonator_registration_service`)과 수정(`resonator_service.update_resonator`)이 함께 사용한다.
 
 ## 개발 환경 실행
 
@@ -168,14 +182,14 @@ cd fastapi && uvicorn app.main:app --reload --port 8000
 - 요청/응답 Pydantic 모델은 도메인별 `schemas.py`에 정의한다 (`Field`, `default_factory` 적극 사용) — 공통 API 응답 래퍼는 `app/schemas/api_response.py`, 프로필 추출 DTO는 `app/profile_extraction/schemas.py`, Resonator 도메인 request/response는 `app/resonator/schemas.py`에 둔다
 - 예외는 `CustomException(ErrorCode.XXX)` 형태로 발생시키고, `ErrorCode`는 `exceptions/error_code.py`의 Enum에 추가. 전역 처리는 `exception_handler.py`가 담당하므로 라우터에서 try/except로 감싸지 않는다
 - 라우터는 얇게 유지 — 실제 로직은 도메인 서비스로 위임한다 (`resonator/router.py` → `resonator/resonator_service.py` 패턴 참고)
-- 도메인/기능 단위로 파일을 묶는다 (`profile_extraction/`, `resonator/`처럼 하나의 책임 영역을 하나의 폴더에 모으고, 그 안에서 파일 수가 많아지는 경우에만 `models/`/`repositories/`처럼 타입별로 더 세분화한다)
+- 도메인/기능 단위로 파일을 묶는다 (`profile_extraction/`, `resonator/`처럼 하나의 책임 영역을 하나의 폴더에 모은다). `models/`/`repositories/`처럼 계층별 폴더로 나누지 않고, 한 도메인·기능의 모델·repository·enum·매핑을 같은 폴더에 둔다
 - **트랜잭션 커밋은 서비스 계층에서 명시적으로.** `get_db()`는 자동 commit하지 않고 미처리 예외에 rollback만 한다. `get_db()`의 `yield` 이후 코드는 FastAPI가 응답을 이미 전송한 뒤 실행돼서, 거기서 commit하면 실패해도 클라이언트는 200을 받은 상태가 된다. 쓰기(insert/update/delete)를 하는 서비스 함수는 **응답 객체를 만들기 전에** `db.commit()`을 직접 호출한다 (응답에 쓸 값은 commit이 인스턴스를 expire시키므로 commit 전에 확보). commit 실패 시 `SQLAlchemyError`가 라우터를 거쳐 `sqlalchemy_exception_handler`로 잡혀 500(`DATABASE_ERROR`)이 나간다. 여러 서비스 함수가 공유하는 내부 헬퍼는 commit하지 않고 호출자가 트랜잭션 경계를 잡는다. repository 함수도 commit하지 않는다 (`# 커밋은 호출부 책임` 주석 유지)
 
 ### ORM → Schema 변환 규칙
 
 - 단순한 ORM 모델 → API Schema 변환은 해당 Schema의 `from_*` classmethod에서 처리한다 (예: `resonator/schemas.py`의 `ResonatorStat.from_final_stat`, `WeaponDetail.from_user_resonator`, `WeaponSetting.from_user_resonator`, `EchoDetail.from_user_echo`).
 - 별도의 mapper 파일을 새로 만들지 않는다.
-- 여러 도메인 객체를 조합하거나 복잡한 변환 로직이 필요한 경우에만 기존 mapper(`resonator/resonance_node_mapper.py` 등) 또는 Service에서 처리한다.
+- 여러 도메인 객체를 조합하거나 복잡한 변환 로직이 필요한 경우에만 기존 mapper(`resonator/resonance_node/resonance_node_mapper.py` 등) 또는 Service에서 처리한다.
 - Repository에서는 API Schema를 생성하지 않는다.
 - Repository는 ORM 객체 또는 DB 조회 결과만 반환한다.
 - Service는 Repository의 결과를 조합하여 API Schema를 반환할 수 있다.
@@ -208,12 +222,12 @@ Spring 쪽에서 트러블슈팅으로 확보했던 최적화를 FastAPI + SQLAl
 
 - **N+1 방지**: Hibernate `default_batch_fetch_size: 100` → SQLAlchemy에서는 `selectinload`/`joinedload`로 연관 엔티티를 배치 조회
 - **Batch insert**: ID 생성을 SEQUENCE(`INCREMENT BY 50`, `CACHE 50`) + `hibernate.jdbc.batch_size: 50` 조합으로 처리 중 (기존 IDENTITY 방식은 batch insert 불가). SQLAlchemy에서도 시퀀스 기반 batch insert를 유지할 것
-- 마스터 테이블 초기화는 `infra/postgres/*.sql` (01~04번, 순서대로 실행됨)
+- 마스터 테이블 초기화는 `infra/postgres/*.sql` (01~05번, 순서대로 실행됨)
 
 ## 제약사항 (이관 여부와 무관하게 항상 지킬 것)
 
 - **무료 인프라만 사용.** 유료 티어로 전환되는 설정을 넣지 말 것 (Cloud Run, Vercel, Supabase 모두 무료 플랜 기준)
-- **Google Vision API 호출은 최소화.** 요청 1건당 API 1회 호출로 묶여 있다 (과거 7회 → 1회로 최적화한 이력 있음). 이미지 크롭/병합 후 1번만 호출하는 구조(`app/profile_extraction/preprocessing/preprocess_service.py`)를 건드릴 땐 호출 횟수가 늘어나지 않는지 확인할 것
+- **Google Vision API 호출은 최소화.** 요청 1건당 API 1회 호출로 묶여 있다 (과거 7회 → 1회로 최적화한 이력 있음). 이미지 크롭/병합 후 1번만 호출하는 구조(`app/profile_extraction/ocr/text_region_builder.py`의 `crop_and_stack` → `ocr/ocr_service.py`의 `extract_text`)를 건드릴 땐 호출 횟수가 늘어나지 않는지 확인할 것
 - 개인 사용 목적의 소규모 서비스이므로, 과도한 확장성 설계(멀티테넌시, 대규모 트래픽 대응 등)는 지양
 
 ## 배포
@@ -224,5 +238,5 @@ Spring 쪽에서 트러블슈팅으로 확보했던 최적화를 FastAPI + SQLAl
 
 `spring/` 제거 후 진행하기로 했던 두 작업 모두 완료됨. 이력용으로 남긴다.
 
-- **Enum DB 값 소문자 전환** — ✅ 완료. `Element`/`StatType`/`BranchPosition`/`NodePosition`을 소문자 code 값으로 통일하고(현재 `resonator/models/*.py`), DB 마스터 데이터와 CHECK 제약도 소문자로 전환(`infra/postgres/01~04`). SAEnum 컬럼은 `values_callable=enum_values`로 멤버 이름이 아니라 값을 저장한다. 값과 code가 같아져 당시 `schemas/common.py`(현재는 `resonator/schemas.py`로 통합됨)에 있던 커스텀 직렬화 로직은 제거됨.
+- **Enum DB 값 소문자 전환** — ✅ 완료. `Element`/`StatType`/`BranchPosition`/`NodePosition`을 소문자 code 값으로 통일하고(현재 `resonator/stat_type.py`, `resonator/master/resonator_master.py`, `resonator/resonance_node/node_positions.py`), DB 마스터 데이터와 CHECK 제약도 소문자로 전환(`infra/postgres/01~04`). SAEnum 컬럼은 `values_callable=enum_values`로 멤버 이름이 아니라 값을 저장한다. 값과 code가 같아져 당시 `schemas/common.py`(현재는 `resonator/schemas.py`로 통합됨)에 있던 커스텀 직렬화 로직은 제거됨.
 - **SEQUENCE INCREMENT BY / CACHE 축소** — ✅ 완료. `infra/postgres/01_init.sql`에서 `user_node_seq`를 `INCREMENT BY 10 CACHE 10`(공명 노드 10개 고정 생성), `user_echo_sub_seq`를 `INCREMENT BY 25 CACHE 25`(게임 내 이론상 최대 5에코 × 5서브)로 낮췄다. SQLAlchemy는 행마다 `nextval()`을 호출하고 클라이언트 사이드 hi-lo가 없으므로 INCREMENT 값과 무관하게 PK 충돌은 없고 ID 조밀도만 바뀐다. (스키마 변경은 별도 마이그레이션 파일 없이 `01_init.sql`을 직접 갱신하는 게 이 프로젝트 컨벤션)
