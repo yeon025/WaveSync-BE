@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.config.logger import logger
 from app.profile_extraction.profile_extraction_service import extract_info
 from app.resonator import extract_profile_validation_service, spec_calculation_service
-from app.resonator.echo_score import echo_explanation_service, echo_score_service
+from app.resonator.echo_score import echo_analysis_input_service, echo_explanation_service, echo_score_service
 from app.resonator.schemas import CreateResonatorResponse
 from app.resonator.user_resonator import user_resonator_repository
 from app.resonator.user_resonator_factory import build_user_resonator
@@ -45,6 +45,11 @@ def create_resonator(db: Session, resonator_profile: UploadFile) -> CreateResona
 
     resonator_name = resonator_master.name
     user_resonator_id = user_resonator.id
+
+    # Gemini에 전달할 입력을 검증하기 위해 파일로 저장한다 (Gemini를 호출하지는 않는다).
+    echo_analysis_input_service.generate_and_write(db, resonator_master.id, user_resonator_id, scored_echoes)
+    logger.debug("에코 분석 입력을 생성했습니다.")
+
     explanation_payload = echo_explanation_service.build_payload(db, resonator_master, scored_echoes)
 
     db.commit()

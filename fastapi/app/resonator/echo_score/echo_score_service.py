@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
@@ -10,6 +11,14 @@ from app.resonator.echo_score.echo_score_calculator import EchoScore, build_weig
 from app.resonator.stat_type import StatType
 from app.resonator.user_resonator import user_resonator_repository
 from app.resonator.user_resonator.user_echo import UserEcho
+
+
+@dataclass(frozen=True)
+class ScoredEcho:
+    # per_stat은 DB 컬럼이 아니다 (score_percent/grade만 영속화한다). 같은 요청 안에서 Gemini 설명 payload와
+    # Analysis Input을 만드는 데 쓰기 위한 계산 결과를, 그걸 만든 echo와 함께 묶어 전달하는 용도일 뿐이다.
+    echo: UserEcho
+    per_stat: Optional[Dict[str, Dict[str, float]]]
 
 
 def _find_weight_table(db: Session, resonator_master_id: int) -> Optional[Dict[StatType, float]]:
@@ -28,13 +37,15 @@ def _find_weight_table(db: Session, resonator_master_id: int) -> Optional[Dict[S
         return None
 
 
-def compute_and_persist_echo_scores(db: Session, user_resonator_id: int) -> List[UserEcho]:
+def compute_and_persist_echo_scores(db: Session, user_resonator_id: int) -> List[ScoredEcho]:
     # commit/flush하지 않는다. autoflush=False라 방금 만든 에코가 대상이면 호출 전에 flush가 필요하다.
     user_resonator = user_resonator_repository.find_by_id_with_echoes(db, user_resonator_id)
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
     weight_table = _find_weight_table(db, user_resonator.resonator_master_id)
+
+    scored_echoes = []
 
     for echo in user_resonator.user_echoes:
         if weight_table is None:
@@ -45,6 +56,6 @@ def compute_and_persist_echo_scores(db: Session, user_resonator_id: int) -> List
 
         echo.score_percent = result.score_percent
         echo.grade = result.grade
-        echo.per_stat = result.per_stat
+        scored_echoes.append(ScoredEcho(echo=echo, per_stat=result.per_stat))
 
-    return list(user_resonator.user_echoes)
+    return scored_echoes

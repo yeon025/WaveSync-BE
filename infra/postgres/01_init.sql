@@ -125,9 +125,9 @@ CREATE TABLE IF NOT EXISTS user_echoes (
     secondary_value INT NOT NULL,
 
     -- 서브속성 점수 (공명자 등록 시 계산해 저장). 점수 계산 대상이 아닌 공명자의 에코와 기존 행은 NULL.
+    -- 서브속성별 산출 내역(옛 per_stat)은 등록 요청 안에서만 쓰이고 이후 다시 조회되지 않아 저장하지 않는다.
     score_percent DOUBLE PRECISION,
     grade VARCHAR(2) CHECK (grade IN ('SS', 'S', 'A', 'B', 'C', 'D')),
-    per_stat JSON,
 
     user_resonator_id BIGINT NOT NULL,
 
