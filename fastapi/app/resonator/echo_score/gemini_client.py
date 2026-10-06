@@ -33,6 +33,10 @@ def generate_text(system_instruction: str, prompt: str) -> Optional[str]:
             system_instruction=system_instruction,
             temperature=0.3,
             max_output_tokens=1024,
+            # 이미 계산된 JSON을 한국어 문장으로 풀어쓰는 단순 작업이라 thinking/함수 호출이 필요 없다.
+            # thinking을 꺼야 응답이 빨라져 위 _TIMEOUT_MS(서버 deadline) 내에 안정적으로 끝난다.
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         ),
     )
     return response.text
