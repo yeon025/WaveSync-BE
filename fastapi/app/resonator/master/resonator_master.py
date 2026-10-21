@@ -19,6 +19,8 @@ class Element(str, Enum):
 class ResonatorMaster(Base):
     __tablename__ = "resonator_master"
 
+    # Encore API의 캐릭터 ID를 그대로 쓴다 (admin/master_data_sync_service.py). 방랑자는 원소별로
+    # 성별 변형(encore_id 2개, name 동일)이 있지만 동기화가 남자 쪽만 저장하므로 name은 UNIQUE로 둔다.
     id = Column(BigInteger, primary_key=True)
     name = Column(String(20), nullable=False, unique=True)
 
@@ -29,7 +31,6 @@ class ResonatorMaster(Base):
     hp = Column(Integer, nullable=False)
     attack = Column(Integer, nullable=False)
     defense = Column(Integer, nullable=False)
-    release_version = Column(Integer, nullable=False)
 
     thumbnail_image = Column(String(255), nullable=False)
     standing_image = Column(String(255), nullable=True)

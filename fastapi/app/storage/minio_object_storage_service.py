@@ -1,10 +1,8 @@
 import io
 import os
-import uuid
 from typing import List
 from urllib.parse import urlparse
 
-from fastapi import UploadFile
 from minio import Minio
 from minio.error import S3Error
 
@@ -12,14 +10,13 @@ from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.error_code import ErrorCode
 from app.storage.object_storage_service import ObjectStorageService, StorageObject
-from app.storage.storage_validator import get_extension, raise_if_minio_bucket_not_found, validate_image
+from app.storage.storage_validator import raise_if_minio_bucket_not_found
 
 
 class MinioObjectStorageService(ObjectStorageService):
     def __init__(self):
         self.endpoint = os.getenv("MINIO_ENDPOINT")
         self.public_url = os.getenv("MINIO_PUBLIC_URL")
-        self.profile_bucket = os.getenv("MINIO_BUCKET_PROFILES")
         self.echo_bucket = os.getenv("MINIO_BUCKET_ECHOES")
 
         parsed = urlparse(self.endpoint)
@@ -33,30 +30,23 @@ class MinioObjectStorageService(ObjectStorageService):
     def create_url(self, path: str) -> str:
         return f"{self.public_url}/{path}"
 
-    def upload(self, bucket: str, file: UploadFile) -> str:
-        logger.info("MinIO 스토리지에 접근합니다.")
-
-        content = validate_image(file)
-        logger.debug("이미지 검증을 완료했습니다.")
-
-        object_name = f"{uuid.uuid4()}{get_extension(file)}"
-
+    def _put(self, bucket: str, object_name: str, content: bytes, content_type: str) -> None:
         try:
             self.client.put_object(
                 bucket,
                 object_name,
                 io.BytesIO(content),
                 length=len(content),
-                content_type=file.content_type,
+                content_type=content_type,
             )
-            logger.debug("프로필 이미지를 업로드했습니다.")
-
         except Exception as e:
             if isinstance(e, S3Error):
                 raise_if_minio_bucket_not_found(e, bucket)
             logger.error(f"Image upload failed: {e}")
             raise CustomException(ErrorCode.IMAGE_PROCESSING_FAILED)
 
+    def upload_bytes(self, bucket: str, object_name: str, content: bytes, content_type: str) -> str:
+        self._put(bucket, object_name, content, content_type)
         return f"{self.endpoint}/{bucket}/{object_name}"
 
     def list_objects(self, bucket: str) -> List[StorageObject]:

@@ -8,6 +8,7 @@ from app.resonator.stat_type import StatType
 class WeaponMaster(Base):
     __tablename__ = "weapon_master"
 
+    # Encore API의 무기 ID를 그대로 쓴다 (admin/master_data_sync_service.py).
     id = Column(BigInteger, primary_key=True)
     name = Column(String(50), nullable=False, unique=True)
     attack_value = Column(Integer, nullable=False)

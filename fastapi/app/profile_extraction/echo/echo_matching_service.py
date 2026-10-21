@@ -6,6 +6,7 @@ import threading
 import time
 from io import BytesIO
 from typing import Dict, List, Optional, Tuple, Union
+from urllib.parse import urlparse
 
 import cv2
 import numpy as np
@@ -65,6 +66,14 @@ def decode_echo_name(key: str) -> str:
         return base64.urlsafe_b64decode(padded).decode("utf-8")
     except (binascii.Error, ValueError, UnicodeDecodeError):
         return stem
+
+
+def encode_echo_object_name(name: str, source_url: str) -> str:
+    # decode_echo_name과 쌍을 이루는 인코더. echo_master 테이블 없이 Encore 아이콘을 echo_bucket에
+    # 바로 저장하는 admin/master_data_sync_service.py의 sync_echoes에서 쓴다.
+    encoded = base64.urlsafe_b64encode(name.encode("utf-8")).decode("ascii").rstrip("=")
+    ext = os.path.splitext(urlparse(source_url).path)[1] or ".webp"
+    return f"{encoded}{ext}"
 
 
 def load_rgb(image_source: Union[str, bytes, os.PathLike]) -> Image.Image:

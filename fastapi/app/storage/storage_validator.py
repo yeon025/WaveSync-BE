@@ -40,15 +40,6 @@ def validate_image(file: UploadFile) -> bytes:
     return content
 
 
-def get_extension(file: UploadFile) -> str:
-    filename = file.filename
-
-    if not filename or "." not in filename:
-        return ""
-
-    return filename[filename.rfind(".") :]
-
-
 def raise_if_bucket_not_found(response: requests.Response, bucket: str) -> None:
     if response.status_code == 404:
         logger.error(f"{bucket} 버킷을 찾을 수 없습니다 (404).")
