@@ -1,8 +1,9 @@
 -- =========================
 -- weapon_master
 -- =========================
+-- id는 Encore API의 무기 ID를 그대로 쓴다 (admin/master_data_sync_service.py). 별도 매핑 컬럼을 두지 않는다.
 CREATE TABLE IF NOT EXISTS weapon_master (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     attack_value INT NOT NULL,
     main_type VARCHAR(50) NOT NULL,
@@ -20,15 +21,17 @@ CREATE TABLE IF NOT EXISTS weapon_master (
 -- =========================
 -- resonator_master
 -- =========================
+-- id는 Encore API의 캐릭터 ID를 그대로 쓴다. 방랑자는 원소별로 성별 변형(encore_id 2개, name 동일)이
+-- 있지만 admin/master_data_sync_service.py의 sync_resonators가 남자 쪽만 동기화하므로 name은 그대로
+-- UNIQUE로 둔다.
 CREATE TABLE IF NOT EXISTS resonator_master (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id BIGINT PRIMARY KEY,
     name VARCHAR(20) NOT NULL UNIQUE,
     element VARCHAR(20) NOT NULL,
     rarity INT NOT NULL CHECK (rarity IN (4, 5)),
     hp INT NOT NULL,
     attack INT NOT NULL,
     defense INT NOT NULL,
-    release_version INT NOT NULL,
     thumbnail_image VARCHAR(255) NOT NULL,
     standing_image VARCHAR(255)
 );
@@ -57,28 +60,82 @@ CREATE TABLE IF NOT EXISTS resonance_node_master (
 
 
 -- =========================
--- resonator_damage_master
+-- master_data_sync_status
 -- =========================
--- 에코 점수 계산 설정. 서포터처럼 점수 계산 대상이 아닌 공명자는 행을 두지 않는다.
--- relevant_damage_types: basic_attack / heavy_attack / resonance_skill / resonance_liberation 중 1~2개의 JSON 배열
--- (배열 원소 값 검증은 CHECK로 표현할 수 없어 애플리케이션(echo_score_service)에서 한다)
-CREATE TABLE IF NOT EXISTS resonator_damage_master (
+-- 대상(SyncTarget.value)당 가장 최근 동기화 실행 결과 1행만 유지한다(이력 테이블이 아니라 최신 상태만).
+CREATE TABLE IF NOT EXISTS master_data_sync_status (
+    target VARCHAR(30) PRIMARY KEY,
+
+    synced_at TIMESTAMPTZ NOT NULL,
+    success BOOLEAN NOT NULL,
+
+    created INT,
+    updated INT,
+    unchanged INT,
+    skipped INT,
+
+    error_message VARCHAR(500)
+);
+
+
+-- =========================
+-- users
+-- =========================
+CREATE TABLE IF NOT EXISTS users (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
-    relevant_damage_types JSON NOT NULL CHECK (
-        CASE WHEN json_typeof(relevant_damage_types) = 'array'
-             THEN json_array_length(relevant_damage_types) BETWEEN 1 AND 2
-             ELSE FALSE
-        END
-    ),
-    scaling_stat VARCHAR(20) NOT NULL CHECK (scaling_stat IN ('attack', 'defense', 'hp')),
+    role VARCHAR(10) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
 
-    resonator_master_id BIGINT NOT NULL UNIQUE,
-
-    CONSTRAINT fk_damage_master_resonator
-        FOREIGN KEY (resonator_master_id)
-        REFERENCES resonator_master(id)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+
+-- =========================
+-- user_sessions
+-- =========================
+-- 쿠키에는 원문 토큰만 담고 여기엔 SHA-256 해시만 저장한다 (원문은 서버에 남지 않음).
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+
+    user_id BIGINT NOT NULL,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT fk_user_session_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+);
+
+
+-- =========================
+-- user_identities
+-- =========================
+-- Google sub 등 외부 로그인 식별자를 내부 user_id와 연결한다. 이메일이 아니라 provider+subject로만
+-- 매칭한다(이메일 기반 자동 병합 금지). 이 테이블에 행이 없는 users는 게스트로 취급한다
+-- (app/auth/session_service.py의 is_guest).
+CREATE TABLE IF NOT EXISTS user_identities (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+
+    provider VARCHAR(20) NOT NULL CHECK (provider IN ('google')),
+    provider_user_id VARCHAR(255) NOT NULL,
+
+    user_id BIGINT NOT NULL,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT fk_user_identity_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id),
+
+    CONSTRAINT uq_user_identities_provider_subject
+        UNIQUE (provider, provider_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_identities_user_id ON user_identities(user_id);
 
 
 -- =========================
@@ -90,13 +147,15 @@ CREATE TABLE IF NOT EXISTS user_resonators (
     resonance_chain_level INT NOT NULL CHECK (resonance_chain_level BETWEEN 0 AND 6),
     refine_level INT NOT NULL CHECK (refine_level BETWEEN 1 AND 5),
 
-    -- Gemini가 생성한 에코 종합 분석. 생성하지 않았거나 실패하면 NULL (이 컬럼 도입 전 행도 NULL)
-    echo_analysis TEXT,
-
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
+    user_id BIGINT NOT NULL,
     resonator_master_id BIGINT NOT NULL,
     weapon_master_id BIGINT NOT NULL,
+
+    CONSTRAINT fk_user_resonator_owner
+        FOREIGN KEY (user_id)
+        REFERENCES users(id),
 
     CONSTRAINT fk_user_resonator_master
         FOREIGN KEY (resonator_master_id)
@@ -106,6 +165,11 @@ CREATE TABLE IF NOT EXISTS user_resonators (
         FOREIGN KEY (weapon_master_id)
         REFERENCES weapon_master(id)
 );
+
+-- Postgres는 FK에 자동으로 인덱스를 만들지 않는다. user_id/resonator_master_id는 PK와 결합되지 않은
+-- 단독 조건으로 조회된다(find_resonator_summary의 LEFT JOIN, find_ids_by_resonator_name의 JOIN).
+CREATE INDEX IF NOT EXISTS idx_user_resonators_user_id ON user_resonators(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_resonators_resonator_master_id ON user_resonators(resonator_master_id);
 
 
 -- =========================
@@ -124,11 +188,6 @@ CREATE TABLE IF NOT EXISTS user_echoes (
     secondary_type VARCHAR(50) NOT NULL,
     secondary_value INT NOT NULL,
 
-    -- 서브속성 점수 (공명자 등록 시 계산해 저장). 점수 계산 대상이 아닌 공명자의 에코와 기존 행은 NULL.
-    -- 서브속성별 산출 내역(옛 per_stat)은 등록 요청 안에서만 쓰이고 이후 다시 조회되지 않아 저장하지 않는다.
-    score_percent DOUBLE PRECISION,
-    grade VARCHAR(2) CHECK (grade IN ('SS', 'S', 'A', 'B', 'C', 'D')),
-
     user_resonator_id BIGINT NOT NULL,
 
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
@@ -137,6 +196,9 @@ CREATE TABLE IF NOT EXISTS user_echoes (
         FOREIGN KEY (user_resonator_id)
         REFERENCES user_resonators(id)
 );
+
+-- 에코 목록 selectinload와 소프트삭제 캐스케이드가 이 컬럼으로 단독 조회한다.
+CREATE INDEX IF NOT EXISTS idx_user_echoes_user_resonator_id ON user_echoes(user_resonator_id);
 
 
 -- =========================
@@ -163,6 +225,9 @@ CREATE TABLE IF NOT EXISTS user_echo_sub (
         REFERENCES user_echoes(id)
 );
 
+-- 서브속성 중첩 selectinload와 소프트삭제 캐스케이드가 이 컬럼으로 단독 조회한다.
+CREATE INDEX IF NOT EXISTS idx_user_echo_sub_user_echo_id ON user_echo_sub(user_echo_id);
+
 
 -- =========================
 -- user_resonance_nodes
@@ -179,7 +244,7 @@ CREATE TABLE IF NOT EXISTS user_resonance_nodes (
     branch_position VARCHAR(20) NOT NULL CHECK (branch_position IN ('left_outer', 'left_inner', 'center', 'right_outer', 'right_inner')),
     node_position VARCHAR(20) NOT NULL CHECK (node_position IN ('top', 'middle')),
 
-    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
     user_resonator_id BIGINT NOT NULL,
@@ -188,6 +253,9 @@ CREATE TABLE IF NOT EXISTS user_resonance_nodes (
         FOREIGN KEY (user_resonator_id)
         REFERENCES user_resonators(id)
 );
+
+-- 설정 조회 시 노드 로드와 소프트삭제 캐스케이드가 이 컬럼으로 단독 조회한다.
+CREATE INDEX IF NOT EXISTS idx_user_resonance_nodes_user_resonator_id ON user_resonance_nodes(user_resonator_id);
 
 
 -- =========================
@@ -217,7 +285,8 @@ CREATE TABLE IF NOT EXISTS final_stats (
     havoc_damage_bonus NUMERIC(5,1) NOT NULL,
     healing_bonus NUMERIC(5,1) NOT NULL,
 
-    user_resonator_id BIGINT NOT NULL,
+    -- UserResonator.final_stat을 1:1(uselist=False)로 다루므로 UNIQUE로 DB에서도 보장한다.
+    user_resonator_id BIGINT NOT NULL UNIQUE,
 
     CONSTRAINT fk_final_stats_resonator
         FOREIGN KEY (user_resonator_id)
