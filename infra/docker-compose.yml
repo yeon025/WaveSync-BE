@@ -46,12 +46,6 @@ services:
     depends_on:
       - minio
 
-    volumes:
-      - ../../WaveSync-tools/resources/images/new_weapons:/seed/weapon-images:ro
-      - ../../WaveSync-tools/resources/images/thumbnails:/seed/resonator-thumbnail-images:ro
-      - ../../WaveSync-tools/resources/images/standings:/seed/resonator-standing-images:ro
-      - ../../WaveSync-tools/resources/images/new_echoes:/seed/echo-images:ro
-
     entrypoint: >
       /bin/sh -c "
       until mc alias set local http://minio:9000 admin password123; do
@@ -59,22 +53,9 @@ services:
         sleep 2;
       done;
 
-      mc mb --ignore-existing local/profile-images;
-      mc mb --ignore-existing local/weapon-images;
-      mc mb --ignore-existing local/resonator-thumbnail-images;
-      mc mb --ignore-existing local/resonator-standing-images;
       mc mb --ignore-existing local/echo-images;
 
-      mc anonymous set download local/profile-images;
-      mc anonymous set download local/weapon-images;
-      mc anonymous set download local/resonator-thumbnail-images;
-      mc anonymous set download local/resonator-standing-images;
       mc anonymous set download local/echo-images;
-
-      mc mirror --overwrite /seed/weapon-images local/weapon-images;
-      mc mirror --overwrite /seed/resonator-thumbnail-images local/resonator-thumbnail-images;
-      mc mirror --overwrite /seed/resonator-standing-images local/resonator-standing-images;
-      mc mirror --overwrite /seed/echo-images local/echo-images;
 
       echo 'MinIO initialization complete.';
       "
@@ -93,11 +74,8 @@ services:
     ports:
       - "8000:8000"
 
-    # Gemini(GEMINI_API_KEY, GEMINI_MODEL) 등 비밀값은 fastapi/.env에서 읽는다 (경로는 이 파일 기준이라 실행 위치와 무관).
-    # 파일이 없거나 GEMINI_API_KEY가 비어 있으면 에코 설명 생성만 건너뛴다.
     env_file:
       - path: ../fastapi/.env
-        required: false
 
     # 개발용 자동 리로드
     command: >
@@ -120,11 +98,11 @@ services:
       MINIO_SECRET_KEY: password123
 
       # 버킷 이름
-      MINIO_BUCKET_PROFILES: profile-images
-      MINIO_BUCKET_WEAPONS: weapon-images
-      MINIO_BUCKET_RESONATOR_THUMBNAILS: resonator-thumbnail-images
-      MINIO_BUCKET_RESONATOR_STANDINGS: resonator-standing-images
       MINIO_BUCKET_ECHOES: echo-images
+
+      # Google OAuth (비밀 아닌 고정값만 — Client ID/Secret은 fastapi/.env)
+      GOOGLE_OAUTH_REDIRECT_URI: http://localhost:8000/api/auth/google/callback
+      GOOGLE_OAUTH_SUCCESS_REDIRECT_URL: http://localhost:3000
 
       TZ: Asia/Seoul
 

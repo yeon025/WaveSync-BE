@@ -1,10 +1,11 @@
 fastapi
 uvicorn[standard]
 google-cloud-vision
-google-genai
+google-auth
 Pillow
 ImageHash
 requests
+beautifulsoup4
 minio
 SQLAlchemy
 psycopg2-binary
