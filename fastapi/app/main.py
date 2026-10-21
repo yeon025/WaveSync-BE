@@ -5,6 +5,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.admin.router import router as admin_router
+from app.auth.router import router as auth_router
+from app.config.cors import ALLOWED_ORIGINS
 from app.config.logger import logger
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.exception_handler import (
@@ -22,7 +25,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://resocollector.com"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -55,7 +58,9 @@ async def execution_time_middleware(request: Request, call_next):
         )
 
 
+app.include_router(auth_router, prefix="/api")
 app.include_router(resonator_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")
 
 app.add_exception_handler(CustomException, custom_exception_handler)
 app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
