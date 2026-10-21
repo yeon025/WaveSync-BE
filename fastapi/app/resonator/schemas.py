@@ -3,7 +3,6 @@ from typing import Annotated, List, Optional
 
 from pydantic import BaseModel, Field
 
-from app.resonator.echo_score.echo_grade import EchoGrade
 from app.resonator.resonance_node.node_positions import BranchPosition, NodePosition
 from app.resonator.stat_type import StatType
 
@@ -117,15 +116,12 @@ class WeaponSetting(BaseModel):
         )
 
 
-# per_stat(점수 산출 내역)은 내부 계산용이라 응답에 포함하지 않는다.
 class EchoDetail(BaseModel):
     name: Optional[str] = None
     imageUrl: Optional[str] = None
     main: Stat
     secondary: Stat
     subs: List[Stat] = Field(default_factory=list)
-    scorePercent: Optional[float] = None
-    grade: Optional[EchoGrade] = None
 
     @classmethod
     def from_user_echo(cls, echo, image_url: Optional[str]) -> "EchoDetail":
@@ -140,15 +136,11 @@ class EchoDetail(BaseModel):
             main=Stat(type=echo.main_type, value=echo.main_value),
             secondary=Stat(type=echo.secondary_type, value=echo.secondary_value),
             subs=subs,
-            scorePercent=echo.score_percent,
-            grade=echo.grade,
         )
 
 
 class EchoListResponse(BaseModel):
     echoes: List[EchoDetail] = Field(default_factory=list)
-    # 공명자 단위 에코 종합 분석(DB에 저장된 값). 없으면 None이라 응답에서 빠진다.
-    echoAnalysis: Optional[str] = None
 
 
 class DeleteResonatorRequest(BaseModel):
@@ -164,7 +156,6 @@ class ResonatorSummaryResponse(BaseModel):
     userResonatorId: Optional[int] = None  # LEFT JOIN이라 매칭되는 UserResonator가 없으면 None
     resonatorName: str
     rarity: int
-    releaseVersion: int
     thumbnailImageUrl: str
 
 

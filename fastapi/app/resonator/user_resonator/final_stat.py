@@ -5,7 +5,6 @@ from app.db.base import Base
 
 
 class FinalStat(Base):
-    # final_stats.user_resonator_id엔 DB상 UNIQUE 제약이 없어 unique=True를 넣지 않는다.
     __tablename__ = "final_stats"
 
     id = Column(BigInteger, primary_key=True)
@@ -31,5 +30,6 @@ class FinalStat(Base):
     havoc_damage_bonus = Column(Numeric(5, 1), nullable=False)
     healing_bonus = Column(Numeric(5, 1), nullable=False)
 
-    user_resonator_id = Column(BigInteger, ForeignKey("user_resonators.id"), nullable=False)
+    # UserResonator.final_stat을 1:1(uselist=False)로 다루므로 UNIQUE로 DB에서도 보장한다.
+    user_resonator_id = Column(BigInteger, ForeignKey("user_resonators.id"), nullable=False, unique=True)
     user_resonator = relationship("UserResonator", back_populates="final_stat")

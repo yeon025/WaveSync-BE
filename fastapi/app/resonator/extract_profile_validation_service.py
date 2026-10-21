@@ -24,7 +24,7 @@ def validate(db: Session, dto: ExtractData) -> Tuple[ResonatorMaster, WeaponMast
 
 
 def _validate_resonator(db: Session, resonator_name: str) -> ResonatorMaster:
-    resonator_master = resonator_master_repository.find_by_name(db, resonator_name)
+    resonator_master = resonator_master_repository.find_by_name_without_spaces(db, resonator_name)
 
     if resonator_master is None:
         logger.warning(f"공명자 이름이 마스터 데이터에 존재하지 않습니다. resonatorName={resonator_name}")

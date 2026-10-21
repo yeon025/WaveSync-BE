@@ -19,47 +19,58 @@ def save(db: Session, user_resonator: UserResonator) -> UserResonator:
     return user_resonator
 
 
-def update_echo_analysis(db: Session, user_resonator_id: int, echo_analysis: str) -> None:
-    # 커밋은 호출부 책임
-    db.execute(update(UserResonator).where(UserResonator.id == user_resonator_id).values(echo_analysis=echo_analysis))
-
-
-def find_ids_by_resonator_name(db: Session, name: str) -> List[int]:
+def find_ids_by_resonator_name(db: Session, name: str, user_id: int) -> List[int]:
     stmt = (
         select(UserResonator.id)
         .join(ResonatorMaster, UserResonator.resonator_master_id == ResonatorMaster.id)
-        .where(ResonatorMaster.name == name, UserResonator.is_deleted.is_(False))
+        .where(
+            ResonatorMaster.name == name,
+            UserResonator.user_id == user_id,
+            UserResonator.is_deleted.is_(False),
+        )
     )
     return list(db.scalars(stmt))
 
 
-def soft_delete_by_ids(db: Session, ids: List[int]) -> None:
+def soft_delete_by_ids(db: Session, ids: List[int], user_id: int) -> None:
+    # 소유자 검증: 요청에 다른 사용자의 id가 섞여 있어도 실제로 user_id가 소유한 id만 걸러낸다.
+    # 이 owned_ids로만 하위 테이블(node/echo/sub/final_stat)까지 캐스케이드 삭제해야, 다른 사용자의
+    # UserResonator 행은 안 지워지는데 그 하위 행만 지워지는 구멍이 생기지 않는다.
+    owned_ids_stmt = select(UserResonator.id).where(
+        UserResonator.id.in_(ids),
+        UserResonator.user_id == user_id,
+        UserResonator.is_deleted.is_(False),
+    )
+    owned_ids = list(db.scalars(owned_ids_stmt))
+    if not owned_ids:
+        return
+
     # 하위 테이블까지 함께 삭제하며 FinalStat엔 is_deleted 컬럼이 없어 하드 DELETE한다. 커밋은 호출부 책임.
     db.execute(
         update(UserResonator)
-        .where(UserResonator.id.in_(ids), UserResonator.is_deleted.is_(False))
+        .where(UserResonator.id.in_(owned_ids), UserResonator.is_deleted.is_(False))
         .values(is_deleted=True)
     )
     db.execute(
         update(UserResonanceNode)
-        .where(UserResonanceNode.user_resonator_id.in_(ids), UserResonanceNode.is_deleted.is_(False))
+        .where(UserResonanceNode.user_resonator_id.in_(owned_ids), UserResonanceNode.is_deleted.is_(False))
         .values(is_deleted=True)
     )
     db.execute(
         update(UserEcho)
-        .where(UserEcho.user_resonator_id.in_(ids), UserEcho.is_deleted.is_(False))
+        .where(UserEcho.user_resonator_id.in_(owned_ids), UserEcho.is_deleted.is_(False))
         .values(is_deleted=True)
     )
     db.execute(
         update(UserEchoSub)
         .where(
             UserEchoSub.user_echo_id == UserEcho.id,
-            UserEcho.user_resonator_id.in_(ids),
+            UserEcho.user_resonator_id.in_(owned_ids),
             UserEchoSub.is_deleted.is_(False),
         )
         .values(is_deleted=True)
     )
-    db.execute(delete(FinalStat).where(FinalStat.user_resonator_id.in_(ids)))
+    db.execute(delete(FinalStat).where(FinalStat.user_resonator_id.in_(owned_ids)))
 
 
 def _base_relation_options():
@@ -76,29 +87,41 @@ def _echo_relation_options():
     return (selectinload(UserResonator.user_echoes).selectinload(UserEcho.user_echo_subs),)
 
 
-def find_by_id(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
+def find_by_id(db: Session, user_resonator_id: int, user_id: int) -> Optional[UserResonator]:
     stmt = (
         select(UserResonator)
         .options(*_base_relation_options())
-        .where(UserResonator.id == user_resonator_id, UserResonator.is_deleted.is_(False))
+        .where(
+            UserResonator.id == user_resonator_id,
+            UserResonator.user_id == user_id,
+            UserResonator.is_deleted.is_(False),
+        )
     )
     return db.scalar(stmt)
 
 
-def find_by_id_with_echoes(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
+def find_by_id_with_echoes(db: Session, user_resonator_id: int, user_id: int) -> Optional[UserResonator]:
     stmt = (
         select(UserResonator)
         .options(*_echo_relation_options())
-        .where(UserResonator.id == user_resonator_id, UserResonator.is_deleted.is_(False))
+        .where(
+            UserResonator.id == user_resonator_id,
+            UserResonator.user_id == user_id,
+            UserResonator.is_deleted.is_(False),
+        )
     )
     return db.scalar(stmt)
 
 
-def find_by_id_for_update(db: Session, user_resonator_id: int) -> Optional[UserResonator]:
+def find_by_id_for_update(db: Session, user_resonator_id: int, user_id: int) -> Optional[UserResonator]:
     # 이름과 달리 SELECT ... FOR UPDATE 행 잠금은 걸지 않는다 (재계산에 필요한 관계를 모두 로드하는 조회).
     stmt = (
         select(UserResonator)
         .options(*_base_relation_options(), *_echo_relation_options())
-        .where(UserResonator.id == user_resonator_id, UserResonator.is_deleted.is_(False))
+        .where(
+            UserResonator.id == user_resonator_id,
+            UserResonator.user_id == user_id,
+            UserResonator.is_deleted.is_(False),
+        )
     )
     return db.scalar(stmt)

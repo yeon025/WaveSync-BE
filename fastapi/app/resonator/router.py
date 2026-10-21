@@ -3,6 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 
+from app.auth.authenticated_user import AuthenticatedUser
+from app.auth.current_user import get_current_user
 from app.db.session import get_db
 from app.resonator import resonator_registration_service, resonator_service
 from app.resonator.schemas import (
@@ -25,8 +27,12 @@ router = APIRouter(prefix="/resonators")
     response_model_exclude_none=True,
     status_code=200,
 )
-def create_resonator(resonatorProfile: UploadFile = File(...), db: Session = Depends(get_db)):
-    data = resonator_registration_service.create_resonator(db, resonatorProfile)
+def create_resonator(
+    resonatorProfile: UploadFile = File(...),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    data = resonator_registration_service.create_resonator(db, current_user.id, resonatorProfile)
 
     return ApiResponse(code="OK", message="공명자가 등록되었습니다.", data=data)
 
@@ -36,8 +42,8 @@ def create_resonator(resonatorProfile: UploadFile = File(...), db: Session = Dep
     response_model=ApiResponse[List[ResonatorSummaryResponse]],
     status_code=200,
 )
-def get_resonator_summary(db: Session = Depends(get_db)):
-    data = resonator_service.get_resonator_summary(db)
+def get_resonator_summary(current_user: AuthenticatedUser = Depends(get_current_user), db: Session = Depends(get_db)):
+    data = resonator_service.get_resonator_summary(db, current_user.id)
 
     return ApiResponse(code="OK", message="전체 공명자 목록을 조회했습니다.", data=data)
 
@@ -48,8 +54,12 @@ def get_resonator_summary(db: Session = Depends(get_db)):
     response_model_exclude_none=True,
     status_code=200,
 )
-def get_resonator_detail(user_resonator_id: int, db: Session = Depends(get_db)):
-    data = resonator_service.get_resonator_detail(db, user_resonator_id)
+def get_resonator_detail(
+    user_resonator_id: int,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    data = resonator_service.get_resonator_detail(db, user_resonator_id, current_user.id)
 
     return ApiResponse(code="OK", message="공명자를 조회했습니다.", data=data)
 
@@ -60,8 +70,12 @@ def get_resonator_detail(user_resonator_id: int, db: Session = Depends(get_db)):
     response_model_exclude_none=True,
     status_code=200,
 )
-def get_resonator_setting(user_resonator_id: int, db: Session = Depends(get_db)):
-    data = resonator_service.get_resonator_setting(db, user_resonator_id)
+def get_resonator_setting(
+    user_resonator_id: int,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    data = resonator_service.get_resonator_setting(db, user_resonator_id, current_user.id)
 
     return ApiResponse(code="OK", message="설정 정보를 조회했습니다.", data=data)
 
@@ -72,8 +86,12 @@ def get_resonator_setting(user_resonator_id: int, db: Session = Depends(get_db))
     response_model_exclude_none=True,
     status_code=200,
 )
-def get_resonator_echoes(user_resonator_id: int, db: Session = Depends(get_db)):
-    data = resonator_service.get_resonator_echoes(db, user_resonator_id)
+def get_resonator_echoes(
+    user_resonator_id: int,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    data = resonator_service.get_resonator_echoes(db, user_resonator_id, current_user.id)
 
     return ApiResponse(code="OK", message="에코를 조회했습니다.", data=data)
 
@@ -84,14 +102,23 @@ def get_resonator_echoes(user_resonator_id: int, db: Session = Depends(get_db)):
     response_model_exclude_none=True,
     status_code=200,
 )
-def update_resonator(user_resonator_id: int, data: UpdateResonatorRequest, db: Session = Depends(get_db)):
-    resonator_service.update_resonator(db, user_resonator_id, data)
+def update_resonator(
+    user_resonator_id: int,
+    data: UpdateResonatorRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    resonator_service.update_resonator(db, user_resonator_id, current_user.id, data)
 
     return ApiResponse(code="OK", message="공명자 정보가 수정되었습니다.")
 
 
 @router.delete("", response_model=ApiResponse, response_model_exclude_none=True, status_code=200)
-def delete_resonator(data: DeleteResonatorRequest, db: Session = Depends(get_db)):
-    resonator_service.delete_resonator(db, data.userResonatorIds)
+def delete_resonator(
+    data: DeleteResonatorRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    resonator_service.delete_resonator(db, data.userResonatorIds, current_user.id)
 
     return ApiResponse(code="OK", message="공명자 정보가 삭제되었습니다.")

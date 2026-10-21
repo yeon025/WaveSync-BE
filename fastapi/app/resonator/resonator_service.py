@@ -25,40 +25,28 @@ from app.resonator.user_resonator import user_resonator_repository
 from app.storage.object_storage_factory import get_object_storage_service
 
 
-def get_resonator_summary(db: Session) -> List[ResonatorSummaryResponse]:
-    rows = resonator_master_repository.find_resonator_summary(db)
+def get_resonator_summary(db: Session, user_id: int) -> List[ResonatorSummaryResponse]:
+    rows = resonator_master_repository.find_resonator_summary(db, user_id)
 
-    resonators = [
+    # 정렬(희귀도 내림차순 후 이름순)은 find_resonator_summary의 쿼리가 담당한다.
+    return [
         ResonatorSummaryResponse(
             userResonatorId=row.id,
             resonatorName=row.name,
             rarity=row.rarity,
-            releaseVersion=row.release_version,
             thumbnailImageUrl=row.thumbnail_image,
         )
         for row in rows
     ]
 
-    # 현대 한글은 코드포인트 순서가 사전순과 같다 (숫자/영문이 섞인 이름이 추가되면 재검토).
-    resonators.sort(key=lambda r: (-r.releaseVersion, r.resonatorName))
 
-    storage = get_object_storage_service()
-    for resonator in resonators:
-        resonator.thumbnailImageUrl = storage.create_url(resonator.thumbnailImageUrl)
-
-    return resonators
-
-
-def get_resonator_detail(db: Session, user_resonator_id: int) -> ResonatorDetailResponse:
-    user_resonator = user_resonator_repository.find_by_id(db, user_resonator_id)
+def get_resonator_detail(db: Session, user_resonator_id: int, user_id: int) -> ResonatorDetailResponse:
+    user_resonator = user_resonator_repository.find_by_id(db, user_resonator_id, user_id)
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
-    storage = get_object_storage_service()
-    standing_image_url = storage.create_url(user_resonator.resonator_master.standing_image)
-    weapon_image_url = storage.create_url(user_resonator.weapon_master.image)
-
-    weapon = WeaponDetail.from_user_resonator(user_resonator, weapon_image_url)
+    standing_image_url = user_resonator.resonator_master.standing_image
+    weapon = WeaponDetail.from_user_resonator(user_resonator, user_resonator.weapon_master.image)
     stat = ResonatorStat.from_final_stat(user_resonator.final_stat)
 
     return ResonatorDetailResponse(
@@ -72,8 +60,8 @@ def get_resonator_detail(db: Session, user_resonator_id: int) -> ResonatorDetail
     )
 
 
-def get_resonator_setting(db: Session, user_resonator_id: int) -> ResonatorSettingResponse:
-    user_resonator = user_resonator_repository.find_by_id(db, user_resonator_id)
+def get_resonator_setting(db: Session, user_resonator_id: int, user_id: int) -> ResonatorSettingResponse:
+    user_resonator = user_resonator_repository.find_by_id(db, user_resonator_id, user_id)
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
     logger.debug("공명자 조회를 완료했습니다.")
@@ -96,18 +84,14 @@ def get_resonator_setting(db: Session, user_resonator_id: int) -> ResonatorSetti
         nodes.append(resonance_node)
     logger.debug("조회한 공명 노드를 dto로 변환했습니다.")
 
-    storage = get_object_storage_service()
-    weapon_image_url = storage.create_url(user_resonator.weapon_master.image)
-    logger.debug("이미지를 전체 경로로 변환했습니다.")
-
-    weapon = WeaponSetting.from_user_resonator(user_resonator, weapon_image_url)
+    weapon = WeaponSetting.from_user_resonator(user_resonator, user_resonator.weapon_master.image)
     logger.debug("무기 조회 후 dto로 변환했습니다.")
 
     return ResonatorSettingResponse(nodes=nodes, weapon=weapon)
 
 
-def get_resonator_echoes(db: Session, user_resonator_id: int) -> EchoListResponse:
-    user_resonator = user_resonator_repository.find_by_id_with_echoes(db, user_resonator_id)
+def get_resonator_echoes(db: Session, user_resonator_id: int, user_id: int) -> EchoListResponse:
+    user_resonator = user_resonator_repository.find_by_id_with_echoes(db, user_resonator_id, user_id)
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
@@ -123,11 +107,11 @@ def get_resonator_echoes(db: Session, user_resonator_id: int) -> EchoListRespons
         echo_detail = EchoDetail.from_user_echo(echo, image_url)
         echoes.append(echo_detail)
 
-    return EchoListResponse(echoes=echoes, echoAnalysis=user_resonator.echo_analysis)
+    return EchoListResponse(echoes=echoes)
 
 
-def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorRequest) -> None:
-    user_resonator = user_resonator_repository.find_by_id_for_update(db, user_resonator_id)
+def update_resonator(db: Session, user_resonator_id: int, user_id: int, data: UpdateResonatorRequest) -> None:
+    user_resonator = user_resonator_repository.find_by_id_for_update(db, user_resonator_id, user_id)
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
@@ -165,6 +149,6 @@ def update_resonator(db: Session, user_resonator_id: int, data: UpdateResonatorR
     db.commit()
 
 
-def delete_resonator(db: Session, user_resonator_ids: List[int]) -> None:
-    user_resonator_repository.soft_delete_by_ids(db, user_resonator_ids)
+def delete_resonator(db: Session, user_resonator_ids: List[int], user_id: int) -> None:
+    user_resonator_repository.soft_delete_by_ids(db, user_resonator_ids, user_id)
     db.commit()

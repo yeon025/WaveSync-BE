@@ -1,12 +1,9 @@
 import os
 from io import BytesIO
 
-import requests
 from PIL import Image
 
 from app.config.logger import logger
-from app.exceptions.custom_exception import CustomException
-from app.exceptions.error_code import ErrorCode
 from app.profile_extraction.echo.echo_matching_service import crop_echo_icons, match_echo_icon
 from app.profile_extraction.echo.echo_text_parser import EchoMapper
 from app.profile_extraction.ocr.ocr_service import (
@@ -21,25 +18,10 @@ from app.profile_extraction.resonance_chain_service import calculate_chain_level
 from app.profile_extraction.schemas import ExtractData
 
 
-def _download_profile_image(image_path) -> Image.Image:
-    response = requests.get(image_path, timeout=10)
-
-    if response.status_code == 404:
-        raise CustomException(ErrorCode.IMAGE_NOT_FOUND)
-
-    if response.status_code == 403:
-        raise CustomException(ErrorCode.IMAGE_ACCESS_DENIED)
-
-    if response.status_code >= 400:
-        raise CustomException(ErrorCode.IMAGE_LOAD_FAILED)
-
-    return Image.open(BytesIO(response.content)).convert("RGB")
-
-
-def extract_info(image_path):
+def extract_info(image_bytes: bytes):
     os.makedirs(TMP_DIR, exist_ok=True)
 
-    profile = _download_profile_image(image_path)
+    profile = Image.open(BytesIO(image_bytes)).convert("RGB")
 
     chain_images = crop_circles(profile)
     merged_image = crop_and_stack(profile)
