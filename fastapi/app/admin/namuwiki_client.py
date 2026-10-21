@@ -1,4 +1,5 @@
 import re
+import time
 from typing import Dict, Optional
 
 import requests
@@ -15,6 +16,10 @@ _CHARACTER_LIST_URL = (
 _HEADERS = {"User-Agent": "Mozilla/5.0"}
 _TIMEOUT_SECONDS = 15
 
+# 타임아웃·연결 오류처럼 일시적인 실패만 재시도한다. 최대 1회 재시도(총 2회 시도)로 제한한다.
+_MAX_ATTEMPTS = 2
+_RETRY_DELAY_SECONDS = 1
+
 # 공명자 속성은 이 6종으로 고정되어 있다 (encore_client 쪽 _ELEMENT_NAME_MAP과 동일 집합).
 _ATTRIBUTE_NAMES = ("응결", "용융", "전도", "기류", "회절", "인멸")
 
@@ -23,15 +28,41 @@ _DISAMBIGUATION_SUFFIX = re.compile(r"\(명조:\s*워더링\s*웨이브\)")
 
 
 def _fetch_soup(url: str) -> BeautifulSoup:
-    try:
-        response = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT_SECONDS)
-        response.raise_for_status()
-    except requests.RequestException as e:
-        body = e.response.text if e.response is not None else None
-        logger.error(f"나무위키 요청 실패: {url}, {e} (body={body})")
-        raise CustomException(ErrorCode.EXTERNAL_API_FAILED)
+    # 응답 본문은 로그에 남기지 않는다 — 403 응답 본문엔 Cloudflare의 차단 챌린지 HTML 전체가
+    # 들어 있어, 그대로 로그에 남기면 의미 없는 대용량 HTML이 쌓인다. 상태 코드와 예외 종류만 남긴다.
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        try:
+            response = requests.get(url, headers=_HEADERS, timeout=_TIMEOUT_SECONDS)
+            response.raise_for_status()
+            return BeautifulSoup(response.text, "html.parser")
 
-    return BeautifulSoup(response.text, "html.parser")
+        except requests.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status == 403:
+                # Cloudflare 봇 차단으로 보이는 응답이다. 우회를 시도하지 않고, 재시도도 하지
+                # 않는다(반복 요청은 차단을 악화시킬 뿐 성공 가능성이 없다).
+                logger.warning(f"나무위키가 요청을 차단했습니다 (403): {url}")
+            else:
+                logger.error(f"나무위키 요청이 실패했습니다 (status={status}): {url}")
+            raise CustomException(ErrorCode.EXTERNAL_API_FAILED) from e
+
+        except (requests.Timeout, requests.ConnectionError) as e:
+            if attempt < _MAX_ATTEMPTS:
+                logger.warning(
+                    f"나무위키 요청이 일시적으로 실패해 재시도합니다 ({attempt}/{_MAX_ATTEMPTS}): "
+                    f"{url}, {type(e).__name__}"
+                )
+                time.sleep(_RETRY_DELAY_SECONDS)
+                continue
+            logger.error(f"나무위키 요청이 반복 실패했습니다: {url}, {type(e).__name__}")
+            raise CustomException(ErrorCode.EXTERNAL_API_FAILED) from e
+
+        except requests.RequestException as e:
+            logger.error(f"나무위키 요청 중 알 수 없는 오류: {url}, {type(e).__name__}")
+            raise CustomException(ErrorCode.EXTERNAL_API_FAILED) from e
+
+    # 도달하지 않는다 — 루프의 모든 경로가 return 또는 raise로 끝난다.
+    raise CustomException(ErrorCode.EXTERNAL_API_FAILED)
 
 
 def _find_attribute_heading(soup: BeautifulSoup) -> Optional[Tag]:

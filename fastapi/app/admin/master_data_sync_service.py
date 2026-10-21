@@ -279,12 +279,27 @@ def sync_standing_images(db: Session) -> SyncResult:
     # Encore API 동기화(sync_resonators)와 논리적으로 분리된 별도 대상이다 — 나무위키 접근 실패가
     # 캐릭터/무기 마스터 동기화 자체를 막지 않는다. 캐릭터 이름으로 나무위키 문서를 매칭하므로
     # resonator_master가 먼저 채워져 있어야 의미가 있다(동기화 순서는 호출부/관리자가 정한다).
-    wiki_urls = namuwiki_client.crawl_character_urls()
-
     resonators = resonator_master_repository.find_all(db)
     result = SyncResult()
 
+    try:
+        wiki_urls = namuwiki_client.crawl_character_urls()
+    except CustomException as e:
+        # 목록 자체를 못 가져오면(예: Cloudflare 차단) 캐릭터별 재시도는 의미가 없다 — 전체를
+        # skipped로 남기고 예외를 올리지 않는다. 여기서 raise하면 sync()가 이후 대상(다른
+        # targets)까지 중단시키고, 이미 커밋된 다른 대상의 동기화 결과도 실패로 기록돼 버린다.
+        logger.warning(f"나무위키 목록 조회 실패로 전신 이미지 동기화를 건너뜁니다: {e.message}")
+        result.skipped = len(resonators)
+        return result
+
     for i, resonator in enumerate(resonators):
+        # 운영에서 Supabase Storage 객체 경로로 수동 등록한 값(절대 URL이 아님)은 자동 동기화가
+        # 덮어쓰지 않는다 — 이 함수가 쓰는 값은 항상 나무위키 절대 URL이므로, 절대 URL이 아닌
+        # 기존 값은 수동 등록으로 간주한다.
+        if resonator.standing_image is not None and not resonator.standing_image.startswith(("http://", "https://")):
+            result.skipped += 1
+            continue
+
         wiki_url = wiki_urls.get(resonator.name)
 
         # 방랑자는 원소별로 이름이 다르지만(방랑자 · 인멸 등) 나무위키 문서는 공용(방랑자) 하나뿐이다.
