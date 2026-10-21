@@ -1,14 +1,18 @@
 import logging
 import time
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from app.admin.router import router as admin_router
 from app.auth.router import router as auth_router
 from app.config.cors import ALLOWED_ORIGINS
 from app.config.logger import logger
+from app.db.session import get_db
 from app.exceptions.custom_exception import CustomException
 from app.exceptions.exception_handler import (
     custom_exception_handler,
@@ -33,8 +37,14 @@ app.add_middleware(
 
 
 @app.get("/health")
-def health_check():
-    return {"status": "ok"}
+def health_check(db: Session = Depends(get_db)):
+    # UptimeRobot 등 외부 모니터링이 주기적으로 호출해 DB를 깨워두는 용도도 겸한다.
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception:
+        # 내부 오류나 접속 정보는 응답에 노출하지 않는다.
+        return JSONResponse(status_code=503, content={"status": "unhealthy", "database": "disconnected"})
 
 
 @app.middleware("http")
