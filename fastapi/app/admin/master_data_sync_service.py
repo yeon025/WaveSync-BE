@@ -41,6 +41,29 @@ _WEAPON_STAT_NAME_MAP = {
     "크리티컬 피해": StatType.CRITICAL_DAMAGE,
 }
 
+# 무기 재련 효과(1~5단계로 스케일링되는, 조건 없이 항상 적용되는 버프) 이름 → StatType.
+# Desc의 첫 문장이 "~발동 시"/"~경우"/"~한 후" 같은 조건 트리거 없이 이 이름으로 바로 시작하는
+# 경우만 재련 효과로 인정한다. 조건부(프록) 효과는 refine_type 한 컬럼으로 표현할 수 없어 저장하지
+# 않는다 — 그런 무기는 첫 문장이 이 이름들로 시작하지 않으므로 자연히 걸러져 refine_type이 NULL로 남는다.
+_WEAPON_REFINE_EFFECT_NAME_MAP = {
+    "HP": StatType.HP_PERCENT,
+    "공격력": StatType.ATTACK_PERCENT,
+    "방어력": StatType.DEFENSE_PERCENT,
+    "공명 효율": StatType.ENERGY_REGEN,
+    "크리티컬 피해": StatType.CRITICAL_DAMAGE,
+    "크리티컬": StatType.CRITICAL_RATE,
+    "전체 속성 피해 보너스": StatType.ALL_ATTRIBUTE_DAMAGE_BONUS,
+    "일반 공격과 강공격 피해 보너스": StatType.BASIC_AND_HEAVY_ATTACK_DAMAGE_BONUS,
+    "공명 스킬 피해 보너스": StatType.RESONANCE_SKILL_DAMAGE_BONUS,
+    "공명 해방 피해 보너스": StatType.RESONANCE_LIBERATION_DAMAGE_BONUS,
+}
+
+_HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
+
+# 문장 끝 "."만 자른다 — "12.8%"처럼 숫자 뒤의 "."은 건너뛴다(부정 전방탐색).
+_SENTENCE_END_PATTERN = re.compile(r"(?<!\d)\.\s*")
+
+
 # 공명 노드(SkillTree) PropertyNodeTitle("OO 증가")의 "OO" 부분 → StatType.
 # 기존 resonance_node_master 시드에서 실제로 쓰인 9개(outer) + 3개(inner) 값만 포함한다.
 _NODE_STAT_NAME_MAP = {
@@ -302,6 +325,37 @@ def sync_standing_images(db: Session) -> SyncResult:
     return result
 
 
+def _first_sentence(desc: Optional[str]) -> str:
+    clean = _HTML_TAG_PATTERN.sub("", desc or "")
+    return _SENTENCE_END_PATTERN.split(clean, maxsplit=1)[0].strip()
+
+
+def _parse_refine_values(array_string: List[str]) -> List[Decimal]:
+    return [Decimal(token.rstrip("%")).quantize(Decimal("0.1")) for token in array_string]
+
+
+def _extract_weapon_refine(detail: dict) -> Tuple[Optional[StatType], List[Optional[Decimal]]]:
+    first = _first_sentence(detail.get("Desc"))
+
+    # 긴 이름을 먼저 봐야 한다 — "크리티컬 피해"가 "크리티컬"보다 먼저 매칭돼야 한다.
+    for stat_name in sorted(_WEAPON_REFINE_EFFECT_NAME_MAP, key=len, reverse=True):
+        if not first.startswith(stat_name):
+            continue
+
+        params = detail.get("DescParams") or []
+        if not params or not isinstance(params[0].get("ArrayString"), list):
+            break
+
+        values = _parse_refine_values(params[0]["ArrayString"])
+        if len(values) != 5:
+            logger.warning(f"재련 효과 값이 5단계가 아니라 건너뜁니다: {first!r} ({values})")
+            break
+
+        return _WEAPON_REFINE_EFFECT_NAME_MAP[stat_name], values
+
+    return None, [None, None, None, None, None]
+
+
 def _apply_weapon_fields(
     existing: WeaponMaster,
     name: str,
@@ -309,6 +363,8 @@ def _apply_weapon_fields(
     attack_value: int,
     main_value: Decimal,
     image: str,
+    refine_type: Optional[StatType],
+    refine_values: List[Optional[Decimal]],
 ) -> bool:
     changed = False
     for field, value in (
@@ -317,6 +373,12 @@ def _apply_weapon_fields(
         ("attack_value", attack_value),
         ("main_value", main_value),
         ("image", image),
+        ("refine_type", refine_type),
+        ("refine_1_value", refine_values[0]),
+        ("refine_2_value", refine_values[1]),
+        ("refine_3_value", refine_values[2]),
+        ("refine_4_value", refine_values[3]),
+        ("refine_5_value", refine_values[4]),
     ):
         if getattr(existing, field) != value:
             setattr(existing, field, value)
@@ -344,6 +406,7 @@ def sync_weapons(db: Session) -> SyncResult:
         level_rows, main_type = _build_weapon_level_rows(detail)
         top_level_row = _select_target_level_row(level_rows, name)
         main_value_1dp = top_level_row["main_value"].quantize(Decimal("0.1"))
+        refine_type, refine_values = _extract_weapon_refine(detail)
 
         existing = by_id.get(encore_id)
 
@@ -355,12 +418,25 @@ def sync_weapons(db: Session) -> SyncResult:
                 main_type=main_type,
                 main_value=main_value_1dp,
                 image=icon_url,
+                refine_type=refine_type,
+                refine_1_value=refine_values[0],
+                refine_2_value=refine_values[1],
+                refine_3_value=refine_values[2],
+                refine_4_value=refine_values[3],
+                refine_5_value=refine_values[4],
             )
             db.add(existing)
             result.created += 1
         else:
             changed = _apply_weapon_fields(
-                existing, name, main_type, top_level_row["attack_value"], main_value_1dp, icon_url
+                existing,
+                name,
+                main_type,
+                top_level_row["attack_value"],
+                main_value_1dp,
+                icon_url,
+                refine_type,
+                refine_values,
             )
             if changed:
                 result.updated += 1
