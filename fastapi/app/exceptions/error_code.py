@@ -12,13 +12,7 @@ class ErrorCode(Enum):
         "1920×1080 해상도의 이미지만 업로드 가능합니다. 다른 이미지를 선택해주세요.",
     )
 
-    IMAGE_LOAD_FAILED = (400, "IMAGE_LOAD_FAILED", "이미지를 불러올 수 없습니다.")
-
     RESONATOR_NOT_FOUND = (400, "RESONATOR_NOT_FOUND", "등록하지 않은 공명자입니다.")
-
-    IMAGE_ACCESS_DENIED = (403, "IMAGE_ACCESS_DENIED", "이미지 접근 권한이 없습니다.")
-
-    IMAGE_NOT_FOUND = (404, "IMAGE_NOT_FOUND", "이미지를 찾을 수 없습니다.")
 
     IMAGE_SIZE_EXCEEDED = (
         413,
@@ -35,3 +29,33 @@ class ErrorCode(Enum):
     DATABASE_ERROR = (500, "DATABASE_ERROR", "데이터 처리 중 오류가 발생했습니다. 다시 시도해주세요.")
 
     INTERNAL_SERVER_ERROR = (500, "INTERNAL_SERVER_ERROR", "서버 내부 오류가 발생했습니다.")
+
+    UNAUTHORIZED = (401, "UNAUTHORIZED", "세션이 유효하지 않습니다. 다시 시도해주세요.")
+
+    OAUTH_STATE_INVALID = (400, "OAUTH_STATE_INVALID", "로그인 요청이 유효하지 않습니다. 다시 시도해주세요.")
+
+    GOOGLE_LOGIN_FAILED = (401, "GOOGLE_LOGIN_FAILED", "Google 로그인에 실패했습니다. 다시 시도해주세요.")
+
+    GOOGLE_ACCOUNT_ALREADY_LINKED = (
+        409,
+        "GOOGLE_ACCOUNT_ALREADY_LINKED",
+        "이 Google 계정은 이미 다른 계정에 연결되어 있습니다. 로그아웃 후 다시 시도해주세요.",
+    )
+
+    FORBIDDEN = (403, "FORBIDDEN", "권한이 없습니다.")
+
+    TOO_MANY_REQUESTS = (429, "TOO_MANY_REQUESTS", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.")
+
+    EXTERNAL_API_FAILED = (502, "EXTERNAL_API_FAILED", "외부 API 호출에 실패했습니다.")
+
+    MASTER_DATA_SYNC_FAILED = (
+        502,
+        "MASTER_DATA_SYNC_FAILED",
+        "외부 API 응답 형식이 예상과 달라 동기화를 중단했습니다.",
+    )
+
+    MASTER_DATA_ITEMS_NOT_SUPPORTED = (
+        400,
+        "MASTER_DATA_ITEMS_NOT_SUPPORTED",
+        "이 대상은 별도의 상세 목록이 없습니다.",
+    )
