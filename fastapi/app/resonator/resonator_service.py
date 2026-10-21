@@ -1,4 +1,5 @@
-from typing import List
+import os
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -24,6 +25,33 @@ from app.resonator.schemas import (
 from app.resonator.user_resonator import user_resonator_repository
 from app.storage.object_storage_factory import get_object_storage_service
 
+# 운영(Supabase)에서 전신 이미지를 수동 업로드하는 버킷. 개발(MinIO)에는 이 버킷이 없고, 개발
+# 환경의 standing_image는 항상 나무위키 절대 URL이라 이 상수를 쓸 일이 없다.
+_STANDING_IMAGE_BUCKET = "resonator-standing-images"
+
+
+def _is_prod() -> bool:
+    return os.getenv("APP_ENV") == "prod"
+
+
+def _resolve_standing_image_url(standing_image: Optional[str]) -> Optional[str]:
+    if standing_image is None:
+        return None
+
+    # 나무위키 크롤링 결과나 마이그레이션 이전의 기존 데이터는 이미 완전한 URL이다 — 그대로 쓴다.
+    # (같은 값을 여러 번 변환해도 계속 이 분기를 타므로 URL이 중첩으로 붙지 않는다.)
+    if standing_image.startswith(("http://", "https://")):
+        return standing_image
+
+    # 절대 URL이 아니면 Supabase Storage 객체 경로(예: "Hiyuki-standing.webp")다. 이 형태는
+    # 운영에서만 수동으로 들어가므로, 개발 환경에서는 조합을 시도하지 않고 값을 그대로 둔다
+    # (개발 환경 동작을 바꾸지 않기 위함 — 실제로는 개발 환경에 이런 값이 들어올 일이 없다).
+    if not _is_prod():
+        return standing_image
+
+    storage = get_object_storage_service()
+    return storage.create_url(f"{_STANDING_IMAGE_BUCKET}/{standing_image}")
+
 
 def get_resonator_summary(db: Session, user_id: int) -> List[ResonatorSummaryResponse]:
     rows = resonator_master_repository.find_resonator_summary(db, user_id)
@@ -45,7 +73,7 @@ def get_resonator_detail(db: Session, user_resonator_id: int, user_id: int) -> R
     if user_resonator is None:
         raise CustomException(ErrorCode.RESONATOR_NOT_FOUND)
 
-    standing_image_url = user_resonator.resonator_master.standing_image
+    standing_image_url = _resolve_standing_image_url(user_resonator.resonator_master.standing_image)
     weapon = WeaponDetail.from_user_resonator(user_resonator, user_resonator.weapon_master.image)
     stat = ResonatorStat.from_final_stat(user_resonator.final_stat)
 
