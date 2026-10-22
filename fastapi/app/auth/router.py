@@ -68,6 +68,12 @@ def issue_session(request: Request, response: Response, db: Session = Depends(ge
     if new_raw_token:
         set_session_cookie(response, new_raw_token)
 
+    # iPhone Safari 세션 유지 이슈 진단용 로그 — 쿠키 값/토큰은 남기지 않는다. 원인 확정 후 제거한다.
+    logger.info(
+        f"세션 발급 처리 | cookie_present={raw_token is not None} | new_session_issued={new_raw_token is not None} | "
+        f"origin={request.headers.get('Origin')} | user_agent={request.headers.get('User-Agent')}"
+    )
+
     is_guest = session_service.is_guest(db, user.id)
     return ApiResponse(
         code="OK", message="세션을 확인했습니다.", data=SessionResponse.from_authenticated_user(user, is_guest)

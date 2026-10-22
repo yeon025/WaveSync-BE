@@ -47,6 +47,22 @@ def get_user_by_token(db: Session, raw_token: Optional[str]) -> Optional[Authent
     return authenticated_user
 
 
+def classify_invalid_token(db: Session, raw_token: Optional[str]) -> str:
+    # iPhone Safari 세션 유지 이슈 진단용 — 인증 로직에는 영향을 주지 않고 UNAUTHORIZED 사유만 분류한다.
+    # 원인 확정 후 제거한다.
+    if not raw_token:
+        return "cookie_missing"
+
+    session = user_session_repository.find_by_token_hash(db, hash_token(raw_token))
+    if session is None:
+        return "session_invalid"
+    if session.revoked_at is not None:
+        return "session_revoked"
+    if session.expires_at <= datetime.now(timezone.utc):
+        return "session_expired"
+    return "session_invalid"  # find_active_with_user와 조건이 어긋나는 경우(이론상 도달하지 않음)
+
+
 def issue_session_for_user(db: Session, user_id: int, role: UserRole) -> Tuple[AuthenticatedUser, str]:
     # 커밋은 호출부 책임 — issue_or_reuse_session과 google_login_service가 공유한다.
     new_raw_token = secrets.token_urlsafe(32)

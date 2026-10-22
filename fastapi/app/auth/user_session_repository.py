@@ -16,6 +16,12 @@ def create_session(db: Session, user_id: int, token_hash: str, expires_at: datet
     return session
 
 
+def find_by_token_hash(db: Session, token_hash: str) -> Optional[UserSession]:
+    # 진단 로그용 — revoked/expires_at 조건 없이 토큰 해시 존재 여부만 확인한다.
+    stmt = select(UserSession).where(UserSession.token_hash == token_hash)
+    return db.execute(stmt).scalar_one_or_none()
+
+
 def find_active_with_user(db: Session, token_hash: str) -> Optional[Tuple[UserSession, User]]:
     stmt = (
         select(UserSession, User)
